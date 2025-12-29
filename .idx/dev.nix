@@ -3,49 +3,36 @@
   channel = "stable-24.05";
 
   # The packages to make available in your workspace.
-  # pkgs.nodejs_20 is required for the Next.js app and Firebase Functions.
   packages = [
     pkgs.nodejs_20
-    # Add firebase-tools for App Hosting
-    ,pkgs.firebase-tools
+    pkgs.firebase-tools
   ];
 
-  # Sets environment variables in your workspace.
-  # You can add your NEXT_PUBLIC_FIREBASE_* keys here,
-  # though a .env.local file is also a good option.
-  env = {};
-
-  # VS Code extensions to install in your workspace.
+  # VS Code extensions to install for a better development experience.
   idx.extensions = [
-    "dbaeumer.vscode-eslint"
-    # Recommended for Tailwind CSS and icons
-    ,"bradlc.vscode-tailwindcss"
-    ,"vscode-icons-team.vscode-icons"
+    "dbaeumer.vscode-eslint"    # For code linting
+    "esbenp.prettier-vscode"  # For code formatting
+    "bradlc.vscode-tailwindcss" # For Tailwind CSS support
   ];
 
   # Workspace lifecycle hooks.
   idx.workspace = {
-    # Runs when a workspace is first created.
+    # Runs when a workspace is first created to set up the project.
     onCreate = {
-      app-install = "cd urai-admin-codebase && npm install";
-      functions-install = "cd functions && npm install";
-    };
-
-    # Runs every time the workspace is (re)started.
-    onStart = {
-      # This will automatically start the Next.js dev server.
-      dev-server = "cd urai-admin-codebase && npm run dev";
+      # Install dependencies for both the Next.js app and Functions.
+      npm-install = "npm install";
     };
   };
 
-  # Configures a web preview for your application.
+  # Configure a web preview for the Next.js frontend.
   idx.previews = {
     enable = true;
     previews = {
-      # The preview for the Next.js admin UI
       web = {
-        command = ["sh", "-c", "cd urai-admin-codebase && npm run dev -- --port $PORT"];
+        # This command starts the Next.js dev server from the `apps/admin-web` package.
+        command = ["npm" "run" "dev" "-w" "apps/admin-web" "--" "--port" "$PORT" "--hostname" "0.0.0.0"];
         manager = "web";
+        label = "Admin Web App";
       };
     };
   };
