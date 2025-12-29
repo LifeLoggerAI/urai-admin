@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() { return request.auth.token.admin == true; }
+    function hasPerm(p) { return isAdmin() && (p in request.auth.token.perms); }
+
+    match /adminUsers/{id} {
+      allow read: if isAdmin();
+      allow write: if hasPerm("adminUsers:write");
+    }
+    match /roles/{id} {
+      allow read: if isAdmin();
+      allow write: if hasPerm("roles:write");
+    }
+    match /featureFlags/{id} {
+      allow read: if isAdmin();
+      allow write: if hasPerm("flags:write");
+    }
+    match /appConfig/{id} {
+      allow read: if isAdmin();
+      allow write: if hasPerm("config:write");
+    }
+    match /moderationQueue/{id=**} {
+      allow read: if hasPerm("moderation:read");
+      allow write: if hasPerm("moderation:write");
+    }
+    match /abuseReports/{id} {
+      allow read: if hasPerm("moderation:read");
+      allow write: if hasPerm("moderation:write");
+    }
+    match /supportTickets/{id=**} {
+      allow read: if hasPerm("support:read");
+      allow write: if hasPerm("support:write");
+    }
+    match /auditLogs/{id} {
+      allow read: if hasPerm("audit:read");
+      allow write: if false; // server-only
+    }
+    match /gdprRequests/{id} {
+      allow read: if hasPerm("privacy:read");
+      allow write: if hasPerm("privacy:write");
+    }
+    match /jobs/{id} {
+      allow read: if hasPerm("jobs:read");
+      allow write: if hasPerm("jobs:write");
+    }
+    match /exports/{id} {
+      allow read: if hasPerm("exports:read
+      allow write: if hasPerm("exports:write");
+    }
+    match /broadcasts/{id} {
+      allow read: if hasPerm("broadcasts:read");
+      allow write: if hasPerm("broadcasts:write");
+    }
+    match /orgSettings/{id} {
+      allow read: if hasPerm("org:read");
+      allow write: if hasPerm("org:write");
+    }
+  }
+}
