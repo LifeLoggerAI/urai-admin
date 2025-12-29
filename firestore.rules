@@ -1,6 +1,49 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check for admin role from custom claims
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+
+    // Helper function to check if the user is an enabled admin in the adminUsers collection
+    function isEnabledAdmin(uid) {
+      return get(/databases/$(database)/documents/adminUsers/$(uid)).data.enabled == true;
+    }
+
+    // Allow enabled admins to read their own record
+    match /adminUsers/{uid} {
+      allow get: if isAdmin() && request.auth.uid == uid;
+      allow list: if isAdmin();
+      // Writes are only allowed via Cloud Functions
+      allow write: if false;
+    }
+
+    // Audit logs are read-only for admins and cannot be written by clients
+    match /adminAudit/{entryId} {
+      allow read: if isAdmin() && isEnabledAdmin(request.auth.uid);
+      allow write: if false;
+    }
+
+    // Feature flags are readable by admins, but only writable via functions
+    match /adminFlags/{flagId} {
+      allow read: if isAdmin() && isEnabledAdmin(request.auth.uid);
+      allow write: if false;
+    }
+
+    // Export records are readable by admins, but only writable via functions
+    match /adminExports/{exportId} {
+      allow read: if isAdmin() && isEnabledAdmin(request.auth.uid);
+      allow write: if false;
+    }
+
+    // Operation locks are internal and not client-accessible
+    match /adminOpsLocks/{lockId} {
+      allow read, write: if false;
+    }
+
+    // Default deny all other collections to ensure a secure-by-default posture
     match /{document=**} {
       allow read, write: if false;
     }
