@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-admin.initializeApp();
+
 async function run(){
   const db = admin.firestore();
   const admins = await db.collection('adminUsers').get();

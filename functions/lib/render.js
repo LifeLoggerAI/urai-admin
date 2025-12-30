@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.triggerRender = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const google_auth_library_1 = require("google-auth-library");
-const node_fetch_1 = require("node-fetch");
+const node_fetch_1 = __importDefault(require("node-fetch"));
 // TODO: Replace this with your actual Cloud Run service URL after deployment
 const workerUrl = "https://your-cloud-run-worker-url.a.run.app/render";
 const auth = new google_auth_library_1.GoogleAuth();

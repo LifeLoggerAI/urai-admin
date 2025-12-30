@@ -1,0 +1,39 @@
+[debug] [2025-11-08T04:49:03.332Z] ----------------------------------------------------------------------
+[debug] [2025-11-08T04:49:03.335Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/f77kilzcw5hh2gidh22k6pj8cp7pxp7h-firebase-tools-14.22.0/lib/node_modules/firebase-tools/lib/bin/firebase.js deploy --only hosting --project urai-admin
+[debug] [2025-11-08T04:49:03.336Z] CLI Version:   14.22.0
+[debug] [2025-11-08T04:49:03.336Z] Platform:      linux
+[debug] [2025-11-08T04:49:03.336Z] Node Version:  v20.19.1
+[debug] [2025-11-08T04:49:03.337Z] Time:          Sat Nov 08 2025 04:49:03 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-11-08T04:49:03.337Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-11-08T04:49:03.907Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-11-08T04:49:03.907Z] > authorizing via signed-in user (lifeloggerai@gmail.com)
+[debug] [2025-11-08T04:49:03.908Z] [iam] checking project urai-admin for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-11-08T04:49:03.909Z] Checked if tokens are valid: false, expires at: 1756377744623
+[debug] [2025-11-08T04:49:03.910Z] Checked if tokens are valid: false, expires at: 1756377744623
+[debug] [2025-11-08T04:49:03.910Z] > refreshing access token with scopes: []
+[debug] [2025-11-08T04:49:03.912Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-11-08T04:49:03.912Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-08T04:49:04.034Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-11-08T04:49:04.036Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-11-08T04:49:04.052Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/urai-admin:testIamPermissions [none]
+[debug] [2025-11-08T04:49:04.052Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/urai-admin:testIamPermissions x-goog-quota-user=projects/urai-admin
+[debug] [2025-11-08T04:49:04.052Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/urai-admin:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-11-08T04:49:04.212Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/urai-admin:testIamPermissions 200
+[debug] [2025-11-08T04:49:04.212Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/urai-admin:testIamPermissions {}
+[debug] [2025-11-08T04:49:04.213Z] [iam] error while checking permissions, command may fail: Authorization failed. This account is missing the following required permissions on project urai-admin:
+
+  firebase.projects.get
+  firebasehosting.sites.update
+[debug] [2025-11-08T04:49:04.214Z] Checked if tokens are valid: true, expires at: 1762580943036
+[debug] [2025-11-08T04:49:04.214Z] Checked if tokens are valid: true, expires at: 1762580943036
+[debug] [2025-11-08T04:49:04.215Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/urai-admin [none]
+[debug] [2025-11-08T04:49:04.430Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/urai-admin 403
+[debug] [2025-11-08T04:49:04.430Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/urai-admin {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-11-08T04:49:04.434Z] Request to https://firebase.googleapis.com/v1beta1/projects/urai-admin had HTTP Error: 403, The caller does not have permission
+[debug] [2025-11-08T04:49:04.466Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/urai-admin had HTTP Error: 403, The caller does not have permission
+    at responseToError (/nix/store/f77kilzcw5hh2gidh22k6pj8cp7pxp7h-firebase-tools-14.22.0/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/nix/store/f77kilzcw5hh2gidh22k6pj8cp7pxp7h-firebase-tools-14.22.0/lib/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project urai-admin. Please make sure the project exists and your account has permission to access it.
