@@ -19,23 +19,45 @@ const PolicyManager = () => {
 
   const createPolicy = async (e: FormEvent) => {
     e.preventDefault();
-    await addDoc(collection(db, 'policies'), newPolicy);
-    setNewPolicy({ name: '', content: '' });
-    toast.success('Policy created successfully!');
+    if (!newPolicy.name || !newPolicy.content) {
+      toast.error('Policy name and content cannot be empty.');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'policies'), newPolicy);
+      setNewPolicy({ name: '', content: '' });
+      toast.success('Policy created successfully!');
+    } catch (error) {
+      toast.error('Failed to create policy.');
+    }
   };
 
   const updatePolicy = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingPolicy) return;
-    const docRef = doc(db, 'policies', editingPolicy.id);
-    await updateDoc(docRef, { name: editingPolicy.name, content: editingPolicy.content });
-    setEditingPolicy(null);
-    toast.success('Policy updated successfully!');
+    if (!editingPolicy.name || !editingPolicy.content) {
+      toast.error('Policy name and content cannot be empty.');
+      return;
+    }
+    try {
+      const docRef = doc(db, 'policies', editingPolicy.id);
+      await updateDoc(docRef, { name: editingPolicy.name, content: editingPolicy.content });
+      setEditingPolicy(null);
+      toast.success('Policy updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update policy.');
+    }
   };
 
   const deletePolicy = async (id: string) => {
-    await deleteDoc(doc(db, 'policies', id));
-    toast.success('Policy deleted successfully!');
+    if (window.confirm('Are you sure you want to delete this policy?')) {
+      try {
+        await deleteDoc(doc(db, 'policies', id));
+        toast.success('Policy deleted successfully!');
+      } catch (error) {
+        toast.error('Failed to delete policy.');
+      }
+    }
   };
 
   return (
