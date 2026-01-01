@@ -2,100 +2,90 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // By default, deny all reads and writes to prevent any unauthorized access.
+    // Deny by default
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // --- Helper Functions ---
-    // These functions centralize role-checking logic for clarity and reusability.
-
-    // Get the role of the currently authenticated user from the `admin_users` collection.
-    function getRole() {
-      return get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role;
+    // Custom claims check function
+    function hasRole(role) {
+      return request.auth.token.roles[role] == true;
     }
 
-    // Check if the user is a Super Admin.
-    function isSuperAdmin() {
-      return getRole() == 'super_admin';
-    }
-
-    // Check if the user is an Operator.
-    function isOperator() {
-      return getRole() == 'operator';
-    }
-    
-    // Check if the user is an Analyst.
-    function isAnalyst() {
-      return getRole() == 'analyst';
-    }
-
-    // Check if the user is a Moderator.
-    function isModerator() {
-      return getRole() == 'moderator';
-    }
-
-    // Check if the user has Read-only privileges.
-    function isReadOnly() {
-      return getRole() == 'read_only';
-    }
-
-    // Check if the user has any administrative role.
+    // adminUsers document check function
     function isAdmin() {
-      return getRole() in ['super_admin', 'operator', 'analyst', 'moderator', 'read_only'];
+      return exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
     }
 
-    // --- Collection Rules ---
+    // Specific role checks
+    function isSuperAdmin() {
+      return hasRole('superAdmin');
+    }
 
-    // `admin_users`: Manages who is an admin and what their role is.
-    // Only Super Admins can modify roles, but all admins can see who other admins are.
-    match /admin_users/{adminId} {
+    function isCouncil() {
+      return hasRole('council');
+    }
+
+    function isOps() {
+      return hasRole('ops');
+    }
+
+    function isSupport() {
+      return hasRole('support');
+    }
+
+    function isAuditor() {
+      return hasRole('auditor');
+    }
+
+    function isModerator() {
+      return hasRole('moderator');
+    }
+
+    // Collection-level rules
+    match /adminUsers/{uid} {
+      allow read, write: if isSuperAdmin();
+      allow read: if isAdmin();
+    }
+
+    match /featureFlags/{flagId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
+    }
+
+    match /config/global {
       allow read: if isAdmin();
       allow write: if isSuperAdmin();
     }
 
-    // `users`: Core user data for the User Intelligence Console.
-    // Write access is limited to suspending/managing users. Read access is broader for analytics.
-    match /users/{userId} {
-      allow read: if isSuperAdmin() || isOperator() || isAnalyst() || isReadOnly();
-      allow write: if isSuperAdmin() || isOperator();
-    }
-    
-    // `data_pipeline_health`: Health metrics for data ingestion.
-    // This is a read-only collection from the admin panel's perspective.
-    // Data is written by backend services.
-    match /data_pipeline_health/{statusId} {
-      allow read: if isSuperAdmin() || isOperator() || isAnalyst() || isReadOnly();
-    }
-
-    // `ai_models`: Governance for AI models and their configurations.
-    // Only Super Admins can change model settings.
-    match /ai_models/{modelId} {
+    match /incidents/{incidentId} {
       allow read: if isAdmin();
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
     }
 
-    // `flagged_insights`: For content safety and insight review.
-    // Allows moderators and above to review and act on flagged content.
-    match /flagged_insights/{insightId} {
-      allow read: if isSuperAdmin() || isOperator() || isModerator() || isAnalyst();
-      allow write: if isSuperAdmin() || isOperator() || isModerator();
-    }
-
-    // `system_config`: For managing feature flags and system-wide settings.
-    // Only Super Admins can change these critical configurations.
-    match /system_config/{configKey} {
+    match /systemHealth/{docId} {
       allow read: if isAdmin();
-      allow write: if isSuperAdmin();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
     }
 
-    // `audit_logs`: Immutable record of all admin actions.
-    // This collection is append-only and writes can only be performed by trusted backend functions, not clients.
-    match /audit_logs/{logId} {
-      allow read: if isSuperAdmin() || isOperator() || isAnalyst();
-      allow write: if false; // Writes must be performed by a trusted server/Cloud Function.
+    match /adminAuditLogs/{logId} {
+      allow read: if isAuditor() || isSuperAdmin();
+      allow write: if false; // Server only
+    }
+
+    match /supportCases/{caseId} {
+      allow read: if isSupport() || isModerator() || isAuditor() || isSuperAdmin();
+      allow write: if isSupport() || isModerator() || isSuperAdmin();
+    }
+
+    match /adminTasks/{taskId} {
+      allow read: if isOps() || isSuperAdmin();
+      allow write: if isOps() || isSuperAdmin();
+    }
+
+    match /crossProjectTokens/{tokenId} {
+      allow read: if isSuperAdmin();
+      allow write: if false; // Server only
     }
   }
 }
- b 

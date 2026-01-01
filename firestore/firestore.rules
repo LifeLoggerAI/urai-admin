@@ -1,0 +1,99 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check for admin roles.
+    // Fallback to checking the adminUsers collection if custom claims are not yet propagated.
+    function hasRole(role) {
+      return request.auth.token[role] == true || get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles[role] == true;
+    }
+
+    function isSuperAdmin() {
+      return hasRole('superAdmin');
+    }
+
+    function isCouncil() {
+      return hasRole('council');
+    }
+
+    function isSupport() {
+      return hasRole('support');
+    }
+
+    function isAuditor() {
+      return hasRole('auditor');
+    }
+
+    function isModerator() {
+      return hasRole('moderator');
+    }
+
+    function isOps() {
+      return hasRole('ops');
+    }
+
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
+
+    // Deny all access by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // adminUsers: SuperAdmins can manage, others can read their own.
+    match /adminUsers/{uid} {
+      allow read: if isSuperAdmin() || request.auth.uid == uid;
+      allow write: if isSuperAdmin();
+    }
+
+    // featureFlags: Council/Ops/SuperAdmin can write, Support can read.
+    match /featureFlags/{flagId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
+    }
+
+    // config: SuperAdmin only for writes, all admins can read.
+    match /config/global {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // incidents: Council/Ops/SuperAdmin can write, Auditor can read.
+    match /incidents/{incidentId} {
+      allow read: if isSuperAdmin() || isCouncil() || isOps() || isAuditor();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
+    }
+
+    // systemHealth: Council/Ops/SuperAdmin can write, all admins can read.
+    match /systemHealth/{docId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin() || isCouncil() || isOps();
+    }
+
+    // adminAuditLogs: Read-only for Auditors, server-only writes.
+    match /adminAuditLogs/{logId} {
+      allow read: if isAuditor() || isSuperAdmin();
+      allow write: if false; // Server-side writes only.
+    }
+
+    // supportCases: Support/Moderator/SuperAdmin can write, Auditor can read.
+    match /supportCases/{caseId} {
+      allow read: if isSupport() || isModerator() || isAuditor() || isSuperAdmin();
+      allow write: if isSupport() || isModerator() || isSuperAdmin();
+    }
+
+    // adminTasks: Ops/SuperAdmin can write, all admins can read.
+    match /adminTasks/{taskId} {
+      allow read: if isAdmin();
+      allow write: if isOps() || isSuperAdmin();
+    }
+
+    // crossProjectTokens: SuperAdmin can read, server-only writes.
+    match /crossProjectTokens/{tokenId} {
+      allow read: if isSuperAdmin();
+      allow write: if false; // Server-side writes only.
+    }
+  }
+}

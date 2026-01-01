@@ -1,8 +1,45 @@
-
 {
   "indexes": [
     {
-      "collectionGroup": "replays",
+      "collectionGroup": "incidents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "adminAuditLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "supportCases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "adminTasks",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -16,15 +53,11 @@
       ]
     },
     {
-      "collectionGroup": "adminNotifications",
+      "collectionGroup": "featureFlags",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "read",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
+          "fieldPath": "key",
           "order": "ASCENDING"
         }
       ]
