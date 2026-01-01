@@ -1,0 +1,1 @@
+{"version":3,"file":"crossProjectService.js","sourceRoot":"","sources":["../../src/services/crossProjectService.ts"],"names":[],"mappings":";;AAAA,mDAA2C;AAE3C,MAAM,QAAQ,GAAG,KAAK,EAAE,OAAe,EAAE,EAAE;IACvC,MAAM,QAAQ,GAAG,MAAM,IAAA,0BAAS,GAAE,CAAC,UAAU,CAAC,oBAAoB,CAAC,CAAC,GAAG,CAAC,OAAO,CAAC,CAAC,GAAG,EAAE,CAAC;IACvF,OAAO,QAAQ,CAAC,IAAI,EAAE,CAAC;AAC3B,CAAC,CAAC"}

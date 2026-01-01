@@ -15,105 +15,87 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminGetMyRoles = exports.adminDisableAdminUser = exports.adminUpsertAdminUser = exports.adminListAdmins = exports.adminDeleteUserData = exports.adminSetUserConsentTier = exports.adminEnableUser = exports.adminDisableUser = exports.adminGetUserSummary = exports.adminSearchUsers = void 0;
-const https_1 = require("firebase-functions/v2/https");
+const express = __importStar(require("express"));
 const admin = __importStar(require("firebase-admin"));
-const authz_1 = require("./authz");
-exports.adminSearchUsers = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { query, limit, cursor } = request.data;
-    // This is a simplified search. For production, use a dedicated search service.
-    const users = await admin.auth().listUsers(limit, cursor);
-    const filteredUsers = users.users.filter(user => user.email?.includes(query));
-    return { users: filteredUsers.map(user => ({ uid: user.uid, email: user.email, disabled: user.disabled })), nextPageToken: users.pageToken };
-});
-exports.adminGetUserSummary = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid } = request.data;
-    const user = await admin.auth().getUser(uid);
-    return { uid: user.uid, email: user.email, disabled: user.disabled, customClaims: user.customClaims, createdAt: user.metadata.creationTime, lastSignedInAt: user.metadata.lastSignInTime };
-});
-exports.adminDisableUser = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid, reason } = request.data;
-    await admin.auth().updateUser(uid, { disabled: true });
-    // Audit this action
-    return { success: true };
-});
-exports.adminEnableUser = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid } = request.data;
-    await admin.auth().updateUser(uid, { disabled: false });
-    // Audit this action
-    return { success: true };
-});
-exports.adminSetUserConsentTier = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid, tier } = request.data;
-    await admin.auth().setCustomUserClaims(uid, { ...((await admin.auth().getUser(uid)).customClaims || {}), consentTier: tier });
-    // Audit this action
-    return { success: true };
-});
-exports.adminDeleteUserData = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid, dryRun, reason } = request.data;
-    if (dryRun) {
-        return { message: `Would delete user ${uid} and associated data.` };
+const router = express.Router();
+// List all users
+router.get('/', async (req, res) => {
+    try {
+        const userRecords = await admin.auth().listUsers();
+        const users = userRecords.users.map((user) => ({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            customClaims: user.customClaims,
+        }));
+        res.json(users);
     }
-    // This is a dangerous operation and should have more robust handling in a real app.
-    await admin.auth().deleteUser(uid);
-    // You would also delete associated data from Firestore, Storage, etc.
-    // Audit this action
-    return { success: true };
-});
-exports.adminListAdmins = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const users = await admin.auth().listUsers();
-    const admins = users.users.filter(user => user.customClaims?.admin);
-    return { admins: admins.map(user => ({ uid: user.uid, email: user.email, roles: user.customClaims })) };
-});
-exports.adminUpsertAdminUser = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid, roles, enabled } = request.data;
-    const user = await admin.auth().getUser(uid);
-    await admin.auth().setCustomUserClaims(uid, roles);
-    await admin.firestore().collection("adminUsers").doc(uid).set({
-        email: user.email,
-        roles,
-        enabled,
-        updatedAt: new Date(),
-    }, { merge: true });
-    return { success: true };
-});
-exports.adminDisableAdminUser = (0, https_1.onCall)(async (request) => {
-    await (0, authz_1.requireAdmin)(request);
-    const { uid } = request.data;
-    await admin.firestore().collection("adminUsers").doc(uid).update({ enabled: false });
-    return { success: true };
-});
-exports.adminGetMyRoles = (0, https_1.onCall)(async (request) => {
-    if (!request.auth) {
-        throw new https_1.HttpsError("unauthenticated", "The function must be called while authenticated.");
+    catch (error) {
+        res.status(500).send(error);
     }
-    const user = await admin.auth().getUser(request.auth.uid);
-    return { roles: user.customClaims };
 });
+// Get a user by id
+router.get('/:id', async (req, res) => {
+    try {
+        const userRecord = await admin.auth().getUser(req.params.id);
+        res.json({
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            customClaims: userRecord.customClaims,
+        });
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+// Create a new user
+router.post('/', async (req, res) => {
+    try {
+        const { email, password, displayName } = req.body;
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+        });
+        res.status(201).json(userRecord);
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+// Update a user
+router.put('/:id', async (req, res) => {
+    try {
+        const { email, password, displayName } = req.body;
+        const userRecord = await admin.auth().updateUser(req.params.id, {
+            email,
+            password,
+            displayName,
+        });
+        res.json(userRecord);
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+// Delete a user
+router.delete('/:id', async (req, res) => {
+    try {
+        await admin.auth().deleteUser(req.params.id);
+        res.status(204).send();
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+});
+exports.default = router;
 //# sourceMappingURL=users.js.map

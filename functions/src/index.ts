@@ -1,10 +1,6 @@
-import * as admin from "firebase-admin";
+import * as functions from 'firebase-functions';
+import { api } from './app';
+import { setCustomClaims } from './auth/setCustomClaims';
 
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-});
-
-// Import and re-export functions from other files
-export * from "./authz";
-export * from "./exports";
-export * from "./users";
+exports.api = functions.https.onRequest(api);
+exports.setCustomClaims = setCustomClaims;
