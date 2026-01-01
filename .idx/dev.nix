@@ -1,17 +1,27 @@
-{ pkgs, ... }: {
-  # The nixpkgs channel to use.
+
+{
+  pkgs, ...
+}: {
   channel = "stable-24.05";
-
-  # The packages to make available in your workspace.
-  packages = [
-    pkgs.nodejs_20
-    pkgs.firebase-tools
-  ];
-
-  # VS Code extensions to install for a better development experience.
+  packages = [pkgs.nodejs_20 pkgs.firebase-tools];
   idx = {
-    extensions = [
-      "firebase.firebase-vscode"
-    ];
+    extensions = ["dbaeumer.vscode-eslint" "vscodevim.vim"];
+    workspace = {
+      onCreate = {
+        npm-install = "npm install";
+      };
+      onStart = {
+        dev-server = "npm run dev";
+      };
+    };
+    previews = {
+      enable = true;
+      previews = {
+        web = {
+          command = ["npm" "run" "dev" "--" "--port" "$PORT"];
+          manager = "web";
+        };
+      };
+    };
   };
 }

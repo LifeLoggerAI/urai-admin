@@ -2,13 +2,100 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /policies/{policyId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
 
-      // Validate that the name and content are not empty
-      allow write: if request.resource.data.name.size() > 0 && 
-                      request.resource.data.content.size() > 0;
+    // By default, deny all reads and writes to prevent any unauthorized access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    // These functions centralize role-checking logic for clarity and reusability.
+
+    // Get the role of the currently authenticated user from the `admin_users` collection.
+    function getRole() {
+      return get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role;
+    }
+
+    // Check if the user is a Super Admin.
+    function isSuperAdmin() {
+      return getRole() == 'super_admin';
+    }
+
+    // Check if the user is an Operator.
+    function isOperator() {
+      return getRole() == 'operator';
+    }
+    
+    // Check if the user is an Analyst.
+    function isAnalyst() {
+      return getRole() == 'analyst';
+    }
+
+    // Check if the user is a Moderator.
+    function isModerator() {
+      return getRole() == 'moderator';
+    }
+
+    // Check if the user has Read-only privileges.
+    function isReadOnly() {
+      return getRole() == 'read_only';
+    }
+
+    // Check if the user has any administrative role.
+    function isAdmin() {
+      return getRole() in ['super_admin', 'operator', 'analyst', 'moderator', 'read_only'];
+    }
+
+    // --- Collection Rules ---
+
+    // `admin_users`: Manages who is an admin and what their role is.
+    // Only Super Admins can modify roles, but all admins can see who other admins are.
+    match /admin_users/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // `users`: Core user data for the User Intelligence Console.
+    // Write access is limited to suspending/managing users. Read access is broader for analytics.
+    match /users/{userId} {
+      allow read: if isSuperAdmin() || isOperator() || isAnalyst() || isReadOnly();
+      allow write: if isSuperAdmin() || isOperator();
+    }
+    
+    // `data_pipeline_health`: Health metrics for data ingestion.
+    // This is a read-only collection from the admin panel's perspective.
+    // Data is written by backend services.
+    match /data_pipeline_health/{statusId} {
+      allow read: if isSuperAdmin() || isOperator() || isAnalyst() || isReadOnly();
+    }
+
+    // `ai_models`: Governance for AI models and their configurations.
+    // Only Super Admins can change model settings.
+    match /ai_models/{modelId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // `flagged_insights`: For content safety and insight review.
+    // Allows moderators and above to review and act on flagged content.
+    match /flagged_insights/{insightId} {
+      allow read: if isSuperAdmin() || isOperator() || isModerator() || isAnalyst();
+      allow write: if isSuperAdmin() || isOperator() || isModerator();
+    }
+
+    // `system_config`: For managing feature flags and system-wide settings.
+    // Only Super Admins can change these critical configurations.
+    match /system_config/{configKey} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // `audit_logs`: Immutable record of all admin actions.
+    // This collection is append-only and writes can only be performed by trusted backend functions, not clients.
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin() || isOperator() || isAnalyst();
+      allow write: if false; // Writes must be performed by a trusted server/Cloud Function.
     }
   }
 }
+ b 
