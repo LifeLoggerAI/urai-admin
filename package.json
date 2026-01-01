@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "firebaseui": "^6.1.0"
+  },
+  "packageManager": "pnpm@10.26.2+sha1.c9ef373489592dd05d174d2a7cf5a9f4306de94f"
+}

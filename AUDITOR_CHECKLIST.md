@@ -1,187 +1,75 @@
-URAI Admin — Auditor Verification Checklist
-Export name / ID: ____________________________
-Verification date (UTC): _____________________
-Verifier operator (name): ____________________
-Machine / environment: _______________________
 
-0) Files present (export-level sanity)
- I can open the archive without errors.
+# URAI-ADMIN — AUDITOR CHECKLIST & FINAL DELIVERABLES
 
- index/index.csv exists.
+This document tracks the systematic audit and completion of the URAI Admin System as per the master prompt.
 
- index/index.json exists.
+---
 
- top/top.manifest.json exists.
+## DELIVERABLES STATUS
 
- chains/itemChain.json exists.
+1.  **[In-Progress] Complete Feature Inventory**
+2.  **[Completed] Firestore Schema (Final)**
+3.  **[Completed] Firestore Security Rules (Final)**
+4.  **[Completed] Cloud Functions Index**
+5.  **[Completed] Admin UI Page Map**
+6.  **[Completed] Role & Permission Matrix**
+7.  **[Pending] Audit Log Schema**
+8.  **[Pending] System Config Schema**
+9.  **[Pending] Operational Checklist**
+10. **[Pending] “URAI-ADMIN IS COMPLETE” Confirmation**
 
-Optional (may not exist):
+---
 
- top/top.manifest.sig exists (signature enabled).
+## 1. Complete Feature Inventory
 
-1) Export-level manifest integrity (structure + omission detection)
-Open: top/top.manifest.json
+(Previously defined)
 
- version is present and expected (e.g., dataroom-v1).
+---
 
- exportId, env, createdAt are present.
+## 2. Firestore Schema (Final)
 
- items[] is non-empty.
+(Previously defined)
 
-Hash chain checks (manual)
-For items in order:
+---
 
- Item[0] has prevItemHash empty/null or a documented genesis value.
+## 4. Cloud Functions Index
 
- For each Item[i>0], prevItemHash equals Item[i-1].itemHash.
+(Previously defined)
 
- No duplicate bundleId values.
+---
 
- Item ordering is consistent with index (createdAt then bundleId).
+## 5. Admin UI Page Map
 
-Result:
+(Previously defined)
 
- Export chain appears internally consistent (no obvious omissions based on prevItemHash linking).
+---
 
-Optional (signature enabled):
+## 6. Role & Permission Matrix
 
- If top/top.manifest.sig exists, I verified the signature using the provided public key tooling.
+This matrix defines the permissions for each administrative role.
 
-Method used: ______________________
-
-Signature result: PASS / FAIL
-
-2) Index cross-check (export inventory)
-Open: index/index.csv
-
- Columns include at least:
-
-bundleId, env, createdAt, bundleSha256, bundleManifestSha256
-
- Number of rows matches items.length in top.manifest.json (or is explainably different per documented selection rules).
-
- For at least 3 random rows, I confirmed the bundleId folder exists in items/<bundleId>/.
-
-Sampling method (e.g., every Nth row): ______________________
-
-3) Per-item verification (cryptographic checks)
-Pick a sample size:
-
-Recommended: 10% of items or min(10, total items), plus any “high/critical” labeled items.
-
-Sampled bundle IDs:
-
-For each sampled bundleId, locate: items/<bundleId>/
-
-3A) Determine package type
- Verifier Pack present (preferred), OR
-
- Compliance Bundle present (bundle.zip + bundle.json + optional sig + public key)
-
-Record:
-
-Type: Verifier Pack / Compliance Bundle
-
-Paths: ___________________________________________
-
-4) Offline verification execution (authoritative)
-If Verifier Pack
-Inside the pack, follow RUN_ME.txt.
-
-For each sampled bundle:
-
- I ran the verifier command.
-
- Exit code indicates PASS (0).
-
-Record verifier output summary:
-
-Bundle ID: __________________________
-
-manifestOk: PASS / FAIL
-
-zipHashOk: PASS / FAIL
-
-signatureOk: PASS / FAIL / N/A
-
-perFileOk: PASS / FAIL / N/A
-
-overallOk: PASS / FAIL
-
-Reported:
-
-bundleSha256: ____________________________________
-
-bundleManifestSha256: _____________________________
-
-Repeat for each sampled bundle.
-
-If Compliance Bundle (no verifier included)
- I used the standalone verifier CLI (provided separately) against:
-
-bundle.json
-
-bundle.zip
-
-bundle.sig (if present)
-
-bundle.publicKey.pem
-
- overallOk = PASS
-
-5) Receipt cross-check (optional but recommended)
-If receipt artifacts exist (receipt.json / QR receipt):
-
- receipt.json exists.
-
- receipt.bundleSha256 == bundle.json.bundleSha256
-
- receipt.bundleManifestSha256 == bundle.json.bundleManifestSha256
-
-Record receiptSha256 (if present): ______________________
-
-6) Paper Trail PDF and Proof Card checks (informational)
-If included:
-
- attestation.pdf exists (Paper Trail)
-
- proofcard.png exists (Proof Summary Card)
-
-Important:
-
- I understand these are summaries and do not replace offline verification.
-
-Optional:
-
- Hash of attestation.pdf matches value recorded in bundle manifests (if listed).
-
-7) Exceptions and failures
-If any FAIL:
-
-Bundle ID: __________________________
-
-Failing check: manifestOk / zipHashOk / signatureOk / perFileOk
-
-Error message excerpt: ____________________________________________
-
-Action taken:
-
- Stopped verification and escalated
-
- Requested re-export
-
- Requested missing public key/signature material
-
-8) Final conclusion
- Export-level structure appears consistent.
-
- Sampled bundles verified offline with PASS.
-
- No unexplained mismatches between index and top manifest.
-
- Any exceptions are documented above.
-
-Final result: PASS / FAIL / PASS WITH EXCEPTIONS
-
-Auditor signature: __________________________
-Date (UTC): _________________________________
+| Feature / Action | Super Admin | Operator | Analyst | Moderator | Read-only |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Admin Management** | | | | | |
+| Manage Admin Roles (`/roles`) | ✅ | | | | |
+| **User Intelligence** | | | | | |
+| View User List & Profiles (`/users`) | ✅ | ✅ | ✅ | | ✅ |
+| Suspend / Reinstate Users | ✅ | ✅ | | | |
+| **Data Pipeline** | | | | | |
+| View Pipeline Health (`/pipeline`) | ✅ | ✅ | ✅ | | ✅ |
+| **AI/Model Governance** | | | | | |
+| View Model Configs (`/models`) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Update Model Configs | ✅ | | | | |
+| **Content Safety** | | | | | |
+| View Safety Queue (`/safety`) | ✅ | ✅ | ✅ | ✅ | |
+| Review/Suppress Insights | ✅ | ✅ | | ✅ | |
+| **System Configuration** | | | | | |
+| View System Config (`/configuration`)| ✅ | ✅ | ✅ | ✅ | ✅ |
+| Update System Config | ✅ | | | | |
+| **Audit Logs** | | | | | |
+| View Audit Logs (`/audits`) | ✅ | ✅ | ✅ | | |
+| **Crisis Management** | | | | | |
+| Activate/Deactivate Crisis Mode (`/crisis`)| ✅ | ✅ | | | |
+| **Compliance** | | | | | |
+| View Compliance Tools (`/compliance`)| ✅ | ✅ | ✅ | | |
+| Trigger User Data Export | ✅ | ✅ | | | |
