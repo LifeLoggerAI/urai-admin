@@ -1,29 +1,27 @@
-import { db } from '../app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { auditService } from './auditService';
 
-export const flagsService = {
-  async getFlags() {
-    const snapshot = await db.collection('featureFlags').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+class FlagsService {
+    private db = getFirestore();
 
-  async upsertFlag(flag: any, actor: any) {
-    await db.collection('featureFlags').doc(flag.id).set(flag, { merge: true });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'FEATUREFLAG_UPDATE',
-      target: { type: 'flag', id: flag.id },
-    });
-  },
+    async getFlags() {
+        const snapshot = await this.db.collection('featureFlags').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
 
-  async toggleFlag(id: string, enabled: boolean, actor: any) {
-    await db.collection('featureFlags').doc(id).update({ enabled });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'FEATUREFLAG_TOGGLE',
-      target: { type: 'flag', id },
-    });
-  },
-};
+    async upsertFlag(flag: any, actor: any) {
+        const existing = await this.db.collection('featureFlags').where('key', '==', flag.key).get();
+        if (!existing.empty && existing.docs[0].id !== flag.id) {
+            throw new Error('Flag key must be unique');
+        }
+        await this.db.collection('featureFlags').doc(flag.id).set({ ...flag, updatedAt: new Date() }, { merge: true });
+        await auditService.log('FEATUREFLAG_UPSERT', { flagId: flag.id }, actor);
+    }
+
+    async toggleFlag(flagId: string, enabled: boolean, actor: any) {
+        await this.db.collection('featureFlags').doc(flagId).update({ enabled, updatedAt: new Date() });
+        await auditService.log('FEATUREFLAG_TOGGLE', { flagId, enabled }, actor);
+    }
+}
+
+export const flagsService = new FlagsService();

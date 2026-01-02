@@ -2,50 +2,43 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // Deny by default
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Custom claims check function
-    function hasRole(role) {
-      return request.auth.token.roles[role] == true;
-    }
-
-    // adminUsers document check function
     function isAdmin() {
-      return exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+      return request.auth.uid != null && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.status == 'active';
     }
 
-    // Specific role checks
     function isSuperAdmin() {
-      return hasRole('superAdmin');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.superAdmin == true;
     }
 
     function isCouncil() {
-      return hasRole('council');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.council == true;
     }
 
     function isOps() {
-      return hasRole('ops');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.ops == true;
     }
 
     function isSupport() {
-      return hasRole('support');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.support == true;
     }
 
     function isAuditor() {
-      return hasRole('auditor');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.auditor == true;
     }
 
     function isModerator() {
-      return hasRole('moderator');
+      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.moderator == true;
     }
 
-    // Collection-level rules
     match /adminUsers/{uid} {
-      allow read, write: if isSuperAdmin();
-      allow read: if isAdmin();
+      allow read: if isSuperAdmin() || request.auth.uid == uid;
+      allow write: if isSuperAdmin();
     }
 
     match /featureFlags/{flagId} {
@@ -69,23 +62,23 @@ service cloud.firestore {
     }
 
     match /adminAuditLogs/{logId} {
-      allow read: if isAuditor() || isSuperAdmin();
+      allow read: if isSuperAdmin() || isAuditor();
       allow write: if false; // Server only
     }
 
     match /supportCases/{caseId} {
-      allow read: if isSupport() || isModerator() || isAuditor() || isSuperAdmin();
-      allow write: if isSupport() || isModerator() || isSuperAdmin();
+      allow read: if isSuperAdmin() || isSupport() || isModerator() || isAuditor();
+      allow write: if isSuperAdmin() || isSupport() || isModerator();
     }
 
     match /adminTasks/{taskId} {
-      allow read: if isOps() || isSuperAdmin();
-      allow write: if isOps() || isSuperAdmin();
+      allow read: if isSuperAdmin() || isOps();
+      allow write: if isSuperAdmin() || isOps();
     }
 
     match /crossProjectTokens/{tokenId} {
-      allow read: if isSuperAdmin();
-      allow write: if false; // Server only
+        allow read: if isSuperAdmin();
+        allow write: if false; // Server only
     }
   }
 }

@@ -1,53 +1,38 @@
-import { firestore } from 'firebase-admin';
-import { db } from '../app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { auditService } from './auditService';
 
-export const supportService = {
-  async getCases() {
-    const snapshot = await db.collection('supportCases').orderBy('updatedAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+class SupportService {
+    private db = getFirestore();
 
-  async createCase(kase: any, actor: any) {
-    const newCaseRef = db.collection('supportCases').doc();
-    await newCaseRef.set({
-      ...kase,
-      createdAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
-      status: 'open',
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'SUPPORTCASE_CREATE',
-      target: { type: 'supportCase', id: newCaseRef.id },
-    });
-    return newCaseRef.id;
-  },
+    async getCases() {
+        const snapshot = await this.db.collection('supportCases').orderBy('updatedAt', 'desc').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
 
-  async addMessage(caseId: string, message: any, actor: any) {
-    await db.collection('supportCases').doc(caseId).update({
-      messages: firestore.FieldValue.arrayUnion(message),
-      updatedAt: firestore.Timestamp.now(),
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'SUPPORTCASE_MESSAGE',
-      target: { type: 'supportCase', id: caseId },
-    });
-  },
+    async createCase(supportCase: any, actor: any) {
+        const newCase = await this.db.collection('supportCases').add({
+            ...supportCase,
+            status: 'open',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            messages: [{ at: new Date(), text: supportCase.description, byUid: actor.uid }]
+        });
+        await auditService.log('SUPPORTCASE_CREATE', { caseId: newCase.id }, actor);
+        return newCase.id;
+    }
 
-  async closeCase(caseId: string, actor: any) {
-    await db.collection('supportCases').doc(caseId).update({
-      status: 'closed',
-      updatedAt: firestore.Timestamp.now(),
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'SUPPORTCASE_CLOSE',
-      target: { type: 'supportCase', id: caseId },
-    });
-  },
-};
+    async addMessage(caseId: string, message: string, actor: any) {
+        await this.db.collection('supportCases').doc(caseId).update({
+            messages: FieldValue.arrayUnion({ at: new Date(), text: message, byUid: actor.uid }),
+            updatedAt: new Date(),
+        });
+        await auditService.log('SUPPORTCASE_MESSAGE', { caseId }, actor);
+    }
+
+    async closeCase(caseId: string, actor: any) {
+        await this.db.collection('supportCases').doc(caseId).update({ status: 'closed', updatedAt: new Date() });
+        await auditService.log('SUPPORTCASE_CLOSE', { caseId }, actor);
+    }
+}
+
+export const supportService = new SupportService();

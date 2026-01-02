@@ -1,54 +1,41 @@
-import { firestore } from 'firebase-admin';
-import { db } from '../app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { auditService } from './auditService';
 
-export const incidentService = {
-  async getIncidents() {
-    const snapshot = await db.collection('incidents').orderBy('updatedAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+class IncidentService {
+    private db = getFirestore();
 
-  async createIncident(incident: any, actor: any) {
-    const newIncidentRef = db.collection('incidents').doc();
-    await newIncidentRef.set({
-      ...incident,
-      startedAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
-      status: 'open',
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'INCIDENT_CREATE',
-      target: { type: 'incident', id: newIncidentRef.id },
-    });
-    return newIncidentRef.id;
-  },
+    async getIncidents() {
+        const snapshot = await this.db.collection('incidents').orderBy('updatedAt', 'desc').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
 
-  async updateIncident(id: string, update: any, actor: any) {
-    await db.collection('incidents').doc(id).update({
-      ...update,
-      updatedAt: firestore.Timestamp.now(),
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'INCIDENT_UPDATE',
-      target: { type: 'incident', id },
-    });
-  },
+    async createIncident(incident: any, actor: any) {
+        const newIncident = await this.db.collection('incidents').add({
+            ...incident,
+            status: 'open',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            timeline: [{ at: new Date(), text: 'Incident created', byUid: actor.uid }]
+        });
+        await auditService.log('INCIDENT_CREATE', { incidentId: newIncident.id }, actor);
+        return newIncident.id;
+    }
 
-  async resolveIncident(id: string, actor: any) {
-    await db.collection('incidents').doc(id).update({
-      status: 'resolved',
-      resolvedAt: firestore.Timestamp.now(),
-      updatedAt: firestore.Timestamp.now(),
-    });
-    await auditService.log({
-      actorUid: actor.uid,
-      actorEmail: actor.email,
-      action: 'INCIDENT_RESOLVE',
-      target: { type: 'incident', id },
-    });
-  },
-};
+    async updateIncident(incidentId: string, update: any, actor: any) {
+        await this.db.collection('incidents').doc(incidentId).update({ ...update, updatedAt: new Date() });
+        await this.db.collection('incidents').doc(incidentId).update({
+            timeline: FieldValue.arrayUnion({ at: new Date(), text: `Incident updated: ${Object.keys(update).join(', ')}` , byUid: actor.uid })
+        });
+        await auditService.log('INCIDENT_UPDATE', { incidentId, update }, actor);
+    }
+
+    async resolveIncident(incidentId: string, actor: any) {
+        await this.db.collection('incidents').doc(incidentId).update({ status: 'resolved', resolvedAt: new Date(), updatedAt: new Date() });
+        await this.db.collection('incidents').doc(incidentId).update({
+            timeline: FieldValue.arrayUnion({ at: new Date(), text: 'Incident resolved', byUid: actor.uid })
+        });
+        await auditService.log('INCIDENT_RESOLVE', { incidentId }, actor);
+    }
+}
+
+export const incidentService = new IncidentService();

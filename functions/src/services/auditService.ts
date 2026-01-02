@@ -1,25 +1,17 @@
-import { firestore } from 'firebase-admin';
-import { db } from '../app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-interface AuditLog {
-  at: firestore.Timestamp;
-  actorUid: string;
-  actorEmail: string;
-  action: string;
-  target: {
-    type: string;
-    id: string;
-  };
-  correlationId?: string;
-  requestId?: string;
-  meta?: any;
+class AuditService {
+    private db = getFirestore();
+
+    async log(action: string, meta: any, actor?: { uid: string, email: string }) {
+        const logEntry = {
+            at: new Date(),
+            action,
+            meta,
+            actor: actor || null,
+        };
+        await this.db.collection('adminAuditLogs').add(logEntry);
+    }
 }
 
-export const auditService = {
-  async log(log: Omit<AuditLog, 'at'>): Promise<void> {
-    await db.collection('adminAuditLogs').add({
-      ...log,
-      at: firestore.Timestamp.now(),
-    });
-  },
-};
+export const auditService = new AuditService();
