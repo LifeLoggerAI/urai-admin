@@ -1,31 +1,44 @@
-import { firestore } from 'firebase-admin';
-import { db } from '../app';
+import { getFirestore } from 'firebase-admin/firestore';
+import axios from 'axios';
 
-export const healthService = {
-  async checkHealth() {
-    try {
-      // Check Firestore connectivity
-      await db.collection('systemHealth').limit(1).get();
+class HealthService {
+    private db = getFirestore();
 
-      // TODO: Ping other services (urai-privacy, urai-analytics)
+    async checkHealth() {
+        const config = (await this.db.collection('config').doc('global').get()).data();
+        const checks: any = {};
 
-      await db.collection('systemHealth').doc('firestore').set({
-        subsystem: 'firestore',
-        status: 'ok',
-        lastCheckAt: firestore.Timestamp.now(),
-      });
-    } catch (error) {
-      await db.collection('systemHealth').doc('firestore').set({
-        subsystem: 'firestore',
-        status: 'down',
-        lastCheckAt: firestore.Timestamp.now(),
-        lastError: { code: 'firestore-unreachable', message: (error as Error).message },
-      });
+        try {
+            await this.db.collection('systemHealth').limit(1).get();
+            checks.firestore = { status: 'ok', lastCheckAt: new Date() };
+        } catch (error: any) {
+            checks.firestore = { status: 'down', lastCheckAt: new Date(), error: { code: error.code, message: error.message } };
+        }
+
+        if (config?.links) {
+            for (const [name, url] of Object.entries(config.links)) {
+                if (url) {
+                    try {
+                        await axios.get(url as string);
+                        checks[name] = { status: 'ok', lastCheckAt: new Date() };
+                    } catch (error: any) {
+                        checks[name] = { status: 'warn', lastCheckAt: new Date(), error: { message: error.message } };
+                    }
+                }
+            }
+        }
+
+        for (const [subsystem, result] of Object.entries(checks)) {
+            await this.db.collection('systemHealth').doc(subsystem).set(result, { merge: true });
+        }
+
+        return checks;
     }
-  },
 
-  async getHealthStatus() {
-    const snapshot = await db.collection('systemHealth').get();
-    return snapshot.docs.map(doc => doc.data());
-  },
-};
+    async getStatus() {
+        const snapshot = await this.db.collection('systemHealth').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+}
+
+export const healthService = new HealthService();

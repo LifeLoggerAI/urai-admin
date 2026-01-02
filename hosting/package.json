@@ -1,5 +1,5 @@
 {
-  "name": "hosting",
+  "name": "urai-admin-hosting",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,17 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "firebase": "^9.17.1",
-    "next": "13.1.6",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react": "^18",
+    "react-dom": "^18",
+    "next": "14.2.3",
+    "firebase": "^10.12.2"
   },
   "devDependencies": {
-    "@types/node": "18.11.18",
-    "@types/react": "18.0.27",
-    "@types/react-dom": "18.0.10",
-    "eslint": "8.33.0",
-    "eslint-config-next": "13.1.6",
-    "typescript": "4.9.5"
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3"
   }
 }

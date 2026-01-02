@@ -1,30 +1,50 @@
 import { Router } from 'express';
-import { incidentService } from '../services/incidentService';
 import { requireAuth } from '../auth/requireAuth';
 import { requireRole } from '../auth/requireRole';
+import { incidentService } from '../services/incidentService';
 
 const router = Router();
 
-router.get('/', requireAuth, async (req, res) => {
-  const incidents = await incidentService.getIncidents();
-  res.json(incidents);
+router.get('/', requireAuth, requireRole(['superAdmin', 'council', 'ops', 'auditor']), async (req, res) => {
+    try {
+        const incidents = await incidentService.getIncidents();
+        res.status(200).send(incidents);
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
 router.post('/create', requireAuth, requireRole(['superAdmin', 'council', 'ops']), async (req, res) => {
-  const id = await incidentService.createIncident(req.body, (req as any).user);
-  res.status(201).json({ id });
+    const { incident } = req.body;
+    const actor = (req as any).user;
+    try {
+        const incidentId = await incidentService.createIncident(incident, { uid: actor.uid, email: actor.email });
+        res.status(201).send({ incidentId });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
 router.post('/update', requireAuth, requireRole(['superAdmin', 'council', 'ops']), async (req, res) => {
-  const { id, ...update } = req.body;
-  await incidentService.updateIncident(id, update, (req as any).user);
-  res.sendStatus(200);
+    const { incidentId, update } = req.body;
+    const actor = (req as any).user;
+    try {
+        await incidentService.updateIncident(incidentId, update, { uid: actor.uid, email: actor.email });
+        res.status(200).send({ success: true });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
 router.post('/resolve', requireAuth, requireRole(['superAdmin', 'council', 'ops']), async (req, res) => {
-  const { id } = req.body;
-  await incidentService.resolveIncident(id, (req as any).user);
-  res.sendStatus(200);
+    const { incidentId } = req.body;
+    const actor = (req as any).user;
+    try {
+        await incidentService.resolveIncident(incidentId, { uid: actor.uid, email: actor.email });
+        res.status(200).send({ success: true });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
-export const incidentRoutes = router;
+export default router;

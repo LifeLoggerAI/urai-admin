@@ -1,30 +1,50 @@
 import { Router } from 'express';
-import { supportService } from '../services/supportService';
 import { requireAuth } from '../auth/requireAuth';
 import { requireRole } from '../auth/requireRole';
+import { supportService } from '../services/supportService';
 
 const router = Router();
 
-router.get('/', requireAuth, requireRole(['support', 'moderator', 'auditor', 'superAdmin']), async (req, res) => {
-  const cases = await supportService.getCases();
-  res.json(cases);
+router.get('/cases', requireAuth, requireRole(['superAdmin', 'support', 'auditor']), async (req, res) => {
+    try {
+        const cases = await supportService.getCases();
+        res.status(200).send(cases);
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
-router.post('/create', requireAuth, async (req, res) => {
-  const id = await supportService.createCase(req.body, (req as any).user);
-  res.status(201).json({ id });
+router.post('/case/create', requireAuth, requireRole(['superAdmin', 'support']), async (req, res) => {
+    const { supportCase } = req.body;
+    const actor = (req as any).user;
+    try {
+        const caseId = await supportService.createCase(supportCase, { uid: actor.uid, email: actor.email });
+        res.status(201).send({ caseId });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
-router.post('/message', requireAuth, requireRole(['support', 'moderator', 'superAdmin']), async (req, res) => {
-  const { caseId, message } = req.body;
-  await supportService.addMessage(caseId, message, (req as any).user);
-  res.sendStatus(200);
+router.post('/case/message', requireAuth, requireRole(['superAdmin', 'support']), async (req, res) => {
+    const { caseId, message } = req.body;
+    const actor = (req as any).user;
+    try {
+        await supportService.addMessage(caseId, message, { uid: actor.uid, email: actor.email });
+        res.status(200).send({ success: true });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
-router.post('/close', requireAuth, requireRole(['support', 'moderator', 'superAdmin']), async (req, res) => {
-  const { caseId } = req.body;
-  await supportService.closeCase(caseId, (req as any).user);
-  res.sendStatus(200);
+router.post('/case/close', requireAuth, requireRole(['superAdmin', 'support']), async (req, res) => {
+    const { caseId } = req.body;
+    const actor = (req as any).user;
+    try {
+        await supportService.closeCase(caseId, { uid: actor.uid, email: actor.email });
+        res.status(200).send({ success: true });
+    } catch (error: any) {
+        res.status(500).send({ error: error.message });
+    }
 });
 
-export const supportRoutes = router;
+export default router;

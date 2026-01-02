@@ -1,22 +1,29 @@
-import * as admin from 'firebase-admin';
-import * as express from 'express';
-import * as cors from 'cors';
-import { flagsRoutes } from './routes/flagsRoutes';
-import { incidentRoutes } from './routes/incidentRoutes';
-import { healthRoutes } from './routes/healthRoutes';
-import { supportRoutes } from './routes/supportRoutes';
-
-admin.initializeApp();
-
-export const adminApp = admin.app();
-export const db = admin.firestore();
+import * as express from "express";
+import * as cors from "cors";
+import { getFirestore } from "firebase-admin/firestore";
+import adminRoutes from "./routes/adminRoutes";
+import flagsRoutes from "./routes/flagsRoutes";
+import incidentRoutes from "./routes/incidentRoutes";
+import supportRoutes from "./routes/supportRoutes";
+import healthRoutes from "./routes/healthRoutes";
 
 const app = express();
-app.use(cors({ origin: true }));
 
-app.use('/flags', flagsRoutes);
-app.use('/incidents', incidentRoutes);
-app.use('/health', healthRoutes);
-app.use('/support', supportRoutes);
+const db = getFirestore();
 
-export const api = app;
+db.collection("config").doc("global").get().then(configDoc => {
+    const config = configDoc.data();
+    if (config && config.allowOrigins) {
+        app.use(cors({ origin: config.allowOrigins }));
+    }
+});
+
+app.use(express.json());
+
+app.use("/api/admin", adminRoutes);
+app.use("/api/flags", flagsRoutes);
+app.use("/api/incidents", incidentRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/health", healthRoutes);
+
+export default app;

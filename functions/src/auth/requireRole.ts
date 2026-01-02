@@ -1,13 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
+import { getFirestore } from "firebase-admin/firestore";
 
-export const requireRole = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const userRoles = (req as any).user?.roles || {};
-    const hasRole = roles.some(role => userRoles[role]);
+type Role = 'superAdmin' | 'council' | 'support' | 'auditor' | 'moderator' | 'ops';
 
-    if (!hasRole) {
-      return res.status(403).send('Forbidden');
-    }
-    next();
-  };
+export const requireRole = (roles: Role[]) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        const user = (req as any).user;
+
+        if (!user) {
+            res.status(401).send('Unauthorized');
+            return;
+        }
+
+        const userRoles = user.roles || (await getFirestore().collection('adminUsers').doc(user.uid).get()).data()?.roles;
+
+        if (!userRoles || !roles.some(role => userRoles[role])) {
+            res.status(403).send('Forbidden');
+            return;
+        }
+
+        next();
+    };
 };

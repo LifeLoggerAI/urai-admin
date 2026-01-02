@@ -1,39 +1,41 @@
 {
+  "hosting": {
+    "public": "hosting/out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "api"
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "emulators": {
     "auth": {
       "port": 9099
     },
-    "firestore": {
-      "port": 8080
-    },
     "functions": {
       "port": 5001
+    },
+    "firestore": {
+      "port": 8080
     },
     "hosting": {
       "port": 5000
     },
     "ui": {
       "enabled": true
-    },
-    "singleProjectMode": true
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "functions": {
-      "source": "functions",
-      "codebase": "default",
-      "runtime": "nodejs20",
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
-    },
-  "apphosting": {
-    "source": "functions",
-    "app": "api"
-  },
-  "storage": {
-    "rules": "storage.rules"
+    }
   }
 }
