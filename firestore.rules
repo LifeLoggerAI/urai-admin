@@ -3,82 +3,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Deny by default
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasClaim(role) {
+      return request.auth.token.uraiRole == role;
+    }
+
+    function hasOneOfRoles(roles) {
+      return request.auth.token.uraiRole in roles;
+    }
+
+    function isActiveAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
+
+    // Deny all access by default
     match /{document=**} {
       allow read, write: if false;
     }
 
-    function isAdmin() {
-      return request.auth.uid != null && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.status == 'active';
-    }
-
-    function isSuperAdmin() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.superAdmin == true;
-    }
-
-    function isCouncil() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.council == true;
-    }
-
-    function isOps() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.ops == true;
-    }
-
-    function isSupport() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.support == true;
-    }
-
-    function isAuditor() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.auditor == true;
-    }
-
-    function isModerator() {
-      return isAdmin() && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.roles.moderator == true;
-    }
-
+    // Superadmin can manage adminUsers
     match /adminUsers/{uid} {
-      allow read: if isSuperAdmin() || request.auth.uid == uid;
-      allow write: if isSuperAdmin();
+      allow read, write: if isActiveAdmin() && hasClaim('superadmin');
     }
 
+    // Admin and Superadmin can view auditLogs
+    match /auditLogs/{logId} {
+      allow read, write: if isActiveAdmin() && hasOneOfRoles(['admin', 'superadmin']);
+    }
+
+    // Admin and Superadmin can manage featureFlags
     match /featureFlags/{flagId} {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin() || isCouncil() || isOps();
+      allow read, write: if isActiveAdmin() && hasOneOfRoles(['admin', 'superadmin']);
     }
 
-    match /config/global {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin();
+    // Support, Admin, and Superadmin can read support cases and incidents
+    match /supportCases/{caseId} {
+      allow read: if isActiveAdmin() && hasOneOfRoles(['support', 'admin', 'superadmin']);
     }
 
     match /incidents/{incidentId} {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin() || isCouncil() || isOps();
+      allow read: if isActiveAdmin() && hasOneOfRoles(['support', 'admin', 'superadmin']);
     }
 
-    match /systemHealth/{docId} {
-      allow read: if isAdmin();
-      allow write: if isSuperAdmin() || isCouncil() || isOps();
-    }
-
-    match /adminAuditLogs/{logId} {
-      allow read: if isSuperAdmin() || isAuditor();
-      allow write: if false; // Server only
-    }
-
-    match /supportCases/{caseId} {
-      allow read: if isSuperAdmin() || isSupport() || isModerator() || isAuditor();
-      allow write: if isSuperAdmin() || isSupport() || isModerator();
-    }
-
-    match /adminTasks/{taskId} {
-      allow read: if isSuperAdmin() || isOps();
-      allow write: if isSuperAdmin() || isOps();
-    }
-
-    match /crossProjectTokens/{tokenId} {
-        allow read: if isSuperAdmin();
-        allow write: if false; // Server only
-    }
+    // Analyst can read analytics data (example)
+    // match /analytics/{docId} {
+    //   allow read: if isActiveAdmin() && hasOneOfRoles(['analyst', 'admin', 'superadmin']);
+    // }
   }
 }
