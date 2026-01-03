@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
-import { auditService } from './auditService';
+import { auditService } from '../services/auditService';
 
 export const setCustomClaims = async (uid: string, roles: any) => {
     await admin.auth().setCustomUserClaims(uid, { roles });

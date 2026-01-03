@@ -1,12 +1,12 @@
-import { getFirestore } from 'firebase-admin/firestore';
+import "../firebase";
 import { auditService } from './auditService';
 
 class FlagsService {
-    private db = getFirestore();
+    private db = require("firebase-admin").firestore();
 
     async getFlags() {
         const snapshot = await this.db.collection('featureFlags').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     }
 
     async upsertFlag(flag: any, actor: any) {

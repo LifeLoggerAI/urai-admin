@@ -1,10 +1,10 @@
-import { getFirestore } from 'firebase-admin/firestore';
+import "../firebase";
 import { auditService } from './auditService';
 import axios from 'axios';
 import * as crypto from 'crypto';
 
 class CrossProjectService {
-    private db = getFirestore();
+    private db = require("firebase-admin").firestore();
 
     async forwardDSAR(uid: string, type: 'export' | 'delete', reason: string | undefined, actor: any) {
         const config = (await this.db.collection('config').doc('global').get()).data();

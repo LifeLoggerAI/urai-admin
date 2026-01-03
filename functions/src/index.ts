@@ -1,4 +1,10 @@
-import * as functions from "firebase-functions";
-import app from "./app";
+import { onRequest } from "firebase-functions/v2/https";
+import express from "express";
 
-export const api = functions.https.onRequest(app);
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
+export const api = onRequest(app);

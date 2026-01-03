@@ -1,8 +1,8 @@
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { admin } from "../firebase";
 import { auditService } from './auditService';
 
 class SupportService {
-    private db = getFirestore();
+    private db = admin.firestore();
 
     async getCases() {
         const snapshot = await this.db.collection('supportCases').orderBy('updatedAt', 'desc').get();
@@ -23,7 +23,7 @@ class SupportService {
 
     async addMessage(caseId: string, message: string, actor: any) {
         await this.db.collection('supportCases').doc(caseId).update({
-            messages: FieldValue.arrayUnion({ at: new Date(), text: message, byUid: actor.uid }),
+            messages: admin.firestore.FieldValue.arrayUnion({ at: new Date(), text: message, byUid: actor.uid }),
             updatedAt: new Date(),
         });
         await auditService.log('SUPPORTCASE_MESSAGE', { caseId }, actor);
