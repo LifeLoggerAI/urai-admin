@@ -1,5 +1,10 @@
-import * as admin from "firebase-admin";
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
+}
 
-export { admin };
+export const auth = getAuth();
+export const db = getFirestore();

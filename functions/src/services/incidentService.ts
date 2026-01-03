@@ -6,7 +6,7 @@ class IncidentService {
 
     async getIncidents() {
         const snapshot = await this.db.collection('incidents').orderBy('updatedAt', 'desc').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     }
 
     async createIncident(incident: any, actor: any) {

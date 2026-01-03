@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "hosting",
+    "public": "apps/admin-web/public",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -9,36 +9,19 @@
     "rewrites": [
       {
         "source": "**",
-        "function": "api"
+        "destination": "/index.html"
       }
     ]
   },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs20",
-    "predeploy": [
-      "npm --prefix functions run build"
-    ]
+    "runtime": "nodejs20"
   },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "functions": {
-      "port": 5001
-    },
-    "firestore": {
-      "port": 8080
-    },
-    "hosting": {
-      "port": 5000
-    },
-    "ui": {
-      "enabled": true
-    }
+  "storage": {
+    "rules": "storage.rules"
   }
 }

@@ -9,7 +9,7 @@ class SupportService {
     }
     async getCases() {
         const snapshot = await this.db.collection('supportCases').orderBy('updatedAt', 'desc').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     }
     async createCase(supportCase, actor) {
         const newCase = await this.db.collection('supportCases').add({

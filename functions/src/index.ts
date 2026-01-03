@@ -1,10 +1,10 @@
-import { onRequest } from "firebase-functions/v2/https";
-import express from "express";
 
-const app = express();
+import * as admin from "firebase-admin";
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+admin.initializeApp();
 
-export const api = onRequest(app);
+// Admin functions
+export { adminUserLookup } from "./adminUserLookup";
+export { adminSetRole } from "./adminSetRole";
+export { adminDeactivateUser } from "./adminDeactivateUser";
+export { adminExportUserData } from "./adminExportUserData";
