@@ -33,28 +33,15 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = __importStar(require("express"));
-const requireAuth_1 = require("../auth/requireAuth");
-const requireRole_1 = require("../auth/requireRole");
-const healthService_1 = require("../services/healthService");
-const router = express.Router();
-router.post("/check", requireAuth_1.requireAuth, (0, requireRole_1.requireRole)(['ops', 'superAdmin']), async (req, res) => {
-    try {
-        await (0, healthService_1.checkHealth)();
-        res.status(200).send({ status: 'success' });
-    }
-    catch (error) {
-        res.status(500).send({ error: error.message });
-    }
-});
-router.get("/status", requireAuth_1.requireAuth, async (req, res) => {
-    try {
-        const status = await (0, healthService_1.getHealthStatus)();
-        res.status(200).send(status);
-    }
-    catch (error) {
-        res.status(500).send({ error: error.message });
-    }
-});
-exports.default = router;
-//# sourceMappingURL=healthRoutes.js.map
+exports.setCustomClaims = void 0;
+const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
+const auditService_1 = require("../services/auditService");
+const setCustomClaims = async (uid, roles) => {
+    await admin.auth().setCustomUserClaims(uid, { roles });
+    const db = (0, firestore_1.getFirestore)();
+    await db.collection('adminUsers').doc(uid).update({ roles, updatedAt: new Date() });
+    await auditService_1.auditService.log('ROLE_SET', { uid, roles });
+};
+exports.setCustomClaims = setCustomClaims;
+//# sourceMappingURL=setCustomClaims.js.map

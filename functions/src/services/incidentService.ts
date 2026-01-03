@@ -1,8 +1,8 @@
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { admin } from "../firebase";
 import { auditService } from './auditService';
 
 class IncidentService {
-    private db = getFirestore();
+    private db = admin.firestore();
 
     async getIncidents() {
         const snapshot = await this.db.collection('incidents').orderBy('updatedAt', 'desc').get();
@@ -24,7 +24,7 @@ class IncidentService {
     async updateIncident(incidentId: string, update: any, actor: any) {
         await this.db.collection('incidents').doc(incidentId).update({ ...update, updatedAt: new Date() });
         await this.db.collection('incidents').doc(incidentId).update({
-            timeline: FieldValue.arrayUnion({ at: new Date(), text: `Incident updated: ${Object.keys(update).join(', ')}` , byUid: actor.uid })
+            timeline: admin.firestore.FieldValue.arrayUnion({ at: new Date(), text: `Incident updated: ${Object.keys(update).join(', ')}` , byUid: actor.uid })
         });
         await auditService.log('INCIDENT_UPDATE', { incidentId, update }, actor);
     }
@@ -32,7 +32,7 @@ class IncidentService {
     async resolveIncident(incidentId: string, actor: any) {
         await this.db.collection('incidents').doc(incidentId).update({ status: 'resolved', resolvedAt: new Date(), updatedAt: new Date() });
         await this.db.collection('incidents').doc(incidentId).update({
-            timeline: FieldValue.arrayUnion({ at: new Date(), text: 'Incident resolved', byUid: actor.uid })
+            timeline: admin.firestore.FieldValue.arrayUnion({ at: new Date(), text: 'Incident resolved', byUid: actor.uid })
         });
         await auditService.log('INCIDENT_RESOLVE', { incidentId }, actor);
     }

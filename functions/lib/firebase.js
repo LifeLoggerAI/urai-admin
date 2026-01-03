@@ -33,28 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = __importStar(require("express"));
-const requireAuth_1 = require("../auth/requireAuth");
-const requireRole_1 = require("../auth/requireRole");
-const healthService_1 = require("../services/healthService");
-const router = express.Router();
-router.post("/check", requireAuth_1.requireAuth, (0, requireRole_1.requireRole)(['ops', 'superAdmin']), async (req, res) => {
-    try {
-        await (0, healthService_1.checkHealth)();
-        res.status(200).send({ status: 'success' });
-    }
-    catch (error) {
-        res.status(500).send({ error: error.message });
-    }
-});
-router.get("/status", requireAuth_1.requireAuth, async (req, res) => {
-    try {
-        const status = await (0, healthService_1.getHealthStatus)();
-        res.status(200).send(status);
-    }
-    catch (error) {
-        res.status(500).send({ error: error.message });
-    }
-});
-exports.default = router;
-//# sourceMappingURL=healthRoutes.js.map
+exports.admin = void 0;
+const admin = __importStar(require("firebase-admin"));
+exports.admin = admin;
+admin.initializeApp();
+//# sourceMappingURL=firebase.js.map

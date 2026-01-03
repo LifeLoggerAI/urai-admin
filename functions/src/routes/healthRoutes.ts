@@ -6,9 +6,8 @@ import { checkHealth, getHealthStatus } from "../services/healthService";
 const router = express.Router();
 
 router.post("/check", requireAuth, requireRole(['ops', 'superAdmin']), async (req, res) => {
-    const user = (req as any).user;
     try {
-        await checkHealth(user.uid, user.email);
+        await checkHealth();
         res.status(200).send({ status: 'success' });
     } catch (error: any) {
         res.status(500).send({ error: error.message });

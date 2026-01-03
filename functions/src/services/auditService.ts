@@ -1,7 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore';
+import { admin } from "../firebase";
 
 class AuditService {
-    private db = getFirestore();
+    private db = admin.firestore();
 
     async log(action: string, meta: any, actor?: { uid: string, email: string }) {
         const logEntry = {

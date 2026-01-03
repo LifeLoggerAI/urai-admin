@@ -4,27 +4,36 @@ const express_1 = require("express");
 const requireAuth_1 = require("../auth/requireAuth");
 const requireRole_1 = require("../auth/requireRole");
 const flagsService_1 = require("../services/flagsService");
-const auditService_1 = require("../services/auditService");
 const router = (0, express_1.Router)();
-router.get('/', requireAuth_1.requireAuth, async (req, res) => {
+router.get('/', requireAuth_1.requireAuth, (0, requireRole_1.requireRole)(['superAdmin', 'council', 'ops', 'support']), async (req, res) => {
     try {
-        const flags = await (0, flagsService_1.getFlags)();
+        const flags = await flagsService_1.flagsService.getFlags();
         res.status(200).send(flags);
     }
     catch (error) {
-        console.error('Error getting flags', error);
-        res.status(500).send({ success: false, error: 'Internal Server Error' });
+        res.status(500).send({ error: error.message });
     }
 });
-router.post('/upsert', requireAuth_1.requireAuth, (0, requireRole_1.requireRole)('council'), async (req, res) => {
+router.post('/upsert', requireAuth_1.requireAuth, (0, requireRole_1.requireRole)(['superAdmin', 'council', 'ops']), async (req, res) => {
+    const { flag } = req.body;
+    const actor = req.user;
     try {
-        await (0, flagsService_1.upsertFlag)(req.body);
-        await (0, auditService_1.logAuditEvent)(req.user.uid, req.user.email, 'FEATUREFLAG_UPDATE', { type: 'flag', id: req.body.key });
+        await flagsService_1.flagsService.upsertFlag(flag, { uid: actor.uid, email: actor.email });
         res.status(200).send({ success: true });
     }
     catch (error) {
-        console.error('Error upserting flag', error);
-        res.status(500).send({ success: false, error: 'Internal Server Error' });
+        res.status(400).send({ error: error.message });
+    }
+});
+router.post('/toggle', requireAuth_1.requireAuth, (0, requireRole_1.requireRole)(['superAdmin', 'council', 'ops']), async (req, res) => {
+    const { flagId, enabled } = req.body;
+    const actor = req.user;
+    try {
+        await flagsService_1.flagsService.toggleFlag(flagId, enabled, { uid: actor.uid, email: actor.email });
+        res.status(200).send({ success: true });
+    }
+    catch (error) {
+        res.status(500).send({ error: error.message });
     }
 });
 exports.default = router;
