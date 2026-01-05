@@ -1,9 +1,19 @@
+'use client';
 
 import { useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
+
+interface FeatureFlag {
+  id: string;
+  key: string;
+  value: string;
+  enabled: boolean;
+  updatedAt: Timestamp;
+  updatedBy: string;
+}
 
 const FlagsPage = () => {
-  const [flags, setFlags] = useState([]);
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [newFlagKey, setNewFlagKey] = useState('');
   const [newFlagValue, setNewFlagValue] = useState('');
@@ -12,7 +22,7 @@ const FlagsPage = () => {
     const fetchFlags = async () => {
       const db = getFirestore();
       const querySnapshot = await getDocs(collection(db, 'featureFlags'));
-      const flagsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const flagsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FeatureFlag));
       setFlags(flagsData);
       setLoading(false);
     };
@@ -20,29 +30,24 @@ const FlagsPage = () => {
     fetchFlags();
   }, []);
 
-  const handleFlagChange = async (id, enabled) => {
+  const handleFlagChange = async (id: string, enabled: boolean) => {
     const db = getFirestore();
     const flagRef = doc(db, 'featureFlags', id);
-    await updateDoc(flagRef, { enabled: !enabled });
-    // Refresh the flags
-    const querySnapshot = await getDocs(collection(db, 'featureFlags'));
-    const flagsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setFlags(flagsData);
+    await updateDoc(flagRef, { enabled: !enabled, updatedAt: new Date() });
+    setFlags(flags.map(flag => flag.id === id ? { ...flag, enabled: !enabled, updatedAt: Timestamp.now() } : flag));
   };
 
   const handleCreateFlag = async () => {
     const db = getFirestore();
-    await addDoc(collection(db, 'featureFlags'), {
+    const newFlag = {
       key: newFlagKey,
       value: newFlagValue,
       enabled: false,
-      updatedAt: new Date(),
+      updatedAt: Timestamp.now(),
       updatedBy: 'admin', // Replace with actual user
-    });
-    // Refresh the flags
-    const querySnapshot = await getDocs(collection(db, 'featureFlags'));
-    const flagsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setFlags(flagsData);
+    };
+    const docRef = await addDoc(collection(db, 'featureFlags'), newFlag);
+    setFlags([...flags, { ...newFlag, id: docRef.id }]);
     setNewFlagKey('');
     setNewFlagValue('');
   };

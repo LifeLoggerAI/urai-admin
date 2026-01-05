@@ -1,26 +1,59 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminDeactivateUser = void 0;
-const v1_1 = require("firebase-functions/v1");
-const firebase_1 = require("./firebase");
-exports.adminDeactivateUser = v1_1.https.onCall(async (data, context) => {
-    // Check if the user is a superadmin
-    if (context.auth?.token.uraiRole !== 'superadmin') {
-        throw new v1_1.https.HttpsError('permission-denied', 'You must be a superadmin to deactivate users.');
-    }
+const v2_1 = require("firebase-functions/v2");
+const https_1 = require("firebase-functions/v2/https");
+const admin = __importStar(require("firebase-admin"));
+const adminAuth_1 = require("./adminAuth");
+exports.adminDeactivateUser = (0, adminAuth_1.requireAdmin)(async (data, auth) => {
     const { uid } = data;
     if (!uid) {
-        throw new v1_1.https.HttpsError('invalid-argument', 'The function must be called with a "uid" argument.');
+        throw new https_1.HttpsError("invalid-argument", 'The "uid" must be provided.');
     }
     try {
-        // Deactivate the user in Firestore
-        const userRef = firebase_1.db.collection('adminUsers').doc(uid);
-        await userRef.update({ isActive: false, updatedAt: new Date() });
+        await admin.auth().updateUser(uid, { disabled: true });
+        v2_1.logger.info(`Successfully deactivated user ${uid}`, {
+            adminUid: auth.uid,
+            targetUid: uid,
+        });
         return { success: true };
     }
     catch (error) {
-        console.error('Error deactivating user:', error);
-        throw new v1_1.https.HttpsError('internal', 'An internal error occurred while deactivating the user.');
+        v2_1.logger.error(`Error deactivating user ${uid}`, { error });
+        throw new https_1.HttpsError("internal", "An error occurred while deactivating the user.");
     }
 });
 //# sourceMappingURL=adminDeactivateUser.js.map

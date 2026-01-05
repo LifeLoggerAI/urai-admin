@@ -1,9 +1,18 @@
+'use client';
 
 import { useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, Timestamp } from 'firebase/firestore';
+
+interface AuditLog {
+  actorUid: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  createdAt: Timestamp;
+}
 
 const AuditLogsPage = () => {
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,7 +20,7 @@ const AuditLogsPage = () => {
       const db = getFirestore();
       const logsCollection = collection(db, 'auditLogs');
       const logSnapshot = await getDocs(logsCollection);
-      const logList = logSnapshot.docs.map(doc => doc.data());
+      const logList = logSnapshot.docs.map(doc => doc.data() as AuditLog);
       setLogs(logList);
       setLoading(false);
     };

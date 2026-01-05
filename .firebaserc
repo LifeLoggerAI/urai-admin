@@ -1,5 +1,15 @@
 {
   "projects": {
-    "default": "urai-admin"
-  }
+    "default": "urai-4dc1d"
+  },
+  "targets": {
+    "urai-4dc1d": {
+      "hosting": {
+        "admin": [
+          "urai-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

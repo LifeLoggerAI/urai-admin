@@ -1,27 +1,62 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminExportUserData = void 0;
-const v1_1 = require("firebase-functions/v1");
-const adminCreateAuditLog_1 = require("./adminCreateAuditLog");
-exports.adminExportUserData = v1_1.https.onCall(async (data, context) => {
-    // Check if the user is an admin or superadmin
-    if (context.auth?.token.uraiRole !== 'admin' && context.auth?.token.uraiRole !== 'superadmin') {
-        throw new v1_1.https.HttpsError('permission-denied', 'You must be an admin or superadmin to export user data.');
-    }
+const v2_1 = require("firebase-functions/v2");
+const https_1 = require("firebase-functions/v2/https");
+const admin = __importStar(require("firebase-admin"));
+const adminAuth_1 = require("./adminAuth");
+exports.adminExportUserData = (0, adminAuth_1.requireAdmin)(async (data, auth) => {
     const { uid } = data;
     if (!uid) {
-        throw new v1_1.https.HttpsError('invalid-argument', 'The function must be called with a "uid" argument.');
+        throw new https_1.HttpsError("invalid-argument", 'The "uid" must be provided.');
     }
     try {
-        // In a real application, you would trigger a secure, asynchronous export process here.
-        // For this example, we will just log the request.
-        await (0, adminCreateAuditLog_1.adminCreateAuditLog)({ uid: context.auth.uid, email: context.auth.token.email }, 'exportUserData', { uid: uid, email: undefined }, // In a real app, you would look up the user's email
-        { details: 'User data export was requested.' });
-        return { success: true, message: 'User data export has been initiated.' };
+        // This is a placeholder for a real data export.
+        // In a real application, you would query your databases (Firestore, etc.)
+        // and return a comprehensive JSON object of the user's data.
+        const user = await admin.auth().getUser(uid);
+        v2_1.logger.info(`Successfully exported data for user ${uid}`, {
+            adminUid: auth.uid,
+            targetUid: uid,
+        });
+        return { user };
     }
     catch (error) {
-        console.error('Error exporting user data:', error);
-        throw new v1_1.https.HttpsError('internal', 'An internal error occurred while exporting user data.');
+        v2_1.logger.error(`Error exporting data for user ${uid}`, { error });
+        throw new https_1.HttpsError("internal", "An error occurred while exporting user data.");
     }
 });
 //# sourceMappingURL=adminExportUserData.js.map

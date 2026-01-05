@@ -1,0 +1,21 @@
+{"users": [
+{
+  "localId": "5ykV2W4CXmaS07XsYxonqk4WVkD2",
+  "email": "lifeloggerai@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "MWpl1pZV1aRIJ6U0ak9L8RoWVdZTYNE7TBre7GeeLzfe8JL8361R+wCFeouOtpmZyYD8YMJUhtOTtDsIzeo9yg==",
+  "salt": "6/F1JQyQb0B1Pg==",
+  "lastSignedInAt": "1755178637473",
+  "createdAt": "1755178637473",
+  "providerUserInfo": []
+},
+{
+  "localId": "ogAs7iGtiob4Oux5qYQJ9wB7Yj63",
+  "email": "therealadamclamp@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "1DRsidxN0YPzhxRxX3uJV1m2zZFVrPaJDZN8wYse0aSpdVJuHOKDP35/03b7dSy7O3mxy3X+kMSQj2/M8EdjIw==",
+  "salt": "q0pqUGkqFk3qBQ==",
+  "createdAt": "1755427237174",
+  "disabled": false,
+  "providerUserInfo": []
+}]}

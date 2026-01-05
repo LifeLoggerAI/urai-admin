@@ -1,9 +1,19 @@
+'use client';
 
 import { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
+interface User {
+  uid: string;
+  email: string;
+}
+
+interface ListUsersResult {
+  users: User[];
+}
+
 const UsersPage = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -12,24 +22,26 @@ const UsersPage = () => {
       const functions = getFunctions();
       const adminListUsers = httpsCallable(functions, 'adminListUsers');
       const result = await adminListUsers();
-      setUsers(result.data.users);
+      const data = result.data as ListUsersResult;
+      setUsers(data.users);
       setLoading(false);
     };
 
     fetchUsers();
   }, []);
 
-  const handleDeactivateUser = async (uid) => {
+  const handleDeactivateUser = async (uid: string) => {
     const functions = getFunctions();
     const adminDeactivateUser = httpsCallable(functions, 'adminDeactivateUser');
     await adminDeactivateUser({ uid });
     // Refresh the user list
     const adminListUsers = httpsCallable(functions, 'adminListUsers');
     const result = await adminListUsers();
-    setUsers(result.data.users);
+    const data = result.data as ListUsersResult;
+    setUsers(data.users);
   };
 
-  const handleExportUserData = async (uid) => {
+  const handleExportUserData = async (uid: string) => {
     const functions = getFunctions();
     const adminExportUserData = httpsCallable(functions, 'adminExportUserData');
     await adminExportUserData({ uid });
