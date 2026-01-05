@@ -1,10 +1,23 @@
+'use client';
 
 import { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getAuth } from 'firebase/auth';
 
+interface User {
+  uid: string;
+  email: string;
+  customClaims?: {
+    uraiRole: string;
+  };
+}
+
+interface ListUsersResult {
+  users: User[];
+}
+
 const AdminsPage = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,21 +25,23 @@ const AdminsPage = () => {
       const functions = getFunctions();
       const adminListUsers = httpsCallable(functions, 'adminListUsers');
       const result = await adminListUsers();
-      setUsers(result.data.users);
+      const data = result.data as ListUsersResult;
+      setUsers(data.users);
       setLoading(false);
     };
 
     fetchUsers();
   }, []);
 
-  const handleRoleChange = async (uid, role) => {
+  const handleRoleChange = async (uid: string, role: string) => {
     const functions = getFunctions();
     const adminSetRole = httpsCallable(functions, 'adminSetRole');
     await adminSetRole({ uid, role });
     // Refresh the user list
     const adminListUsers = httpsCallable(functions, 'adminListUsers');
     const result = await adminListUsers();
-    setUsers(result.data.users);
+    const data = result.data as ListUsersResult;
+    setUsers(data.users);
   };
 
   if (loading) {

@@ -1,0 +1,52 @@
+{ pkgs, ... }:
+
+{
+  # Stable Nixpkgs channel
+  channel = "stable-24.05";
+
+  # Packages
+  packages = [
+    pkgs.nodejs_20
+    pkgs.firebase-tools
+  ];
+
+  # NOTE:
+  # The following "idx.*" keys are Firebase Studio/IDX metadata.
+  # Some Nix linters will warn "Unknown attr" even though Studio uses them.
+  idx = {
+    extensions = [
+      "dbaeumer.vscode-eslint"
+      "esbenp.prettier-vscode"
+      "ms-vscode.typescript-next"
+      "firebase.firebase-vscode"
+    ];
+
+    workspace = {
+      onCreate = {
+        npm-install-functions = "cd functions && npm install";
+        npm-install-hosting = "cd hosting && npm install";
+      };
+
+      onStart = {
+        welcome = "echo 'URAI Admin Console environment ready. Run `firebase emulators:start` to begin.'";
+      };
+    };
+
+    previews = {
+      enable = true;
+      previews = {
+        admin-console = {
+          command = ["npm" "run" "dev" "--prefix" "hosting"];
+          manager = "web";
+          port = 2999;
+        };
+
+        emulator-ui = {
+          command = ["bash" "-lc" "echo \"Emulator UI running at http://$HOST:3999\" && sleep infinity"];
+          manager = "web";
+          port = 3999;
+        };
+      };
+    };
+  };
+}

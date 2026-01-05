@@ -1,9 +1,16 @@
+'use client';
 
 import { useState, useEffect } from 'react';
 import { getFirestore, collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
+interface FeatureFlag {
+  id: string;
+  name: string;
+  isEnabled: boolean;
+}
+
 const FeatureFlagsPage = () => {
-  const [flags, setFlags] = useState([]);
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,7 +18,7 @@ const FeatureFlagsPage = () => {
       const db = getFirestore();
       const flagsCollection = collection(db, 'featureFlags');
       const flagSnapshot = await getDocs(flagsCollection);
-      const flagList = flagSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const flagList = flagSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FeatureFlag));
       setFlags(flagList);
       setLoading(false);
     };
@@ -19,11 +26,15 @@ const FeatureFlagsPage = () => {
     fetchFlags();
   }, []);
 
-  const handleFlagChange = async (id, isEnabled) => {
+  const handleFlagChange = async (id: string, isEnabled: boolean) => {
     const db = getFirestore();
     const flagRef = doc(db, 'featureFlags', id);
     await updateDoc(flagRef, { isEnabled });
     // Refresh the flag list
+    const flagsCollection = collection(db, 'featureFlags');
+    const flagSnapshot = await getDocs(flagsCollection);
+    const flagList = flagSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FeatureFlag));
+    setFlags(flagList);
   };
 
   if (loading) {

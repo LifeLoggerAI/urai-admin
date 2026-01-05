@@ -1,25 +1,32 @@
+'use client';
 
-import { useRouter } from 'next/router';
-import { useAuth } from '../lib/firebase'; // Adjust this import to your firebase auth setup
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../hooks/useAuth';
+import { useEffect } from 'react';
 
-const ProtectedRoute = ({ children, role }) => {
+const ProtectedRoute = ({ children, role }: { children: React.ReactNode, role: string }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
 
   if (loading) {
     return <p>Loading...</p>;
   }
 
   if (!user) {
-    router.push('/login');
     return null;
   }
 
-  if (role && user.customClaims?.uraiRole !== role) {
+  if (role && (user as any).customClaims?.uraiRole !== role) {
     return <p>Access disabled</p>;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

@@ -1,8 +1,6 @@
 
 import { logger } from "firebase-functions/v2";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
-
 // This is the middleware that checks for an admin user.
 export const requireAdmin = (handler: any) => {
   return onCall(async (request) => {
