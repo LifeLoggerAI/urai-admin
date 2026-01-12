@@ -1,6 +1,15 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "runtime": "nodejs20"
+    }
+  ],
   "hosting": {
-    "target": "admin",
     "public": "apps/admin-web/out",
     "ignore": [
       "firebase.json",
