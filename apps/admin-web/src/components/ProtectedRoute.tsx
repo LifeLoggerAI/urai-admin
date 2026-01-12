@@ -1,10 +1,10 @@
 'use client';
 
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
 import { useEffect } from 'react';
 
-const ProtectedRoute = ({ children, role }: { children: React.ReactNode, role: string }) => {
+export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -12,21 +12,11 @@ const ProtectedRoute = ({ children, role }: { children: React.ReactNode, role: s
     if (!loading && !user) {
       router.push('/login');
     }
-  }, [loading, user, router]);
+  }, [user, loading, router]);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (role && (user as any).customClaims?.uraiRole !== role) {
-    return <p>Access disabled</p>;
+  if (loading || !user) {
+    return <div>Loading...</div>; // Or a proper spinner component
   }
 
   return <>{children}</>;
-};
-
-export default ProtectedRoute;
+}

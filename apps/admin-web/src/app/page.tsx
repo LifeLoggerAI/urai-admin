@@ -1,5 +1,11 @@
-import DashboardClient from "@/components/DashboardClient";
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Page() {
-  return <DashboardClient />;
+export default function HomePage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/admin/dashboard');
+  }, [router]);
+  return null;
 }
