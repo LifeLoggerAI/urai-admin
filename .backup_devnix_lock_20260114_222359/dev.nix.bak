@@ -1,0 +1,22 @@
+{ pkgs, ... }:
+{
+  packages = [
+    pkgs.git
+    pkgs.nodejs_20
+  ];
+
+  env = {
+    CI = "1";
+    FRONTEND = "noninteractive";
+    TMPDIR = "$HOME/.tmp";
+
+    # User-writable npm global prefix
+    NPM_CONFIG_PREFIX = "$HOME/.local/share/npm-global";
+    PATH = "$HOME/.local/share/npm-global/bin:$HOME/.local/share/pnpm:$PATH";
+
+    # Keep these for tooling that expects them
+    PNPM_HOME = "$HOME/.local/share/pnpm";
+    XDG_CACHE_HOME = "$HOME/.cache";
+    XDG_DATA_HOME = "$HOME/.local/share";
+  };
+}

@@ -8,10 +8,12 @@
   env = {
     CI = "1";
     FRONTEND = "noninteractive";
-    COREPACK_ENABLE_DOWNLOAD_PROMPT = "0";
-    PNPM_HOME = "$HOME/.local/share/pnpm";
-    PATH = "$HOME/.local/share/pnpm:$PATH";
     TMPDIR = "$HOME/.tmp";
+
+    # Deterministic path order (user bins first)
+    PATH = "$HOME/.local/bin:$HOME/.global_modules/bin:$HOME/.local/share/npm-global/bin:$HOME/.local/share/pnpm:$PATH";
+    NPM_CONFIG_PREFIX = "$HOME/.local/share/npm-global";
+
     XDG_CACHE_HOME = "$HOME/.cache";
     XDG_DATA_HOME = "$HOME/.local/share";
   };
