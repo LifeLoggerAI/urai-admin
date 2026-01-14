@@ -1,0 +1,49 @@
+{ pkgs, ... }:
+{
+  # Minimal, safe IDX dev environment.
+  # Keep this small to avoid env build failures.
+
+  packages = [
+    pkgs.git
+    pkgs.bashInteractive
+    pkgs.nodejs_20
+    pkgs.corepack
+  ];
+
+  env = {
+    CI = "1";
+    COREPACK_ENABLE_DOWNLOAD_PROMPT = "0";
+    PNPM_HOME = "$HOME/.local/share/pnpm";
+    PATH = "$PNPM_HOME:$PATH";
+    STARSHIP_LOG = "error";
+    TMPDIR = "$HOME/.tmp";
+  };
+
+  idx = {
+    # Safe defaults; preview command can be adjusted later.
+    previews = {
+      enable = true;
+      previews = {
+        app = {
+          manager = "web";
+          command = [ "bash" "-lc" ''
+            set -euo pipefail
+            set +H
+            mkdir -p "$HOME/.tmp" "$HOME/.local/share/pnpm"
+            corepack enable >/dev/null 2>&1 || true
+            if command -v pnpm >/dev/null 2>&1; then
+              pnpm -v
+            fi
+            if [ -f package.json ]; then
+              pnpm install --prefer-offline --no-frozen-lockfile
+              pnpm dev
+            else
+              echo "No package.json at repo root; edit .idx/dev.nix preview command as needed."
+              sleep 3600
+            fi
+          '' ];
+        };
+      };
+    };
+  };
+}

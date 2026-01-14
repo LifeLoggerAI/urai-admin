@@ -2,17 +2,17 @@
 {
   packages = [
     pkgs.git
+    pkgs.bashInteractive
     pkgs.nodejs_20
+    pkgs.corepack
   ];
 
   env = {
     CI = "1";
-    FRONTEND = "noninteractive";
     COREPACK_ENABLE_DOWNLOAD_PROMPT = "0";
     PNPM_HOME = "$HOME/.local/share/pnpm";
-    PATH = "$HOME/.local/share/pnpm:$PATH";
+    PATH = "$PNPM_HOME:$PATH";
+    STARSHIP_LOG = "error";
     TMPDIR = "$HOME/.tmp";
-    XDG_CACHE_HOME = "$HOME/.cache";
-    XDG_DATA_HOME = "$HOME/.local/share";
   };
 }

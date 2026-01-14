@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint --config .eslintrc.cjs src --ext ts,tsx --ignore-path .eslintignore --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src --ext ts,tsx --ignore-path .eslintignore --ignore-pattern _archive --ignore-pattern \"**/_archive/**\" --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "firebase deploy --only hosting"
   },
