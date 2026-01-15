@@ -1,33 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
     function isAuth() { return request.auth != null; }
-    function getRole() { return request.auth.token.role; }
-    function isAdmin() { return getRole() in ['admin', 'superadmin']; }
-    function isSuperAdmin() { return getRole() == 'superadmin'; }
+    function claims() { return request.auth.token; }
+    function hasRole(role) { return isAuth() && claims()[role] == true; }
+    function isSuperAdmin() { return hasRole('super_admin'); }
+    function isAdmin() { return hasRole('admin') || isSuperAdmin(); }
+    function isOps() { return hasRole('ops') || isAdmin(); }
+    function isSupport() { return hasRole('support') || isOps(); }
+    function isPrivacyAdmin() { return hasRole('privacy_admin') || isSuperAdmin(); }
 
-    // Admins can read/write their own user data (if any)
-    match /users/{uid} {
-      allow read, write: if isAuth() && request.auth.uid == uid;
-    }
+    match /{path=**} { allow read, write: if false; }
 
-    // Tenants can only be read and written by admins.
-    match /tenants/{tenantId} {
+    match /systemConfig/{docId} {
       allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+    match /featureFlags/{flagId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+    
+    match /adminUsers/{uid} {
+      allow get: if isSupport();
+      allow list: if isSupport();
       allow create, update: if isSuperAdmin();
-      allow delete: if false; // Disallow deletion
     }
 
-    // Audit logs are immutable. They can only be created (by functions) and read by admins.
-    match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow write: if false; // Must be written by a trusted backend (function)
+    match /auditEvents/{eventId} {
+      allow read: if isOps();
+      allow write: if false; // Server-side writes only
     }
 
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+    match /jobAdminViews/{jobId} {
+      allow read: if isOps();
+      allow write: if false; 
+    }
+    
+    match /moderationReports/{reportId} {
+      allow read, write: if hasRole('reviewer') || isAdmin();
+    }
+    match /privacyRequests/{reqId} {
+      allow read, write: if isPrivacyAdmin();
     }
   }
 }
