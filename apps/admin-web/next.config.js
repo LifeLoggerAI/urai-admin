@@ -1,7 +1,6 @@
-/** @type {import('next').NextConfig} */
-module.exports = {
-  reactStrictMode: true,
-  transpilePackages: ["@repo/ui"],
-  output: 'export',
-  distDir: 'out',
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var nextConfig = {
+/* config options here */
 };
+exports.default = nextConfig;
