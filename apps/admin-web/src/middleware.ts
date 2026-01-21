@@ -1,18 +1,17 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const cookie = request.cookies.get('firebaseIdToken'); 
   const { pathname } = request.nextUrl;
+  const isAuthenticated = request.cookies.has('authenticated');
 
-  // If user is not authenticated and trying to access a protected route, redirect to login
-  if (!cookie && pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') && !isAuthenticated) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If user is authenticated and trying to access the login page, redirect to dashboard
-  if (cookie && pathname === '/login') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  if (pathname === '/login' && isAuthenticated) {
+    return NextResponse.redirect(new URL('/admin/overview', request.url));
   }
 
   return NextResponse.next();

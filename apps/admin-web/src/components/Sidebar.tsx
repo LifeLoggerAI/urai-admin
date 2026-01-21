@@ -1,41 +1,51 @@
 
 'use client';
 
+import { navItems } from '@/lib/nav-items';
+import { cn } from '@/lib/utils';
+import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import React, { useState } from 'react';
 
-const links = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/users', label: 'User Intelligence' },
-  { href: '/pipeline', label: 'Data Pipeline' },
-  { href: '/models', label: 'AI/Model Governance' },
-  { href: '/safety', label: 'Content Safety' },
-  { href: '/configuration', label: 'System Config' },
-  { href: '/roles', label: 'Roles & Permissions' },
-  { href: '/incident', label: 'Incident Tools' },
-  { href: '/monetization', label: 'Monetization' },
-  { href: '/compliance', label: 'Compliance' },
-];
+const Sidebar = () => {
+    const pathname = usePathname();
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
-export default function Sidebar() {
-  const pathname = usePathname();
+    return (
+        <div className={cn(
+            "relative min-w-[250px] border-r pr-4 pl-8 py-4 flex flex-col justify-between",
+            isCollapsed && "min-w-[80px] pl-4"
+        )}>
+            <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className='absolute -right-4 top-8 p-2 rounded-full bg-background border border-border'>
+                <ChevronLeft className={cn(
+                    "h-4 w-4",
+                    isCollapsed && "rotate-180"
+                )} />
+            </button>
 
-  return (
-    <div className="w-64 bg-zinc-100 dark:bg-zinc-900 p-4 border-r dark:border-zinc-800">
-      <div className="text-2xl font-bold mb-4">URAI Admin</div>
-      <nav>
-        <ul>
-          {links.map(link => (
-            <li key={link.href}>
-              <Link href={link.href}>
-                <p className={`p-2 rounded-lg ${pathname === link.href ? 'bg-blue-500 text-white' : 'hover:bg-zinc-200 dark:hover:bg-zinc-800'}`}>
-                  {link.label}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </div>
-  );
+            <div>
+                <div className='font-bold text-2xl mb-8'>URAI</div>
+
+                <div className="flex flex-col space-y-2">
+                    {navItems.map((item, index) => (
+                        <Link key={index} href={item.href} className={cn(
+                            "flex items-center space-x-2 py-2 px-4 rounded-lg",
+                            pathname === item.href && "bg-muted",
+                            isCollapsed && "justify-center"
+                        )}>
+                            <item.icon className="h-5 w-5" />
+                            {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                        </Link>
+                    ))}
+                </div>
+            </div>
+
+            {!isCollapsed && <div className='text-sm text-center text-muted-foreground'>© 2024 URAI</div>}
+        </div>
+    );
 }
+
+export default Sidebar;
