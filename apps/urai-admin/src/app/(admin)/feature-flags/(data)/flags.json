@@ -1,0 +1,14 @@
+[
+  {
+    "id": "flag-1",
+    "name": "new-dashboard",
+    "enabled": true,
+    "rollout": 100
+  },
+  {
+    "id": "flag-2",
+    "name": "new-billing",
+    "enabled": false,
+    "rollout": 0
+  }
+]
