@@ -1,0 +1,12 @@
+[
+  {
+    "id": "policy-1",
+    "name": "Privacy Policy",
+    "version": "1.0.0"
+  },
+  {
+    "id": "policy-2",
+    "name": "Terms of Service",
+    "version": "1.0.0"
+  }
+]

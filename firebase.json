@@ -2,7 +2,7 @@
   "hosting": [
     {
       "target": "admin",
-      "public": "apps/admin-web/dist",
+      "public": "apps/urai-admin/dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [{ "source": "/admin/**", "destination": "/index.html" }],
       "headers": [

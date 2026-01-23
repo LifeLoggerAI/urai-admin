@@ -1,0 +1,14 @@
+[
+  {
+    "id": "job-1",
+    "queue": "default",
+    "status": "completed",
+    "retries": 0
+  },
+  {
+    "id": "job-2",
+    "queue": "default",
+    "status": "failed",
+    "retries": 3
+  }
+]
