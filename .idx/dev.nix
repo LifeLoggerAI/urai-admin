@@ -12,11 +12,13 @@
     pkgs.nodejs_20
     pkgs.nodePackages.pnpm
     pkgs.python3
+    pkgs.firebase-tools
 
     # Common dependencies for native Node.js modules
     pkgs.pkg-config
     pkgs.openssl
     pkgs.git
+    pkgs.jq
   ];
 
   # Sets environment variables in the workspace
