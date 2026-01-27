@@ -1,0 +1,8 @@
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..f7f2e4b
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,2 @@
++ADMIN_EMAILS=user@example.com
++NEXT_PUBLIC_FIREBASE_CONFIG={}

@@ -1,0 +1,36 @@
+diff --git a/apps/urai-admin/src/app/(admin)/dashboard/page.tsx b/apps/urai-admin/src/app/(admin)/dashboard/page.tsx
+new file mode 100644
+index 0000000..f5f8e9a
+--- /dev/null
++++ b/apps/urai-admin/src/app/(admin)/dashboard/page.tsx
+@@ -0,0 +1,46 @@
++import Link from 'next/link';
++
++const DashboardPage = () => {
++  const tiles = [
++    { name: 'Users', href: '/admin/users' },
++    { name: 'Jobs', href: '/admin/jobs' },
++    { name: 'Analytics', href: '/admin/analytics' },
++    { name: 'Flags/Config', href: '/admin/flags' },
++    { name: 'System Status', href: '/admin/system' },
++  ];
++
++  return (
++    <div className="container mx-auto px-4 py-8">
++      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
++      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
++        {tiles.map((tile) => (
++          <Link key={tile.name} href={tile.href}>
++            <a className="block p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:bg-gray-100">
++              <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
++                {tile.name}
++              </h5>
++            </a>
++          </Link>
++        ))}
++      </div>
++    </div>
++  );
++};
++
++export default DashboardPage;

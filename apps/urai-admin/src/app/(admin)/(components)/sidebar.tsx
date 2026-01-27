@@ -8,7 +8,7 @@ import { useRBAC } from "@/hooks/useRBAC";
 import { useAuth } from "@/hooks/useAuth";
 
 const links = [
-  { name: "Dashboard", href: "/" },
+  { name: "Dashboard", href: "/dashboard" },
   { name: "Users", href: "/users" },
   { name: "Feature Flags", href: "/feature-flags" },
   { name: "Council", href: "/council" },

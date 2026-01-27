@@ -1,0 +1,37 @@
+diff --git a/apps/urai-admin/src/middleware.ts b/apps/urai-admin/src/middleware.ts
+new file mode 100644
+index 0000000..e73448e
+--- /dev/null
++++ b/apps/urai-admin/src/middleware.ts
+@@ -0,0 +1,29 @@
++import { NextResponse } from 'next/server';
++import type { NextRequest } from 'next/server';
++import { auth } from './lib/firebase'; // Assuming you have a firebase auth instance initialized
++
++export async function middleware(request: NextRequest) {
++  const { pathname } = request.nextUrl;
++
++  // Protect all admin routes
++  if (pathname.startsWith('/admin')) {
++    const token = request.cookies.get('token')?.value;
++
++    if (!token) {
++      return NextResponse.redirect(new URL('/login', request.url));
++    }
++
++    try {
++      const decodedToken = await auth.verifyIdToken(token);
++      if (!decodedToken.admin) {
++        return NextResponse.redirect(new URL('/not-authorized', request.url));
++      }
++    } catch (error) {
++      return NextResponse.redirect(new URL('/login', request.url));
++    }
++  }
++
++  return NextResponse.next();
++}
++
++export const config = {
++  matcher: ['/admin/:path*'],
++};

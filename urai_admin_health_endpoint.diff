@@ -1,0 +1,19 @@
+diff --git a/apps/urai-admin/src/app/api/health/route.ts b/apps/urai-admin/src/app/api/health/route.ts
+new file mode 100644
+index 0000000..d81a2b1
+--- /dev/null
++++ b/apps/urai-admin/src/app/api/health/route.ts
+@@ -0,0 +1,11 @@
++import { NextResponse } from 'next/server';
++
++export async function GET() {
++  try {
++    return NextResponse.json({
++      ok: true,
++      service: 'urai-admin',
++      ts: new Date().toISOString(),
++    });
++  } catch (e) {
++    return new Response('Error', { status: 500});
++  }
++}
