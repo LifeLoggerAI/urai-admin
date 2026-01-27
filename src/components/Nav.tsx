@@ -1,10 +1,13 @@
+
 import { Link, useLocation } from 'react-router-dom';
 const items = [
   { to: '/', label: 'Dashboard' },
+  { to: '/system', label: 'System' },
   { to: '/users', label: 'Users' },
-  { to: '/flags', label: 'Flags' },
-  { to: '/reports', label: 'Reports' },
-  { to: '/dsr', label: 'DSR' },
+  { to: '/execution-runs', label: 'Execution Runs' },
+  { to: '/asset-factory', label: 'Asset Factory' },
+  { to: '/notifications', label: 'Notifications' },
+  { to: '/content', label: 'Content' },
 ];
 export default function Nav(){
   const { pathname } = useLocation();

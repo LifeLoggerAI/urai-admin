@@ -1,0 +1,41 @@
+diff --git a/apps/urai-admin/src/app/(admin)/system/page.tsx b/apps/urai-admin/src/app/(admin)/system/page.tsx
+new file mode 100644
+index 0000000..c5a3d1e
+--- /dev/null
++++ b/apps/urai-admin/src/app/(admin)/system/page.tsx
+@@ -0,0 +1,33 @@
++import { NextPage } from 'next';
++
++const SystemStatusPage: NextPage = () => {
++  const buildId = process.env.BUILD_ID || 'N/A';
++  const environment = process.env.NODE_ENV || 'development';
++  const lastDeploy = 'N/A'; // This would be more complex to get
++
++  return (
++    <div className="container mx-auto px-4 py-8">
++      <h1 className="text-3xl font-bold mb-8">System Status</h1>
++      <div className="bg-white shadow-md rounded-lg p-6">
++        <div className="grid grid-cols-2 gap-4">
++          <div>
++            <p className="font-semibold">Build Version:</p>
++            <p>{buildId}</p>
++          </div>
++          <div>
++            <p className="font-semibold">Environment:</p>
++            <p>{environment}</p>
++          </div>
++          <div>
++            <p className="font-semibold">Timestamp:</p>
++            <p>{new Date().toISOString()}</p>
++          </div>
++          <div>
++            <p className="font-semibold">Last Deploy:</p>
++            <p>{lastDeploy}</p>
++          </div>
++        </div>
++      </div>
++    </div>
++  );
++};
++
++export default SystemStatusPage;

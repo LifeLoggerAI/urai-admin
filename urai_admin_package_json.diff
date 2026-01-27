@@ -1,0 +1,15 @@
+diff --git a/apps/urai-admin/package.json b/apps/urai-admin/package.json
+index 8f3de17..6a4a7a5 100644
+--- a/apps/urai-admin/package.json
++++ b/apps/urai-admin/package.json
+@@ -5,9 +5,11 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "lint": "next lint"
++    "lint": "next lint",
++    "typecheck": "tsc --noEmit",
++    "smoke": "curl --fail http://localhost:3000/api/health && curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/admin | grep -E '200|302'"
+   },
+   "dependencies": {
+     "next": "14.2.3",
