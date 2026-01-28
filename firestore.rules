@@ -1,95 +1,27 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Start Boilerplate ---
-    function isAuth() { 
-      return request.auth != null; 
-    }
-    
-    function getRole() {
-        return request.auth.token.role;
-    }
-
-    function isSuperAdmin() { 
-        return isAuth() && getRole() == 'superadmin';
-    }
-    
     function isAdmin() {
-        return isAuth() && (getRole() == 'admin' || isSuperAdmin());
+      return request.auth != null && request.auth.token.admin == true;
     }
-
-    function isSupport() {
-        return isAuth() && (getRole() == 'support' || isAdmin());
-    }
-
-    function isReadOnly() {
-        return isAuth() && (getRole() == 'readonly' || isSupport());
-    }
-    // --- End Boilerplate ---
-
-    // --- Collections ---
-    match /users/{uid} {
-      allow read: if isReadOnly();
-      allow write: if isAdmin(); // For updating flags
-    }
-
-    match /system/{docId} {
-      allow read: if isReadOnly();
-      allow write: if isAdmin(); // For kill-switches, maintenance mode
-    }
-
-    match /adminAuditLogs/{logId} {
-      allow read: if isReadOnly();
-      allow create: if false; // Only backend can create audit logs
-      allow update, delete: if false;
-    }
-
-    match /executionRuns/{runId} {
-      allow read: if isReadOnly();
-      allow create: if false; // Only backend can create runs
-      allow update: if isSupport(); // For pausing, resuming, cancelling
-      allow delete: if false;
-    }
-
-    match /assetRenders/{renderId} {
-      allow read: if isReadOnly();
-      allow create, update, delete: if false; // Managed by backend
-    }
-
-    match /cleanupJobs/{jobId} {
-        allow read: if isAdmin(); // So admins can see job status
-        allow create: if false; // Only backend creates cleanup jobs
-        allow update, delete: if false;
-    }
-
-    match /notificationLogs/{logId} {
-        allow read: if isReadOnly();
-        allow create: if false;
-        allow update: if isSupport(); // For marking as 'retrying'
-        allow delete: if false;
-    }
-
-    match /notificationRetryJobs/{jobId} {
-        allow read: if isSupport();
-        allow create: if false; // Only backend
-        allow update, delete: if false;
-    }
-
-    match /filmTemplates/{templateId} {
-        allow read: if isReadOnly();
-        allow write: if isAdmin();
-
-        match /versions/{versionId} {
-            allow read: if isReadOnly();
-            allow write: if false; // Versions are immutable, new ones are created.
-        }
-    }
-
-    // DEFAULT DENY
-    match /{path=**} {
+    match /{document=**} {
       allow read, write: if false;
+    }
+    match /users/{userId} {
+      allow read, write: if isAdmin();
+    }
+    match /audit_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+    match /feature_flags/{flagId} {
+      allow read, write: if isAdmin();
+    }
+    match /system_health/{docId} {
+        allow read, write: if isAdmin();
+    }
+    match /access_requests/{reqId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
     }
   }
 }
