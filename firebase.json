@@ -1,34 +1,23 @@
 {
-  "hosting": [
-    {
-      "target": "admin",
-      "public": "apps/urai-admin/dist",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{ "source": "/admin/**", "destination": "/index.html" }],
-      "headers": [
-        {
-          "source": "**",
-          "headers": [
-            { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-            { "key": "X-Content-Type-Options", "value": "nosniff" },
-            { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-            { "key": "X-Frame-Options", "value": "DENY" },
-            { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com;" },
-            { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=()" }
-          ]
-        }
-      ]
-    }
-  ],
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs20"
-  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "storage": {
     "rules": "storage.rules"
-  }
+  },
+  "apphosting": [
+    {
+      "backendId": "urai-admin",
+      "source": "apps/urai-admin",
+      "region": "us-central1",
+      "ignore": [
+        "*.bak",
+        "tests/**",
+        "playwright.config.ts",
+        "postcss.config.mjs",
+        "tailwind.config.ts"
+      ]
+    }
+  ]
 }

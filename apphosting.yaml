@@ -1,0 +1,1 @@
+run: pnpm --prefix apps/urai-admin run start

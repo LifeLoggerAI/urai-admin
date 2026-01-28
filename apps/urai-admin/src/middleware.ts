@@ -1,30 +1,40 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './lib/firebase';
+import { getAuth } from 'firebase-admin/auth';
+import { initializeApp, getApps } from 'firebase-admin/app';
+
+// Initialize Firebase Admin SDK if not already done.
+if (getApps().length === 0) {
+  initializeApp();
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const sessionCookie = request.cookies.get('__session')?.value;
+  const isProtectedRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
 
-  // Get the user from the session
-  const user = auth.currentUser;
-
-  // If the user is not logged in and is trying to access an admin route, redirect to login
-  if (!user && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (!isProtectedRoute) {
+    return NextResponse.next();
   }
 
-  // If the user is logged in, check for admin claim
-  if (user) {
-    const idTokenResult = await user.getIdTokenResult();
-    // If the user does not have the admin claim and is trying to access an admin route, show not authorized
-    if (!idTokenResult.claims.admin && pathname.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/not-authorized', request.url));
+  if (!sessionCookie) {
+    request.nextUrl.pathname = '/login';
+    return NextResponse.redirect(request.nextUrl);
+  }
+
+  try {
+    const decodedToken = await getAuth().verifySessionCookie(sessionCookie, true);
+    if (decodedToken.admin !== true) {
+        request.nextUrl.pathname = '/unauthorized';
+        return NextResponse.redirect(request.nextUrl);
     }
+    return NextResponse.next();
+  } catch (error) {
+    request.nextUrl.pathname = '/login';
+    return NextResponse.redirect(request.nextUrl);
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };

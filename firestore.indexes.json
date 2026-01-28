@@ -1,8 +1,33 @@
+
 {
   "indexes": [
-    { "collectionGroup": "auditEvents", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "actor.uid", "order": "ASCENDING" }, { "fieldPath": "timestamp", "order": "DESCENDING" }] },
-    { "collectionGroup": "auditEvents", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "action", "order": "ASCENDING" }, { "fieldPath": "timestamp", "order": "DESCENDING" }] },
-    { "collectionGroup": "jobAdminViews", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] }
-  ],
-  "fieldOverrides": []
+    {
+      "collectionGroup": "accessRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "requestedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "auditLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "actorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ts",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ]
 }

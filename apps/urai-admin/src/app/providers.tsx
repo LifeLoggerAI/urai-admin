@@ -1,9 +1,26 @@
-'use client'
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { type ThemeProviderProps } from "next-themes/dist/types"
+'use client';
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useRouter, usePathname } from 'next/navigation';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (!user && pathname !== '/login') {
+        router.push('/login');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [pathname, router]);
+
+  return <>{children}</>;
 }

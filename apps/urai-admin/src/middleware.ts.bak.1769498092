@@ -1,0 +1,35 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+
+export async function middleware(req: NextRequest) {
+  const session = cookies().get('session')?.value;
+  const url = req.nextUrl.clone();
+
+  if (!session) {
+    if (url.pathname.startsWith('/(protected)')) {
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  try {
+    // Here you would typically verify the session cookie with your auth provider
+    // For simplicity, we are assuming the cookie is valid if it exists
+    if (url.pathname === '/login') {
+      url.pathname = '/';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  } catch (error) {
+    if (url.pathname.startsWith('/(protected)')) {
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|favicon.ico|.*\..*).*)'],
+};
