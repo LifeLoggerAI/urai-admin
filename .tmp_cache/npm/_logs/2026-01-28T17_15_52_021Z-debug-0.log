@@ -1,0 +1,24 @@
+0 verbose cli /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/wsdanhm606q4wzv2y98bxc5hpfbi3sap-idx-builtins/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.19.1
+3 silly config load:file:/nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/user/urai-admin/node_modules/.pnpm/re2@1.23.0/node_modules/re2/.npmrc
+5 silly config load:file:/home/user/.npmrc
+6 silly config load:file:/home/user/urai-admin/etc/npmrc
+7 verbose title npm run verify-build
+8 verbose argv "run" "verify-build"
+9 verbose logfile logs-max:10 dir:/home/user/urai-admin/.tmp_cache/npm/_logs/2026-01-28T17_15_52_021Z-
+10 verbose logfile /home/user/urai-admin/.tmp_cache/npm/_logs/2026-01-28T17_15_52_021Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET 200 https://registry.npmjs.org/npm 1000ms
+13 verbose cwd /home/user/urai-admin/node_modules/.pnpm/re2@1.23.0/node_modules/re2
+14 verbose os Linux 6.6.111+
+15 verbose node v20.19.1
+16 verbose npm  v10.8.2
+17 notice
+17 notice New major version of npm available! 10.8.2 -> 11.8.0
+17 notice Changelog: https://github.com/npm/cli/releases/tag/v11.8.0
+17 notice To update run: npm install -g npm@11.8.0
+17 notice  { force: true, [Symbol(proc-log.meta)]: true }
+18 verbose exit 0
+19 info ok

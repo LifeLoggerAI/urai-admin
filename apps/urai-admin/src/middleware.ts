@@ -1,40 +1,42 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { auth } from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
-// Initialize Firebase Admin SDK if not already done.
-if (getApps().length === 0) {
-  initializeApp();
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
+  });
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get('__session')?.value;
-  const isProtectedRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+  const session = request.cookies.get('__session');
 
-  if (!isProtectedRoute) {
-    return NextResponse.next();
-  }
-
-  if (!sessionCookie) {
-    request.nextUrl.pathname = '/login';
-    return NextResponse.redirect(request.nextUrl);
+  // Return to login if session is not set
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   try {
-    const decodedToken = await getAuth().verifySessionCookie(sessionCookie, true);
-    if (decodedToken.admin !== true) {
-        request.nextUrl.pathname = '/unauthorized';
-        return NextResponse.redirect(request.nextUrl);
+    const decodedToken = await auth().verifyIdToken(session.value);
+    const isAdmin = decodedToken.admin;
+
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
+
     return NextResponse.next();
   } catch (error) {
-    request.nextUrl.pathname = '/login';
-    return NextResponse.redirect(request.nextUrl);
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/api/admin/:path*',
+  ],
 };
