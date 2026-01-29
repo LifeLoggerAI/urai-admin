@@ -1,23 +1,24 @@
 {
+  "hosting": {
+    "public": "apps/urai-admin/.next",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "nextServer"
+      }
+    ]
+  },
+  "functions": {
+    "source": ".",
+    "runtime": "nodejs20"
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "apphosting": [
-    {
-      "backendId": "urai-admin",
-      "source": "apps/urai-admin",
-      "region": "us-central1",
-      "ignore": [
-        "*.bak",
-        "tests/**",
-        "playwright.config.ts",
-        "postcss.config.mjs",
-        "tailwind.config.ts"
-      ]
-    }
-  ]
+  }
 }

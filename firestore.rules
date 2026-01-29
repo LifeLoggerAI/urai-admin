@@ -1,27 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /admin_audit_logs/{logId} {
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     match /{document=**} {
       allow read, write: if false;
-    }
-    match /users/{userId} {
-      allow read, write: if isAdmin();
-    }
-    match /audit_logs/{logId} {
-      allow read, write: if isAdmin();
-    }
-    match /feature_flags/{flagId} {
-      allow read, write: if isAdmin();
-    }
-    match /system_health/{docId} {
-        allow read, write: if isAdmin();
-    }
-    match /access_requests/{reqId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if isAdmin();
     }
   }
 }

@@ -1,47 +1,24 @@
 'use client';
-
-import { useEffect, useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, getUserRole, ROLES } from '@/lib/auth';
-import { Progress } from "@/components/ui/progress";
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const role = await getUserRole(user.uid);
-      if (role === ROLES.a || role === ROLES.s) {
-        setIsAuthorized(true);
-      } else {
-        router.push('/unauthorized');
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p className="mb-2">Authenticating...</p>
-        <Progress value={33} className="w-1/2" />
-      </div>
-    );
-  }
-
-  if (isAuthorized) {
-    return <>{children}</>;
-  }
-
-  return null;
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <nav style={{ width: '220px', padding: '1rem', borderRight: '1px solid #e0e0e0', background: '#fafafa', display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ paddingBottom: '1rem', borderBottom: '1px solid #e0e0e0' }}><Link href="/admin/dashboard" style={{ textDecoration: 'none', color: 'inherit' }}>URAI-ADMIN</Link></h2>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, flexGrow: 1 }}>
+          <li style={{ marginBottom: '0.5rem' }}><Link href="/admin/dashboard">Dashboard</Link></li>
+          <li style={{ marginBottom: '0.5rem' }}><Link href="/admin/users">Users</Link></li>
+        </ul>
+        <button onClick={handleLogout} style={{ width: '100%', padding: '0.5rem' }}>Logout</button>
+      </nav>
+      <main style={{ flex: 1, padding: '2rem', background: '#ffffff' }}>{children}</main>
+    </div>
+  );
 }
