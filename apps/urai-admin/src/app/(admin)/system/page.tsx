@@ -1,50 +1,59 @@
 
-'use client';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { z } from 'zod';
 
-import React from 'react';
-import ControlButton from './(components)/control-button';
-import { useAuth } from '../../../../contexts/AuthContext';
+import { columns } from './(components)/columns';
+import { DataTable } from './(components)/data-table';
+import { UserNav } from './(components)/user-nav';
+import { taskSchema } from './(data)/schema';
 
-const SystemPage = () => {
-  const { idToken } = useAuth();
+// Simulate a database read for tasks.
+async function getTasks() {
+  const data = await fs.readFile(
+    path.join(process.cwd(), 'src/app/(admin)/system/(data)/tasks.json')
+  );
 
-  const handleAction = async (action: string) => {
-    if (!idToken) {
-      console.error('No ID token found');
-      return;
-    }
+  const tasks = JSON.parse(data.toString());
 
-    try {
-      const response = await fetch(`/api/admin/${action}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
+  return z.array(taskSchema).parse(tasks);
+}
 
-      if (!response.ok) {
-        throw new Error('Failed to perform action');
-      }
-
-      console.log(`${action} successful`);
-    } catch (error) {
-      console.error(`Error performing action: ${action}`, error);
-    }
-  };
+export default async function TaskPage() {
+  const tasks = await getTasks();
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">System Controls</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ControlButton label="Toggle Maintenance Mode" action={() => handleAction('setMaintenanceMode')} />
-        <ControlButton label="Toggle Jobs Paused" action={() => handleAction('toggleJobsPaused')} />
-        <ControlButton label="Toggle Exports Paused" action={() => handleAction('toggleExportsPaused')} />
-        <ControlButton label="Invalidate Foundation Config Cache" action={() => handleAction('invalidateFoundationConfigCache')} />
-        <ControlButton label="Invalidate Jobs Cache" action={() => handleAction('invalidateJobsCache')} />
+    <>
+      <div className="md:hidden">
+        <img
+          src="/examples/tasks-light.png"
+          width={1280}
+          height={998}
+          alt="Playground"
+          className="block dark:hidden"
+        />
+        <img
+          src="/examples/tasks-dark.png"
+          width={1280}
+          height={998}
+          alt="Playground"
+          className="hidden dark:block"
+        />
       </div>
-    </div>
+      <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Welcome back!</h2>
+            <p className="text-muted-foreground">
+              Here&apos;s a list of your tasks for this month!
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <UserNav />
+          </div>
+        </div>
+        <DataTable data={tasks} columns={columns} />
+      </div>
+    </>
   );
-};
-
-export default SystemPage;
+}

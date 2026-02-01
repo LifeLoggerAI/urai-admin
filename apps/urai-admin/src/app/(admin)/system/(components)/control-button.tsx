@@ -1,20 +1,25 @@
-
 'use client';
 
-import React from 'react';
 import { Button } from '@/components/ui/button';
+import { useTransition } from 'react';
 
-interface ControlButtonProps {
+type ControlButtonProps = {
   label: string;
-  action: () => void;
-}
-
-const ControlButton: React.FC<ControlButtonProps> = ({ label, action }) => {
-  return (
-    <Button onClick={action} className="w-full">
-      {label}
-    </Button>
-  );
+  action: () => Promise<any>;
 };
 
-export default ControlButton;
+export function ControlButton({ label, action }: ControlButtonProps) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleClick = () => {
+    startTransition(async () => {
+      await action();
+    });
+  };
+
+  return (
+    <Button onClick={handleClick} disabled={isPending}>
+      {isPending ? 'Executing...' : label}
+    </Button>
+  );
+}
