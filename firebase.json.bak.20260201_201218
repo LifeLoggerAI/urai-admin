@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "urai-admin-73155349",
     "public": "apps/urai-admin/.next",
     "ignore": [
       "firebase.json",
@@ -15,7 +14,7 @@
     ]
   },
   "functions": {
-    "source": "functions",
+    "source": ".",
     "runtime": "nodejs20"
   },
   "firestore": {
