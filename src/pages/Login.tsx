@@ -1,65 +1,68 @@
 
-import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase/client";
+import React from "react";
+import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
+import { getFirebaseAuth, getFirebaseDb } from "../lib/firebase/client";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const auth = getFirebaseAuth();
+  const db = getFirebaseDb();
 
-  const handleLogin = async () => {
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/");
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (user) {
+        const adminDocRef = doc(db, "adminUsers", user.uid);
+        const adminDocSnap = await getDoc(adminDocRef);
+
+        if (adminDocSnap.exists() && adminDocSnap.data().isActive) {
+          navigate("/");
+        } else {
+          const adminUsersCollection = collection(db, 'adminUsers');
+          const adminUsersSnapshot = await getDocs(adminUsersCollection);
+
+          if (adminUsersSnapshot.empty && import.meta.env.VITE_ALLOW_ADMIN_BOOTSTRAP === 'true') {
+            await setDoc(adminDocRef, {
+              email: user.email,
+              role: "owner",
+              isActive: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+            navigate("/");
+          } else {
+            navigate("/access-denied");
+          }
+        }
+      }
     } catch (error) {
-      console.error("Error signing in:", error);
-      alert("Failed to sign in. Please check your credentials.");
+      console.error("Error signing in with Google:", error);
+      alert("Failed to sign in with Google.");
     }
   };
 
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="w-full max-w-xs">
-        <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-              Email
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="email"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+          <div className="mb-4 text-center">
+            <h1 className="text-2xl font-bold">Admin Login</h1>
           </div>
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-              Password
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-              id="password"
-              type="password"
-              placeholder="******************"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={handleLogin}
+              onClick={handleGoogleSignIn}
             >
-              Sign In
+              Sign In with Google
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

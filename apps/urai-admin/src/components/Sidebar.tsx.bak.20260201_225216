@@ -1,0 +1,40 @@
+
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const navigation = [
+  { name: 'Dashboard', href: '/admin' },
+  { name: 'Users', href: '/admin/users' },
+  { name: 'Jobs', href: '/admin/jobs' },
+  { name: 'Content', href: '/admin/content' },
+  { name: 'Audit', href: '/admin/audit' },
+];
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
+export default function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <div className="flex flex-col w-64 bg-gray-800 text-white">
+        <div className="h-16 flex items-center justify-center text-2xl font-bold">URAI ADMIN</div>
+        <nav className="flex-1 px-2 py-4 space-y-1">
+            {navigation.map((item) => (
+            <Link
+                key={item.name}
+                href={item.href}
+                className={classNames(
+                pathname === item.href ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+                )}
+            >
+                {item.name}
+            </Link>
+            ))}
+        </nav>
+    </div>
+  );
+}

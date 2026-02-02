@@ -1,49 +1,36 @@
 
-'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+"use client";
 
-const navigation = [
-  { name: 'Dashboard', href: '/' },
-  { name: 'Users', href: '/users' },
-  { name: 'Execution Runs', href: '/runs' },
-  { name: 'Asset Renders', href: '/renders' },
-  { name: 'Notifications', href: '/notifications' },
-  { name: 'Templates', href: '/templates' },
-  { name: 'System Control', href: '/system' },
-  { name: 'Audit Logs', href: '/audit' },
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const links = [
+  { href: "/", label: "Dashboard" },
+  { href: "/users", label: "Users" },
+  { href: "/jobs", label: "Jobs" },
+  { href: "/content", label: "Content" },
+  { href: "/audit", label: "Audit" },
 ];
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}
-
-export default function Sidebar() {
+export function Sidebar() {
   const pathname = usePathname();
-  const { user, role } = useAdminAuth();
-
-  if (!user || !role) {
-    return null; // Don't render sidebar if not logged in or role not determined
-  }
 
   return (
     <div className="flex flex-col w-64 bg-gray-800 text-white">
-        <div className="h-16 flex items-center justify-center text-2xl font-bold">URAI ADMIN</div>
-        <nav className="flex-1 px-2 py-4 space-y-1">
-            {navigation.map((item) => (
-            <Link
-                key={item.name}
-                href={item.href}
-                className={classNames(
-                pathname === item.href ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
-                )}
-            >
-                {item.name}
-            </Link>
-            ))}
-        </nav>
+      <div className="p-4 border-b border-gray-700">
+        <Link href="/" className="text-2xl font-bold">Urai Admin</Link>
+      </div>
+      <nav className="flex-grow">
+        <ul>
+          {links.map(({ href, label }) => (
+            <li key={href}>
+              <Link href={href} className={`block p-4 hover:bg-gray-700 ${pathname === href ? "bg-gray-900" : ""}`}>
+                  {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
 }

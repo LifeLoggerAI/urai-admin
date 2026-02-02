@@ -1,0 +1,70 @@
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { auth, db } from './lib/firebaseAdmin';
+
+async function handleAuthorization(session: string, uid: string, email: string | undefined) {
+    const adminUsersCollection = db.collection('adminUsers');
+    const adminUserDoc = await adminUsersCollection.doc(uid).get();
+
+    if (adminUserDoc.exists) {
+        const adminUserData = adminUserDoc.data();
+        if (adminUserData?.isActive) {
+            return NextResponse.next();
+        } else {
+            return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+    } else {
+        const adminUsersSnapshot = await adminUsersCollection.limit(1).get();
+        if (adminUsersSnapshot.empty && process.env.ALLOW_ADMIN_BOOTSTRAP === 'true') {
+            await adminUsersCollection.doc(uid).set({
+                email,
+                role: 'owner',
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+            return NextResponse.next();
+        } else {
+            return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+    }
+}
+
+export async function middleware(request: NextRequest) {
+    const session = request.cookies.get('__session');
+
+    const { pathname } = request.nextUrl;
+
+    if (pathname.startsWith('/login') || pathname.startsWith('/unauthorized')) {
+        return NextResponse.next();
+    }
+
+    if (!session) {
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    try {
+        const decodedToken = await auth.verifyIdToken(session.value);
+        const { uid, email } = decodedToken;
+
+        const response = await handleAuthorization(session.value, uid, email);
+
+        // Set a custom header to pass user information to the client-side
+        response.headers.set('x-user-id', uid);
+        response.headers.set('x-user-email', email || '');
+
+        return response;
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('__session');
+        return response;
+    }
+}
+
+export const config = {
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico|login|unauthorized|api/auth/logout).*)',
+    ],
+};

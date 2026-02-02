@@ -1,0 +1,69 @@
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
+  });
+}
+
+const db = getFirestore();
+const auth = getAuth();
+
+export async function middleware(request: NextRequest) {
+  const session = request.cookies.get('__session');
+
+  if (request.nextUrl.pathname.startsWith('/login')) {
+    return NextResponse.next();
+  }
+
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  try {
+    const decodedToken = await auth.verifyIdToken(session.value);
+    const { uid, email } = decodedToken;
+
+    const adminUsersCollection = db.collection('adminUsers');
+    const adminUserDoc = await adminUsersCollection.doc(uid).get();
+
+    if (adminUserDoc.exists) {
+      const adminUserData = adminUserDoc.data();
+      if (adminUserData?.isActive) {
+        return NextResponse.next();
+      } else {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
+    } else {
+      const adminUsersSnapshot = await adminUsersCollection.limit(1).get();
+      if (adminUsersSnapshot.empty && process.env.ALLOW_ADMIN_BOOTSTRAP === 'true') {
+        await adminUsersCollection.doc(uid).set({
+          email,
+          role: 'owner',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        return NextResponse.next();
+      } else {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
+    }
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|login|unauthorized).*)',
+  ],
+};
