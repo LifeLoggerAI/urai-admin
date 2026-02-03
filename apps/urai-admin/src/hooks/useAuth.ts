@@ -1,38 +1,32 @@
 
-import { useEffect, useState, createContext, useContext } from 'react';
-import { onIdTokenChanged, User } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { useEffect, useState } from 'react';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { app } from '@/lib/firebase/client';
 
-interface AuthContextType {
-  user: User | null;
-  isAdmin: boolean;
-  loading: boolean;
-}
+const auth = getAuth(app);
 
-const AuthContext = createContext<AuthContextType>({ user: null, isAdmin: false, loading: true });
-
-export const AuthProvider = ({ children }: any) => {
+export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (user) {
-        const idTokenResult = await user.getIdTokenResult();
-        setIsAdmin(!!idTokenResult.claims.admin);
-      }
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, isAdmin, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const signOut = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      // Force a reload to clear all state and redirect via middleware
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
-export const useAuth = () => useContext(AuthContext);
+  return { user, loading, signOut };
+}

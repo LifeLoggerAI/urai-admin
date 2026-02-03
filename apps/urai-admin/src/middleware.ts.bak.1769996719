@@ -1,0 +1,77 @@
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { adminAuth, adminDb } from './lib/firebaseAdmin';
+
+const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-eval' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+`;
+
+export async function middleware(request: NextRequest) {
+  const headers = new Headers(request.headers);
+  headers.set('x-content-type-options', 'nosniff');
+  headers.set('x-frame-options', 'DENY');
+  headers.set('x-xss-protection', '1; mode=block');
+  headers.set('content-security-policy', cspHeader.replace(/\s{2,}/g, ' ').trim());
+
+  const session = request.cookies.get('__session')?.value || '';
+
+  if (!session) {
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return NextResponse.next({ headers });
+  }
+
+  try {
+    const decodedToken = await adminAuth.verifySessionCookie(session, true);
+    const userDoc = await adminDb.collection('adminUsers').doc(decodedToken.uid).get();
+
+    const adminUsersSnapshot = await adminDb.collection('adminUsers').get();
+    if (adminUsersSnapshot.empty && process.env.ALLOW_ADMIN_BOOTSTRAP === 'true') {
+      await adminDb.collection('adminUsers').doc(decodedToken.uid).set({
+        email: decodedToken.email,
+        role: 'owner',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } else if (!userDoc.exists || !userDoc.data()?.isActive) {
+      const response = NextResponse.redirect(new URL('/unauthorized', request.url));
+      response.cookies.delete('__session');
+      return response;
+    }
+
+    if (request.nextUrl.pathname === '/login') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+    headers.set('x-user-id', decodedToken.uid);
+    headers.set('x-user-email', decodedToken.email || '');
+    headers.set('x-user-role', userDoc.data()?.role || '');
+
+    return NextResponse.next({
+      request: {
+        headers,
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying session cookie:', error);
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('__session');
+    return response;
+  }
+}
+
+export const config = {
+  matcher: ['/admin/:path*', '/login'],
+};

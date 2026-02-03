@@ -1,9 +1,15 @@
 
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  const response = NextResponse.json({ success: true });
-  response.cookies.delete('session');
-  return response;
+export async function POST() {
+  try {
+    const cookieStore = cookies();
+    cookieStore.delete('__session');
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }

@@ -1,60 +1,117 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
 
-interface User {
-  id: string;
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useRBAC } from '@/hooks/useRBAC';
+
+interface AdminUser {
+  uid: string;
   email: string;
-  role: string;
+  role: 'owner' | 'admin' | 'viewer';
+  createdAt: string;
+  lastLoginAt: string;
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const { user } = useAuth();
+  const { role } = useRBAC();
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const usersCollection = collection(firestore, 'users');
-        const q = query(usersCollection, where('role', '==', 'admin'));
-        const querySnapshot = await getDocs(q);
-        const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(usersData);
-      } catch (error) {
-        console.error('Error fetching users:', error);
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const data = await res.json();
+        setUsers(data.users);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    fetchUsers();
-  }, []);
+    if (user) {
+      fetchUsers();
+    }
+  }, [user]);
+
+  const handleRoleChange = async (uid: string, newRole: string) => {
+    try {
+      const res = await fetch(`/api/admin/users/${uid}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update role');
+      }
+
+      setUsers(users.map((u) => (u.uid === uid ? { ...u, role: newRole as any } : u)));
+      alert('Role updated successfully!');
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading users...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div>
-      <h1>Users</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table>
+      <h1 className="text-2xl font-bold mb-4">Admin Users</h1>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md rounded-lg">
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Role</th>
+            <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+              <th className="py-3 px-6 text-left">Email</th>
+              <th className="py-3 px-6 text-left">Role</th>
+              <th className="py-3 px-6 text-left">Created At</th>
+              <th className="py-3 px-6 text-left">Last Login</th>
+              {role === 'owner' && <th className="py-3 px-6 text-center">Actions</th>}
             </tr>
           </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
+          <tbody className="text-gray-600 text-sm font-light">
+            {users.map((adminUser) => (
+              <tr key={adminUser.uid} className="border-b border-gray-200 hover:bg-gray-100">
+                <td className="py-3 px-6 text-left whitespace-nowrap">{adminUser.email}</td>
+                <td className="py-3 px-6 text-left">{adminUser.role}</td>
+                <td className="py-3 px-6 text-left">
+                  {new Date(adminUser.createdAt).toLocaleDateString()}
+                </td>
+                <td className="py-3 px-6 text-left">
+                  {new Date(adminUser.lastLoginAt).toLocaleDateString()}
+                </td>
+                {role === 'owner' && (
+                  <td className="py-3 px-6 text-center">
+                    <select
+                      defaultValue={adminUser.role}
+                      onChange={(e) => handleRoleChange(adminUser.uid, e.target.value)}
+                      className="border rounded px-2 py-1"
+                    >
+                      <option value="owner">Owner</option>
+                      <option value="admin">Admin</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 }

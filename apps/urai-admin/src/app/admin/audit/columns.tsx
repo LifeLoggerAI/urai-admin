@@ -1,34 +1,41 @@
+
 'use client';
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from '@tanstack/react-table';
+import { ArrowUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export type AuditLog = {
   id: string;
-  adminId: string;
+  actorEmail: string;
   action: string;
-  timestamp: any;
-  details: string;
+  target: string;
+  createdAt: Date;
 };
 
 export const columns: ColumnDef<AuditLog>[] = [
   {
-    accessorKey: "adminId",
-    header: "Admin ID",
+    accessorKey: 'actorEmail',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Actor
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
-    accessorKey: "action",
-    header: "Action",
+    accessorKey: 'action',
+    header: 'Action',
   },
   {
-    accessorKey: "timestamp",
-    header: "Timestamp",
-    cell: ({ row }) => {
-      const log = row.original;
-      return new Date(log.timestamp.seconds * 1000).toLocaleString();
-    }
+    accessorKey: 'target',
+    header: 'Target',
   },
   {
-    accessorKey: "details",
-    header: "Details",
+    accessorKey: 'createdAt',
+    header: 'Date',
+    cell: ({ row }) => new Date(row.getValue('createdAt')).toLocaleString(),
   },
 ];
