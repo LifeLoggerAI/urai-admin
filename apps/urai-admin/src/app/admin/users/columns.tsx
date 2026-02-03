@@ -1,47 +1,49 @@
+
 'use client';
 
-import { ROLES } from "@/lib/auth";
-import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { adminSetUserRole } from "@/lib/firebase";
-import { logAdminAction } from "@/lib/audit";
+import { ColumnDef } from '@tanstack/react-table';
+import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export type User = {
   id: string;
   email: string;
-  role: string;
+  role: 'owner' | 'admin' | 'viewer';
+  createdAt: Date;
+  lastLoginAt: Date;
 };
 
 export const columns: ColumnDef<User>[] = [
   {
-    accessorKey: "email",
-    header: "Email",
+    accessorKey: 'email',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Email
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
-    accessorKey: "role",
-    header: "Role",
+    accessorKey: 'role',
+    header: 'Role',
   },
   {
-    id: "actions",
+    accessorKey: 'createdAt',
+    header: 'Created At',
+    cell: ({ row }) => new Date(row.getValue('createdAt')).toLocaleDateString(),
+  },
+  {
+    accessorKey: 'lastLoginAt',
+    header: 'Last Login',
+    cell: ({ row }) => (row.getValue('lastLoginAt') ? new Date(row.getValue('lastLoginAt')).toLocaleDateString() : 'Never'),
+  },
+  {
+    id: 'actions',
     cell: ({ row }) => {
       const user = row.original;
-
-      const handleRoleChange = async (role: string) => {
-        await adminSetUserRole({ uid: user.id, role });
-        await logAdminAction('set_user_role', `Set role for user ${user.email} to ${role}`);
-        // Ideally, you would refresh the data here
-      };
 
       return (
         <DropdownMenu>
@@ -53,10 +55,10 @@ export const columns: ColumnDef<User>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.id)}>Copy user ID</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleRoleChange(ROLES.a)}>Set as Admin</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleRoleChange(ROLES.s)}>Set as Staff</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleRoleChange(ROLES.v)}>Set as Viewer</DropdownMenuItem>
+            <DropdownMenuItem>View customer</DropdownMenuItem>
+            <DropdownMenuItem>View payment details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

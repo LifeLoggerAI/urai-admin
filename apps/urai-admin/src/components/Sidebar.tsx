@@ -1,36 +1,41 @@
 
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/users", label: "Users" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/content", label: "Content" },
-  { href: "/audit", label: "Audit" },
+const navItems = [
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/users', label: 'Users' },
+  { href: '/admin/audit', label: 'Audit Log' },
+  { href: '/admin/settings', label: 'Settings' },
 ];
 
-export function Sidebar() {
+export default function Sidebar() {
   const pathname = usePathname();
+  const { signOut } = useAuth();
 
   return (
-    <div className="flex flex-col w-64 bg-gray-800 text-white">
-      <div className="p-4 border-b border-gray-700">
-        <Link href="/" className="text-2xl font-bold">Urai Admin</Link>
+    <div className="w-64 bg-gray-800 text-white p-4 flex flex-col justify-between">
+      <div>
+        <h2 className="text-2xl font-bold mb-8">Urai Admin</h2>
+        <nav>
+          <ul>
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href}>
+                  <a className={`block p-2 rounded-md ${pathname === item.href ? 'bg-gray-700' : ''}`}>
+                    {item.label}
+                  </a>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
-      <nav className="flex-grow">
-        <ul>
-          {links.map(({ href, label }) => (
-            <li key={href}>
-              <Link href={href} className={`block p-4 hover:bg-gray-700 ${pathname === href ? "bg-gray-900" : ""}`}>
-                  {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <Button onClick={signOut}>Logout</Button>
     </div>
   );
 }

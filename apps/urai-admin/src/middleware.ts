@@ -1,49 +1,36 @@
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { adminAuth, adminDb } from './lib/firebaseAdmin';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/firebase/admin';
+import { cookies } from 'next/headers';
 
-export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('session')?.value || '';
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  // Redirect to login if no session cookie is present and the route is not /login
-  if (!session && request.nextUrl.pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+  if (pathname.startsWith('/admin')) {
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('__session')?.value;
 
-  if (session) {
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
+
     try {
-      const decodedToken = await adminAuth.verifySessionCookie(session, true);
-      const userDoc = await adminDb.collection('adminUsers').doc(decodedToken.uid).get();
+      const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+      const { uid, role } = decodedToken;
 
-      // Check for bootstrap
-      const adminUsers = await adminDb.collection('adminUsers').get();
-      if (adminUsers.empty && process.env.ALLOW_ADMIN_BOOTSTRAP === 'true') {
-        await adminDb.collection('adminUsers').doc(decodedToken.uid).set({
-          email: decodedToken.email,
-          role: 'owner',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-        console.log(`Bootstrapped first admin user: ${decodedToken.email}`);
-      } else if (!userDoc.exists || !userDoc.data()?.isActive) {
-        // If user is not an active admin, redirect to access denied page and sign out
-        const response = NextResponse.redirect(new URL('/access-denied', request.url));
-        response.cookies.delete('session');
-        return response;
+      if (!role || !['owner', 'admin', 'viewer'].includes(role)) {
+        return NextResponse.redirect(new URL('/unauthorized', req.url));
       }
 
-      // If on the login page and authenticated, redirect to the dashboard
-      if (request.nextUrl.pathname === '/login') {
-        return NextResponse.redirect(new URL('/', request.url));
-      }
+      const headers = new Headers(req.headers);
+      headers.set('x-user-id', uid);
+      headers.set('x-user-role', role);
+
+      return NextResponse.next({ request: { headers } });
     } catch (error) {
-      console.error('Error verifying session cookie:', error);
-      // If session is invalid, redirect to login page and clear the cookie
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete('session');
-      return response;
+      console.error('Middleware error:', error);
+      cookieStore.delete('__session');
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
@@ -51,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/admin/:path*', '/'],
 };
