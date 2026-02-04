@@ -1,5 +1,12 @@
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
+  overrides: [
+    {
+      files: ["functions/**/*.ts"],
+      rules: { "react-refresh/only-export-components": "off" },
+    },
+  ],
+
   root: true,
   env: { browser: true, es2022: true, node: true },
   parser: "@typescript-eslint/parser",
