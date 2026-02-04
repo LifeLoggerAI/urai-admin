@@ -1,6 +1,6 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getDashboardData } from '../../../../lib/dashboard';
+import { getDashboardData } from '@/lib/dashboard';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
