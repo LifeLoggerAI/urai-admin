@@ -1,17 +1,11 @@
 {
   "hosting": {
     "site": "urai-admin",
-    "public": "apps/urai-admin/.next",
+    "public": "apps/urai-admin/out",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "function": "nextServer"
-      }
     ]
   },
   "functions": {
