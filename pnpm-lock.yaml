@@ -48,6 +48,9 @@ importers:
       eslint:
         specifier: 8.57.1
         version: 8.57.1
+      eslint-plugin-react-refresh:
+        specifier: ^0.5.0
+        version: 0.5.0(eslint@8.57.1)
       firebase-tools:
         specifier: ^13.13.2
         version: 13.35.1(@types/node@25.0.10)(encoding@0.1.13)
@@ -2354,6 +2357,11 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0
+
+  eslint-plugin-react-refresh@0.5.0:
+    resolution: {integrity: sha512-ZYvmh7VfVgqR/7wR71I3Zl6hK/C5CcxdWYKZSpHawS5JCNgE4efhQWg/+/WPpgGAp9Ngp/rRZYyaIwmPQBq/lA==}
+    peerDependencies:
+      eslint: '>=9'
 
   eslint-plugin-react@7.37.5:
     resolution: {integrity: sha512-Qteup0SqU15kdocexFNAJMvCJEfa2xUKNV4CC1xsVMrIIqEy3SQ/rqyxCWNzfrd3/ldy6HMlD2e0JDVpDg2qIA==}
@@ -7298,6 +7306,10 @@ snapshots:
       string.prototype.includes: 2.0.1
 
   eslint-plugin-react-hooks@5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1):
+    dependencies:
+      eslint: 8.57.1
+
+  eslint-plugin-react-refresh@0.5.0(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
