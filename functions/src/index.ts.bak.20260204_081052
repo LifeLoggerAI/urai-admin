@@ -248,7 +248,6 @@ export const aggregateAnalytics = functions
 
     } catch (error: unknown) {
       console.error(`[${jobId}:${runId}] FAILED:`, error);
-      await runRef.update({ status: "failed", finishedAt: new Date(), error: (error instanceof Error ? error.message : String(error)) });
+      await runRef.update({ status: "failed", finishedAt: new Date(), error: error.message });
     }
   });
-

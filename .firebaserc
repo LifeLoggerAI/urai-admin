@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "urai-8025b"
-  }
+    "default": "urai-8025b",
+    "admin": "urai-4dc1d"
+  },
+  "targets": {},
+  "etags": {}
 }

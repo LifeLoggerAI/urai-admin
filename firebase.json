@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "urai-admin-73155349",
+    "site": "urai-admin",
     "public": "apps/urai-admin/.next",
     "ignore": [
       "firebase.json",
