@@ -19,3 +19,6 @@ firebaserc
 # local backups + temp
 .bak/
 tmp/
+
+# backups
+*.bak*
