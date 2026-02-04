@@ -1,24 +1,30 @@
+'use client';
 
-import Link from 'next/link';
+import { useAuth } from '@/lib/firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 bg-gray-800 text-white p-4">
-        <h1 className="text-2xl font-bold mb-8">URAI Admin</h1>
-        <nav>
-          <ul>
-            <li><Link href="/dashboard" className="block p-2 hover:bg-gray-700 rounded-md">Dashboard</Link></li>
-            <li><Link href="/users" className="block p-2 hover:bg-gray-700 rounded-md">Users</Link></li>
-            <li><Link href="/jobs" className="block p-2 hover:bg-gray-700 rounded-md">Jobs</Link></li>
-            <li><Link href="/content" className="block p-2 hover:bg-gray-700 rounded-md">Content</Link></li>
-            <li><Link href="/audit" className="block p-2 hover:bg-gray-700 rounded-md">Audit</Link></li>
-          </ul>
-        </nav>
-      </aside>
-      <main className="flex-1 p-8">
-        {children}
-      </main>
-    </div>
-  );
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
