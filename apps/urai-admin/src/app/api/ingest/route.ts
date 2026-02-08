@@ -5,7 +5,6 @@ import { AnalyticsEventSchemaV1 } from '@/lib/analytics/schema';
 
 // Initialize Firebase Admin SDK
 if (!getApps().length) {
-  // Ensure the environment variable is set
   if (!process.env.FIREBASE_ADMIN_SDK_JSON) {
     throw new Error('The FIREBASE_ADMIN_SDK_JSON environment variable is not set.');
   }
