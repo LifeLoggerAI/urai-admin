@@ -1,0 +1,17 @@
+{
+  "timestamp": "2024-10-27T10:00:00Z",
+  "evidenceGeneratorVersion": "1.1.0",
+  "gitCommit": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+  "sealedVersion": "1.2.0-sealed",
+  "controlHashes": {
+    "packageJson": "sha256-f4c7c2b0d...e4a",
+    "lockfile": "sha256-a3b1e8d9c...f2d",
+    "firestoreRules": "sha256-b1c2d3e4f...a9b",
+    "governanceConstitution": "sha256-c9d8e7f6a...b8c"
+  },
+  "verifications": {
+    "logChainVerification": "VALID",
+    "driftCheck": "CLEAN",
+    "ciStatus": "SUCCESS"
+  }
+}

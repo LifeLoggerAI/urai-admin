@@ -1,0 +1,44 @@
+
+{
+  "governanceVersion": "1.0.0",
+  "roles": {
+    "FOUNDER": {
+      "canActivateNuclear": true,
+      "canModifyGovernance": true,
+      "canBypassFreeze": true,
+      "canResolveCriticalIncidents": true,
+      "isOperational": false
+    },
+    "SYSTEM_ADMIN": {
+      "canModifySystemConfig": true,
+      "canManageTenants": true,
+      "canViewAuditLogs": true,
+      "isOperational": true
+    },
+    "SECURITY_OFFICER": {
+      "canViewAnomalies": true,
+      "canSuspendPrivileges": true,
+      "canTriggerIncidentProtocol": true,
+      "canManageIncidents": true,
+      "isOperational": false
+    },
+    "COMPLIANCE_OFFICER": {
+      "canViewAuditLogs": true,
+      "canViewIncidentLedger": true,
+      "canExportComplianceBundle": true,
+      "isReadOnly": true
+    },
+    "AUDITOR": {
+      "canViewAuditLogs": true,
+      "canVerifyLogChain": true,
+      "isReadOnly": true
+    }
+  },
+  "escalationPolicy": {
+    "HIGH": "SUSPEND_AND_ALERT",
+    "CRITICAL": "TRIGGER_TAMPER_WEBHOOK"
+  },
+  "requiresDualApproval": [
+    "GOVERNANCE_MODIFICATION"
+  ]
+}
