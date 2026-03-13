@@ -9,7 +9,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://urai-admin-73155349.firebaseapp.com https://urai-admin-73155349.web.app;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'self' https://urai-admin-73155349.firebaseapp.com https://urai-admin-73155349.web.app;",
           },
           {
             key: 'X-Content-Type-Options',
