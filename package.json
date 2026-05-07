@@ -2,10 +2,12 @@
   "name": "urai-admin-root",
   "private": true,
   "scripts": {
-    "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "build": "pnpm -r build",
+    "lint": "pnpm --dir apps/urai-admin lint && pnpm --dir functions lint",
+    "typecheck": "pnpm --dir apps/urai-admin typecheck && pnpm --dir functions typecheck",
+    "test": "pnpm --dir apps/urai-admin test && pnpm --dir functions test",
+    "build": "pnpm --dir apps/urai-admin build && pnpm --dir functions build",
+    "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
+    "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
     "smoke-test": "bash scripts/smoke-test.sh"
   },
