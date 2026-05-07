@@ -1,77 +1,73 @@
-import { auth } from '@/lib/firebase/admin';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestore } from 'firebase-admin/firestore';
+import { z } from 'zod';
 
-const db = getFirestore();
-const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+import { auth, firestore } from '@/lib/firebase/admin';
 
-export async function POST(req: NextRequest) {
+const loginSchema = z.object({
+  idToken: z.string().min(1),
+});
+
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
+const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+
+export async function POST(request: NextRequest) {
   try {
-    const { idToken } = await req.json();
-
-    if (!idToken || typeof idToken !== 'string') {
-      return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
-    }
-
-    const decodedToken = await auth.verifyIdToken(idToken);
-    const { uid, email } = decodedToken;
-
-    const adminUserRef = db.collection('adminUsers').doc(uid);
+    const { idToken } = loginSchema.parse(await request.json());
+    const decodedToken = await auth.verifyIdToken(idToken, true);
+    const adminUserRef = firestore.collection('adminUsers').doc(decodedToken.uid);
     const adminUserDoc = await adminUserRef.get();
+    const adminUser = adminUserDoc.data();
 
-    if (adminUserDoc.exists && adminUserDoc.data()?.isActive) {
-      const user = adminUserDoc.data();
-      const role = user?.role;
-
-      if (!['owner', 'admin', 'viewer'].includes(role)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      await auth.setCustomUserClaims(uid, { role, admin: role === 'owner' || role === 'admin' });
-      await adminUserRef.update({ lastLoginAt: new Date(), updatedAt: new Date() });
-
-      const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
-      cookies().set('__session', sessionCookie, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: expiresIn / 1000,
-      });
-
-      return NextResponse.json({ success: true }, { status: 200 });
+    if (!adminUserDoc.exists || adminUser?.isActive !== true) {
+      return NextResponse.json({ success: false, error: 'Admin access is not active for this account' }, { status: 403 });
     }
 
-    const snapshot = await db.collection('adminUsers').limit(1).get();
-
-    if (snapshot.empty && process.env.ALLOW_ADMIN_BOOTSTRAP === 'true') {
-      await adminUserRef.set({
-        email,
-        role: 'owner',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLoginAt: new Date(),
-      });
-
-      await auth.setCustomUserClaims(uid, { role: 'owner', admin: true });
-      const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
-
-      cookies().set('__session', sessionCookie, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: expiresIn / 1000,
-      });
-
-      return NextResponse.json({ success: true, isBootstrap: true }, { status: 200 });
+    if (!['owner', 'admin', 'viewer'].includes(adminUser.role)) {
+      return NextResponse.json({ success: false, error: 'Admin role is not valid for this account' }, { status: 403 });
     }
 
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const isPrivilegedAdmin = adminUser.role === 'owner' || adminUser.role === 'admin';
+
+    await auth.setCustomUserClaims(decodedToken.uid, {
+      admin: isPrivilegedAdmin,
+      role: adminUser.role,
+    });
+
+    await adminUserRef.set({
+      email: decodedToken.email ?? adminUser.email ?? null,
+      lastLoginAt: new Date(),
+      updatedAt: new Date(),
+    }, { merge: true });
+
+    const refreshedUser = await auth.getUser(decodedToken.uid);
+    const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
+    const response = NextResponse.json({ success: true, role: adminUser.role, uid: refreshedUser.uid });
+
+    response.cookies.set('__session', sessionCookie, {
+      maxAge: SESSION_MAX_AGE_SECONDS,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    await firestore.collection('auditLogs').add({
+      actorUid: decodedToken.uid,
+      actorEmail: decodedToken.email ?? adminUser.email ?? null,
+      actorRole: adminUser.role,
+      action: 'auth.login',
+      target: { type: 'adminUser', id: decodedToken.uid },
+      metadata: { provider: decodedToken.firebase?.sign_in_provider ?? null },
+      createdAt: new Date(),
+    });
+
+    return response;
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ success: false, error: 'Invalid login payload', issues: error.issues }, { status: 400 });
+    }
+
+    console.error('Admin login failed:', error);
+    return NextResponse.json({ success: false, error: 'Login failed' }, { status: 401 });
   }
 }
