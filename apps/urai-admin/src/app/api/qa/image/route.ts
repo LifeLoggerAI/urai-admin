@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
-import path from 'path';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -18,7 +17,7 @@ export async function GET(request: Request) {
                 'Content-Type': 'image/png'
             }
         });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 }
