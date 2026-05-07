@@ -1,0 +1,8 @@
+src/**/*.js
+src/**/*.jsx
+src/app/(admin)/_legacy/**
+src/app/(admin)/**
+src/pages/**
+.next/**
+out/**
+node_modules/**
