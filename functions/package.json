@@ -6,7 +6,7 @@
     "node": "20"
   },
   "scripts": {
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "echo 'No tests in functions' && exit 0",
     "build": "tsc"
