@@ -16,7 +16,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
-import { cn } from '@/lib/utils';
 import { DataTablePagination } from './data-table-pagination';
 import { DataTableToolbar } from './data-table-toolbar';
 import {
