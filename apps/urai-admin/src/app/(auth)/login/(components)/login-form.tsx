@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +19,8 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -29,12 +30,32 @@ export function LoginForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setError(null);
+    setIsSubmitting(true);
+
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/');
+      const credential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const idToken = await credential.user.getIdToken();
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!response.ok) {
+        await auth.signOut();
+        setError(response.status === 401 ? 'This account is not authorized for URAI Admin.' : 'Unable to create an admin session.');
+        return;
+      }
+
+      router.push('/admin');
+      router.refresh();
     } catch (error) {
       setError("Invalid email or password");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -46,6 +67,7 @@ export function LoginForm() {
           id="email"
           type="email"
           placeholder="name@example.com"
+          disabled={isSubmitting}
           {...form.register("email")}
         />
         {form.formState.errors.email && (
@@ -56,7 +78,7 @@ export function LoginForm() {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" type="password" {...form.register("password")} />
+        <Input id="password" type="password" disabled={isSubmitting} {...form.register("password")} />
         {form.formState.errors.password && (
           <p className="text-sm font-medium text-destructive">
             {form.formState.errors.password.message}
@@ -68,7 +90,7 @@ export function LoginForm() {
           {error}
         </p>
       )}
-      <Button type="submit">Sign In</Button>
+      <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in...' : 'Sign In'}</Button>
     </form>
   )
 }

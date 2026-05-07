@@ -1,27 +1,55 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { auth, firestore } from '@/lib/firebase/admin';
 
-import admin from './firebase-admin';
+type AdminRole = 'owner' | 'admin' | 'viewer';
 
-export const withAuthApi = (handler) => async (req, res) => {
-  const { authorization } = req.headers;
+type AuthedRequest = NextApiRequest & {
+  user?: {
+    uid: string;
+    email?: string;
+    role: AdminRole;
+  };
+};
 
-  if (!authorization || !authorization.startsWith('Bearer ')) {
+export const withAuthApi = (
+  handler: (req: AuthedRequest, res: NextApiResponse) => Promise<void> | void,
+  allowedRoles: AdminRole[] = ['owner', 'admin', 'viewer'],
+) => async (req: AuthedRequest, res: NextApiResponse) => {
+  const sessionCookie = req.cookies.__session;
+
+  if (!sessionCookie) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const token = authorization.split('Bearer ')[1];
-
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const userDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+    const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+    const role = decodedToken.role as AdminRole | undefined;
 
-    if (!userDoc.exists) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    if (!role || !allowedRoles.includes(role)) {
+      return res.status(403).json({ message: 'Forbidden' });
     }
 
-    req.user = { ...decodedToken, role: userDoc.data().role };
+    const adminUserDoc = await firestore.collection('adminUsers').doc(decodedToken.uid).get();
+    const adminUser = adminUserDoc.data();
+
+    if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      role,
+    };
 
     return handler(req, res);
   } catch (error) {
+    console.error('Pages API admin auth error:', error);
     return res.status(401).json({ message: 'Unauthorized' });
   }
 };
+
+export const withAdminAuth = (
+  handler: (req: AuthedRequest, res: NextApiResponse) => Promise<void> | void,
+  allowedRoles: AdminRole[] = ['owner', 'admin'],
+) => withAuthApi(handler, allowedRoles);

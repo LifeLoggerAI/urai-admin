@@ -1,38 +1,46 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import admin from '@/lib/firebaseAdmin';
+import { firestore } from '@/lib/firebase/admin';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
 export async function POST(request: NextRequest) {
-  const { flagId, enabled } = await request.json();
-  const actorUid = request.headers.get('x-user-id');
-  const actorEmail = (await admin.auth().getUser(actorUid as string)).email;
-
-  if (!flagId || typeof enabled !== 'boolean') {
-    return NextResponse.json({ success: false, message: 'Flag ID and enabled status are required' }, { status: 400 });
-  }
-
   try {
-    const flagRef = admin.firestore().collection('featureFlags').doc(flagId);
-    const auditLogRef = admin.firestore().collection('auditLogs').doc();
+    const session = await requireAdminSession(request, ['owner', 'admin']);
+    const { flagId, enabled } = await request.json();
 
-    const batch = admin.firestore().batch();
+    if (!flagId || typeof flagId !== 'string' || typeof enabled !== 'boolean') {
+      return NextResponse.json(
+        { success: false, message: 'Flag ID and enabled status are required' },
+        { status: 400 },
+      );
+    }
 
-    batch.update(flagRef, { enabled });
-    batch.set(auditLogRef, {
-      ts: new Date(),
-      actorUid,
-      actorEmail,
-      action: 'set-flag',
-      targetType: 'featureFlag',
-      targetId: flagId,
-      meta: { enabled },
+    const flagRef = firestore.collection('featureFlags').doc(flagId);
+    const auditLogRef = firestore.collection('auditLogs').doc();
+
+    await firestore.runTransaction(async (transaction) => {
+      const current = await transaction.get(flagRef);
+      const before = current.exists ? current.data() : null;
+
+      transaction.set(flagRef, {
+        ...(before ?? {}),
+        enabled,
+        updatedAt: new Date(),
+        updatedBy: session.uid,
+      }, { merge: true });
+
+      transaction.set(auditLogRef, {
+        actorUid: session.uid,
+        actorEmail: session.email ?? null,
+        actorRole: session.role,
+        action: 'featureFlag.update',
+        target: { type: 'featureFlag', id: flagId },
+        metadata: { before: before?.enabled ?? null, after: enabled },
+        createdAt: new Date(),
+      });
     });
 
-    await batch.commit();
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, flagId, enabled });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, message: 'An error occurred' }, { status: 500 });
+    return adminAuthErrorResponse(error);
   }
 }
