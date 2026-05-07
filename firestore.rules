@@ -24,7 +24,7 @@ service cloud.firestore {
     }
 
     match /adminUsers/{uid} {
-      allow read: if request.auth.uid == uid || isOwnerOrAdmin();
+      allow read: if isSignedIn() && (request.auth.uid == uid || isOwnerOrAdmin());
       allow write: if false;
     }
 

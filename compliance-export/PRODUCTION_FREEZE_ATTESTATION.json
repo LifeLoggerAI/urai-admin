@@ -1,0 +1,14 @@
+{
+  "attestationVersion": "1.0.0",
+  "frozenAt": "2024-10-27T09:55:00Z",
+  "frozenBy": "FOUNDER",
+  "systemVersion": "1.2.0-sealed",
+  "governanceVersion": "1.2.0",
+  "hashes": {
+    "packageJson": "sha256-f4c7c2b0d...e4a",
+    "lockfile": "sha256-a3b1e8d9c...f2d",
+    "firestoreRules": "sha256-b1c2d3e4f...a9b",
+    "governanceConstitution": "sha256-c9d8e7f6a...b8c",
+    "finalSystemStateHash": "sha256-d4e5f6a7b...c1d"
+  }
+}
