@@ -23,6 +23,13 @@ urai_backups/
 **/urai_backups/
 *.bak*
 
+# stale local Functions sources removed from the active deploy path
+functions/src/admin/
+functions/src/middleware/
+functions/src/scripts/
+functions/src/setAdminClaim.ts
+functions/src/setAdminClaim.js
+
 # generated TypeScript artifacts
 apps/urai-admin/src/**/*.js
 apps/urai-admin/src/**/*.jsx
