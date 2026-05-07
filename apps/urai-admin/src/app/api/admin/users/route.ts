@@ -1,31 +1,38 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, firestore } from '@/lib/firebase/admin';
+import { firestore } from '@/lib/firebase/admin';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get('__session')?.value;
-    if (!sessionCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAdminSession(req, ['owner', 'admin']);
 
-    const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
-    const { role } = decodedToken;
+    const usersSnapshot = await firestore.collection('adminUsers').orderBy('createdAt', 'desc').limit(100).get();
+    const users = usersSnapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    if (!role || !['owner', 'admin', 'viewer'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+      return {
+        uid: doc.id,
+        email: data.email ?? null,
+        role: data.role ?? null,
+        isActive: data.isActive === true,
+        createdAt: data.createdAt ?? null,
+        updatedAt: data.updatedAt ?? null,
+        lastLoginAt: data.lastLoginAt ?? null,
+      };
+    });
 
-    const usersSnapshot = await firestore.collection('adminUsers').get();
-    const users = usersSnapshot.docs.map(doc => ({
-      uid: doc.id,
-      ...doc.data()
-    }));
+    await firestore.collection('auditLogs').add({
+      actorUid: session.uid,
+      actorEmail: session.email ?? null,
+      actorRole: session.role,
+      action: 'adminUsers.list',
+      target: { type: 'adminUsers', id: 'list' },
+      metadata: { count: users.length },
+      createdAt: new Date(),
+    });
 
     return NextResponse.json({ users });
-
   } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return adminAuthErrorResponse(error);
   }
 }
