@@ -29,6 +29,9 @@ jobs:
       - name: Clean stale Functions sources
         run: bash scripts/clean-functions-legacy.sh
 
+      - name: Clean generated app artifacts
+        run: bash scripts/clean-app-generated.sh
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
