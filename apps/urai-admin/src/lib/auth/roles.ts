@@ -1,9 +1,7 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { headers } from 'next/headers';
 import { User } from 'firebase/auth';
-import { auth } from '@/config/firebase-admin';
 
 export const ROLES = { SUPERADMIN: 'superadmin' };
 
