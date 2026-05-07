@@ -1,4 +1,5 @@
 import { firestore } from '@/lib/firebase/admin';
+import { FeatureFlagActions } from './FeatureFlagActions';
 
 function formatDate(value: unknown) {
   if (!value) return '—';
@@ -59,16 +60,17 @@ export default async function FeatureFlagsPage() {
               <th className="px-4 py-3 font-medium">Rollout</th>
               <th className="px-4 py-3 font-medium">Updated</th>
               <th className="px-4 py-3 font-medium">Updated By</th>
+              <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {flags.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={5}>No feature flags found.</td>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>No feature flags found.</td>
               </tr>
             ) : (
               flags.map((flag) => (
-                <tr key={flag.id} className="border-t">
+                <tr key={flag.id} className="border-t align-top">
                   <td className="px-4 py-3">
                     <div className="font-medium">{flag.name}</div>
                     <div className="text-xs text-muted-foreground">{flag.id}</div>
@@ -78,6 +80,9 @@ export default async function FeatureFlagsPage() {
                   <td className="px-4 py-3">{flag.rollout === null ? '—' : `${flag.rollout}%`}</td>
                   <td className="px-4 py-3">{formatDate(flag.updatedAt)}</td>
                   <td className="px-4 py-3">{flag.updatedBy ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <FeatureFlagActions flagId={flag.id} enabled={flag.enabled} rollout={flag.rollout} />
+                  </td>
                 </tr>
               ))
             )}
