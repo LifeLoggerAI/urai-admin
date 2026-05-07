@@ -19,7 +19,11 @@ firebaserc
 # local backups + temp
 .bak/
 tmp/
-
-# backups
+urai_backups/
+**/urai_backups/
 *.bak*
-.next/
+
+# generated TypeScript artifacts
+apps/urai-admin/src/**/*.js
+apps/urai-admin/src/**/*.jsx
+!apps/urai-admin/src/**/*.config.js
