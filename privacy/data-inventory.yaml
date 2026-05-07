@@ -1,0 +1,65 @@
+repo: urai-admin
+privacyGovernanceVersion: 0.1.0-draft
+owner: admin-platform
+lastReviewed: 2026-05-07
+
+fields:
+  - name: admin_actor_id
+    collectionOrTable: admin_audit_events
+    source: admin
+    dataClass: L1
+    purpose: identify privileged actor for auditability
+    consentTier: C0
+    retentionClass: R4
+    exportable: false
+    deletable: false
+    monetizable: false
+    aiTrainingAllowed: false
+    adminAccessible: true
+    auditRequired: true
+    notes: Operational admin metadata used to attribute privileged actions.
+
+  - name: target_user_reference
+    collectionOrTable: admin_audit_events
+    source: system
+    dataClass: L3
+    purpose: record which user record was accessed or changed during support, access review, or incident response
+    consentTier: C3
+    retentionClass: R4
+    exportable: true
+    deletable: false
+    monetizable: false
+    aiTrainingAllowed: false
+    adminAccessible: true
+    auditRequired: true
+    notes: Must be minimized and shown in user-visible privacy/audit history when appropriate.
+
+  - name: access_request_email
+    collectionOrTable: accessRequests
+    source: user
+    dataClass: L1
+    purpose: route and review admin access requests
+    consentTier: C1
+    retentionClass: R2
+    exportable: true
+    deletable: true
+    monetizable: false
+    aiTrainingAllowed: false
+    adminAccessible: true
+    auditRequired: true
+    notes: Access-request metadata should not be reused for analytics or monetization.
+
+  - name: role_assignment
+    collectionOrTable: user_roles
+    source: admin
+    dataClass: L1
+    purpose: enforce least-privilege access to admin functions
+    consentTier: C0
+    retentionClass: R4
+    exportable: true
+    deletable: false
+    monetizable: false
+    aiTrainingAllowed: false
+    adminAccessible: true
+    auditRequired: true
+    notes: Role changes must be logged and reviewable.
