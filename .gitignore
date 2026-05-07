@@ -30,6 +30,9 @@ functions/src/scripts/
 functions/src/setAdminClaim.ts
 functions/src/setAdminClaim.js
 
+# legacy duplicate Next app-router tree; canonical routes live under apps/urai-admin/src/app
+apps/urai-admin/app/
+
 # generated TypeScript artifacts
 apps/urai-admin/src/**/*.js
 apps/urai-admin/src/**/*.jsx
