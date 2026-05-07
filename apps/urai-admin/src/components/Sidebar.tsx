@@ -11,6 +11,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/projects', label: 'Projects' },
   { href: '/admin/jobs', label: 'Jobs' },
+  { href: '/admin/job-runs', label: 'Job Runs' },
   { href: '/admin/dead-letters', label: 'Dead Letters' },
   { href: '/admin/feature-flags', label: 'Feature Flags' },
   { href: '/admin/policies', label: 'Roles & Policies' },
