@@ -7,9 +7,9 @@
   },
   "scripts": {
     "lint": "eslint src/index.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.active.json --noEmit",
     "test": "echo 'No tests in functions' && exit 0",
-    "build": "tsc"
+    "build": "tsc -p tsconfig.active.json"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",
