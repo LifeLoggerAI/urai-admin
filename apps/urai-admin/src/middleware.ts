@@ -1,42 +1,27 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase/admin';
-import { cookies } from 'next/headers';
 
-export async function middleware(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminApi = pathname.startsWith('/api/admin');
 
-  if (pathname.startsWith('/admin')) {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('__session')?.value;
+  if (!isAdminPage && !isAdminApi) {
+    return NextResponse.next();
+  }
 
-    if (!sessionCookie) {
-      return NextResponse.redirect(new URL('/login', req.url));
+  const sessionCookie = req.cookies.get('__session')?.value;
+
+  if (!sessionCookie) {
+    if (isAdminApi) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    try {
-      const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
-      const { uid, role } = decodedToken;
-
-      if (!role || !['owner', 'admin', 'viewer'].includes(role)) {
-        return NextResponse.redirect(new URL('/unauthorized', req.url));
-      }
-
-      const headers = new Headers(req.headers);
-      headers.set('x-user-id', uid);
-      headers.set('x-user-role', role);
-
-      return NextResponse.next({ request: { headers } });
-    } catch (error) {
-      console.error('Middleware error:', error);
-      cookieStore.delete('__session');
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
