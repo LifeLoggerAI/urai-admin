@@ -51,7 +51,7 @@ export default async function AdminUsersPage() {
         <p className="text-sm text-muted-foreground">Manage active admin access and role assignments through hardened admin APIs.</p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border" role="region" aria-label="Admin users table">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
