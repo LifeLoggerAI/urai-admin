@@ -9,9 +9,7 @@ export const withAuth = (handler: NextApiHandler) => async (req: NextApiRequest,
 
   const token = authHeader.split(' ')[1];
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    // You can add the decoded token to the request object if needed
-    // (req as any).uid = decodedToken.uid;
+    await adminAuth.verifyIdToken(token);
     return handler(req, res);
   } catch (error) {
     console.error('Error verifying token:', error);
