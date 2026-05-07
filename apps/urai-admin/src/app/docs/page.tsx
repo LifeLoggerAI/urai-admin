@@ -1,10 +1,17 @@
 import Link from 'next/link';
 
 const sections = [
-  { title: 'Getting started', body: 'Set up Firebase, configure session cookies, bootstrap the first owner, and deploy the admin console.' },
-  { title: 'Security model', body: 'Understand role checks, active admin documents, server-side writes, and deny-by-default rules.' },
-  { title: 'Admin modules', body: 'Use users, projects, feature flags, jobs, job runs, dead letters, system config, and audit logs.' },
-  { title: 'Standalone mode', body: 'Prepare URAI Admin for organizations, invites, billing, integrations, and external customers.' },
+  { title: 'Getting started', body: 'Connect Firebase, configure environment variables, bootstrap the first owner, and verify uraiadmin.com with the green-ship script.' },
+  { title: 'Security model', body: 'Admin access uses session cookies, active admin records, role-aware APIs, deny-by-default rules, and audited server-side mutations.' },
+  { title: 'Admin modules', body: 'Run the product with users, projects, feature flags, jobs, job runs, dead letters, system config, roles, and audit logs.' },
+  { title: 'Standalone mode', body: 'Start in single-org mode, then expand toward organizations, invites, billing, integrations, and external customer workspaces.' },
+];
+
+const launchChecks = [
+  'Run scripts/clean-functions-legacy.sh before local gates if stale Functions files exist.',
+  'Run scripts/green-ship.sh before deploy.',
+  'Verify Firebase Auth authorized domains include uraiadmin.com and www.uraiadmin.com.',
+  'Verify /api/admin/* returns 401 when unauthenticated.',
 ];
 
 export default function DocsPage() {
@@ -26,8 +33,14 @@ export default function DocsPage() {
             </section>
           ))}
         </div>
-        <div className="mt-10 rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-slate-300">
-          Replace this placeholder with full setup guides, API references, deployment instructions, and integration docs before broad release.
+        <div className="mt-10 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-6">
+          <h2 className="text-xl font-semibold">Launch checklist</h2>
+          <ul className="mt-4 space-y-2 text-sm text-slate-300">
+            {launchChecks.map((check) => <li key={check}>• {check}</li>)}
+          </ul>
+        </div>
+        <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-6 text-sm leading-6 text-slate-300">
+          For deeper setup details, use the repository readiness guide at docs/URAI_ADMIN_STANDALONE_READINESS.md. It covers public routes, protected routes, environment variables, auth flow, admin mutation standards, and the multi-tenant path.
         </div>
       </div>
     </main>
