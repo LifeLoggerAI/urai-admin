@@ -9,6 +9,9 @@ echo "--- URAI Admin Green Ship ---"
 echo "--- Cleaning stale Functions sources ---"
 bash scripts/clean-functions-legacy.sh
 
+echo "--- Cleaning generated app artifacts ---"
+bash scripts/clean-app-generated.sh
+
 echo "--- Installing dependencies ---"
 pnpm install
 
