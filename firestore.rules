@@ -6,17 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwnerOrAdmin() {
+    function adminUser() {
+      return get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data;
+    }
+
+    function isActiveAdminUser() {
       return isSignedIn()
         && request.auth.token.admin == true
-        && request.auth.token.role in ['owner', 'admin']
-        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true;
+        && adminUser().isActive == true;
+    }
+
+    function isOwnerOrAdmin() {
+      return isActiveAdminUser()
+        && adminUser().role in ['owner', 'admin'];
     }
 
     function isViewerOrAbove() {
-      return isSignedIn()
-        && request.auth.token.role in ['owner', 'admin', 'viewer']
-        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true;
+      return isActiveAdminUser()
+        && adminUser().role in ['owner', 'admin', 'viewer'];
     }
 
     match /{document=**} {
