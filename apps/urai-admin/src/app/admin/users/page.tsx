@@ -1,4 +1,5 @@
 import { firestore } from '@/lib/firebase/admin';
+import { AdminUserActions } from './AdminUserActions';
 
 function formatDate(value: unknown) {
   if (!value) return '—';
@@ -47,7 +48,7 @@ export default async function AdminUsersPage() {
     <main className="space-y-6 p-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Admin Users</h1>
-        <p className="text-sm text-muted-foreground">Read-only view of active and inactive admin users.</p>
+        <p className="text-sm text-muted-foreground">Manage active admin access and role assignments through hardened admin APIs.</p>
       </div>
 
       <div className="overflow-hidden rounded-lg border">
@@ -60,12 +61,13 @@ export default async function AdminUsersPage() {
               <th className="px-4 py-3 font-medium">Created</th>
               <th className="px-4 py-3 font-medium">Updated</th>
               <th className="px-4 py-3 font-medium">Last Login</th>
+              <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>No admin users found.</td>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>No admin users found.</td>
               </tr>
             ) : (
               users.map((user) => (
@@ -79,6 +81,9 @@ export default async function AdminUsersPage() {
                   <td className="px-4 py-3">{formatDate(user.createdAt)}</td>
                   <td className="px-4 py-3">{formatDate(user.updatedAt)}</td>
                   <td className="px-4 py-3">{formatDate(user.lastLoginAt)}</td>
+                  <td className="px-4 py-3">
+                    <AdminUserActions uid={user.uid} role={user.role} isActive={user.isActive} />
+                  </td>
                 </tr>
               ))
             )}
