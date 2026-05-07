@@ -1,14 +1,15 @@
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
-  cookies().set('__session', '', {
+  const response = NextResponse.json({ success: true }, { status: 200 });
+
+  response.cookies.set('__session', '', {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: 0,
   });
 
-  return NextResponse.json({ success: true }, { status: 200 });
+  return response;
 }
