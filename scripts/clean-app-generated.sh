@@ -13,6 +13,11 @@ find apps/urai-admin/src -type f \( -name '*.js' -o -name '*.jsx' \) \
 # Remove legacy route-group artifacts that are no longer canonical for /admin/*.
 rm -rf 'apps/urai-admin/src/app/(admin)/_legacy'
 
+# Remove the legacy duplicate app-router tree. The canonical Next.js app
+# lives under apps/urai-admin/src/app; keeping apps/urai-admin/app around
+# creates confusing duplicate routes and can mask build/typecheck issues.
+rm -rf apps/urai-admin/app
+
 # Remove generated Next output for a clean build.
 rm -rf apps/urai-admin/.next apps/urai-admin/out
 
