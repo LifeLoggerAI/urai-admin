@@ -1,5 +1,4 @@
-
-import { firestore } from './firebase-admin';
+import { firestore } from './firebase/admin';
 
 export async function getDashboardData() {
   const usersSnapshot = await firestore.collection('users').get();
