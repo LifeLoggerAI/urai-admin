@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
+      - name: Security gate
+        run: pnpm security:gate
+
       - name: Verify active Functions entrypoint
         run: |
           pnpm functions:typecheck:active
