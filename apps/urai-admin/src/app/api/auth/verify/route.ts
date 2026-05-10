@@ -1,18 +1,12 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
-  const session = cookies().get('__session')?.value || '';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
-  if (!session) {
-    return new NextResponse('Session not found', { status: 401 });
-  }
-
+export async function GET(req: NextRequest) {
   try {
-    const decodedClaims = await auth.verifySessionCookie(session, true);
-    return NextResponse.json({ status: 'success', role: decodedClaims.role });
+    const session = await requireAdminSession(req, ['owner', 'admin', 'viewer']);
+    return NextResponse.json({ status: 'success', role: session.role });
   } catch (error) {
-    return new NextResponse('Invalid session cookie', { status: 401 });
+    return adminAuthErrorResponse(error);
   }
 }
