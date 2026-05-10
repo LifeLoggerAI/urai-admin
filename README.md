@@ -52,9 +52,60 @@ pnpm install
 
 If `corepack enable` fails in a read-only filesystem environment, that is usually fine as long as `corepack prepare pnpm@9.15.0 --activate` and `pnpm --version` work.
 
-## One-command verification
+## Core verification commands
 
-Use the green-ship script before deploy:
+Run these before a release:
+
+```bash
+pnpm preflight:production
+pnpm security:gate
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+After production deploy, verify the live site:
+
+```bash
+pnpm verify:production
+```
+
+## Production launch path
+
+The production release path is documented in:
+
+- `docs/PRODUCTION_LAUNCH.md`
+- `docs/RELEASE_CHECKLIST.md`
+- `docs/ROLLBACK_AND_INCIDENTS.md`
+
+Minimum launch sequence:
+
+```bash
+pnpm preflight:production
+pnpm security:gate
+pnpm bootstrap:owner
+pnpm deploy
+pnpm verify:production
+```
+
+Do not claim production launch complete until the release checklist is complete, GitHub Actions deployment is green, and `pnpm verify:production` passes against `https://www.uraiadmin.com`.
+
+## Production environment
+
+Use `.env.production.example` as the source checklist for required GitHub/Firebase production values. Do not commit real secrets.
+
+Required categories:
+
+- Firebase public app values
+- Firebase deploy token
+- optional Firebase service account key
+- initial owner bootstrap UID/email
+- production verification URLs
+
+## One-command green-ship script
+
+Use the green-ship script for broad local verification before deploy:
 
 ```bash
 bash scripts/green-ship.sh
@@ -107,22 +158,29 @@ pnpm functions:build:active
 
 ## Deploy
 
-After green-ship passes:
+Preferred deploy path is GitHub Actions: `Deploy URAI Admin`.
+
+Manual fallback after all checks pass:
 
 ```bash
 pnpm deploy
+pnpm verify:production
 ```
 
 ## Production domain checklist
 
 Verify in Firebase Console:
 
-- `uraiadmin.com` is attached to Firebase Hosting
+- `uraiadmin.com` is attached to Firebase Hosting or intentionally redirected
 - `www.uraiadmin.com` is attached to Firebase Hosting
 - `uraiadmin.com` is an authorized Firebase Auth domain
 - `www.uraiadmin.com` is an authorized Firebase Auth domain
+- SSL is active for `www.uraiadmin.com`
 
 ## More docs
 
+- `docs/PRODUCTION_LAUNCH.md`
+- `docs/RELEASE_CHECKLIST.md`
+- `docs/ROLLBACK_AND_INCIDENTS.md`
 - `docs/URAI_ADMIN_STANDALONE_READINESS.md`
 - `docs/TROUBLESHOOTING_LOCAL_BUILDS.md`
