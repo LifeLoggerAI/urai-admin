@@ -2,6 +2,8 @@
 
 This runbook defines the minimum gates required before URAI Admin can be called live, cohesive, and production-ready at `https://www.uraiadmin.com`.
 
+Related recovery runbook: `docs/ROLLBACK_AND_INCIDENTS.md`.
+
 ## Production target
 
 - Public site: `https://www.uraiadmin.com`
@@ -100,11 +102,12 @@ From the repository root:
 ```bash
 pnpm install --frozen-lockfile=false
 pnpm preflight:production
+pnpm security:gate
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-pnpm smoke-test
+pnpm verify:production
 ```
 
 ## Deployment
@@ -114,27 +117,39 @@ Preferred path:
 1. Go to GitHub Actions.
 2. Run `Deploy URAI Admin`.
 3. Confirm production preflight passes.
-4. Confirm validation passes.
-5. Confirm Firebase deploy succeeds.
-6. Confirm production smoke test succeeds.
+4. Confirm security gate passes.
+5. Confirm validation passes.
+6. Confirm Firebase deploy succeeds.
+7. Confirm production live verification succeeds.
 
 Manual fallback:
 
 ```bash
 pnpm preflight:production
+pnpm security:gate
 pnpm deploy
-URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm smoke-test
+URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm verify:production
 ```
 
-## Production smoke test expectations
+## Production verification expectations
 
-The smoke test must verify:
+The verifier must confirm:
 
 - Public homepage returns successfully and includes `URAI Admin`.
+- `/login` loads.
 - `/admin` is protected and redirects or blocks unauthenticated access.
 - `/api/admin/users` returns `401` without a valid session.
 - Functions health endpoint returns `{"status":"ok"}`.
 - Functions auth endpoint blocks unauthenticated access.
+
+## Rollback readiness
+
+Before launch, confirm `docs/ROLLBACK_AND_INCIDENTS.md` is understood by the launch owner and that the team can recover through at least one of these paths:
+
+- Git revert and redeploy.
+- Firebase Hosting release rollback.
+- Functions-only redeploy from a known good SHA.
+- Rules-only rollback for Firestore or Storage.
 
 ## Launch acceptance criteria
 
@@ -142,6 +157,7 @@ URAI Admin is launch-ready only when all of these are true:
 
 - GitHub CI is green on `main`.
 - Production preflight is green.
+- Security gate is green.
 - Deploy workflow is green.
 - `https://www.uraiadmin.com` loads over HTTPS.
 - Admin login works with a real Firebase Google account.
@@ -151,6 +167,7 @@ URAI Admin is launch-ready only when all of these are true:
 - Firestore audit logs are written for bootstrap, login, and admin API access.
 - No production secrets are committed to the repository.
 - Firebase Hosting, Functions, Firestore rules, and Storage rules are deployed from the repo.
+- Rollback path is documented and understood.
 
 ## Do not claim launch complete if
 
@@ -160,4 +177,5 @@ URAI Admin is launch-ready only when all of these are true:
 - Firebase project permissions are unknown.
 - No active `owner` admin user exists.
 - CI or deploy workflow has not run.
-- Smoke tests have not passed against the live domain.
+- Production verification has not passed against the live domain.
+- Rollback path is unknown.
