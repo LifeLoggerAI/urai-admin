@@ -15,6 +15,13 @@ This runbook defines the minimum gates required before URAI Admin can be called 
 Set these repository or environment secrets before running the deploy workflow:
 
 - `FIREBASE_TOKEN`: Firebase CLI token or deploy credential with access to project `urai-4dc1d`.
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `FIREBASE_SERVICE_ACCOUNT_KEY` if Application Default Credentials are not sufficient.
 
 Recommended production environment protection:
 
@@ -40,6 +47,20 @@ Configure server-side Firebase Admin credentials if Application Default Credenti
 ## Required Firestore bootstrap
 
 Create at least one active owner before launch.
+
+Preferred scripted path:
+
+```bash
+export NEXT_PUBLIC_FIREBASE_PROJECT_ID=urai-4dc1d
+export FIREBASE_SERVICE_ACCOUNT_KEY='<service account json>'
+export URAI_ADMIN_OWNER_UID='<firebase auth uid>'
+export URAI_ADMIN_OWNER_EMAIL='owner@example.com'
+pnpm bootstrap:owner
+```
+
+The script sets Firebase custom claims, writes `adminUsers/{uid}`, and adds an audit log entry.
+
+Manual fallback:
 
 Collection: `adminUsers`
 
@@ -78,6 +99,7 @@ From the repository root:
 
 ```bash
 pnpm install --frozen-lockfile=false
+pnpm preflight:production
 pnpm lint
 pnpm typecheck
 pnpm test
@@ -91,13 +113,15 @@ Preferred path:
 
 1. Go to GitHub Actions.
 2. Run `Deploy URAI Admin`.
-3. Confirm validation passes.
-4. Confirm Firebase deploy succeeds.
-5. Confirm production smoke test succeeds.
+3. Confirm production preflight passes.
+4. Confirm validation passes.
+5. Confirm Firebase deploy succeeds.
+6. Confirm production smoke test succeeds.
 
 Manual fallback:
 
 ```bash
+pnpm preflight:production
 pnpm deploy
 URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm smoke-test
 ```
@@ -117,13 +141,14 @@ The smoke test must verify:
 URAI Admin is launch-ready only when all of these are true:
 
 - GitHub CI is green on `main`.
+- Production preflight is green.
 - Deploy workflow is green.
 - `https://www.uraiadmin.com` loads over HTTPS.
 - Admin login works with a real Firebase Google account.
 - Non-admin users cannot access `/admin` or `/api/admin/*`.
 - Active owner/admin users can access the dashboard.
 - Logout clears the session and returns the user to `/login`.
-- Firestore audit logs are written for login and admin API access.
+- Firestore audit logs are written for bootstrap, login, and admin API access.
 - No production secrets are committed to the repository.
 - Firebase Hosting, Functions, Firestore rules, and Storage rules are deployed from the repo.
 
