@@ -10,6 +10,8 @@
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
+    "preflight:production": "bash scripts/preflight-production.sh",
+    "bootstrap:owner": "node scripts/bootstrap-owner.mjs",
     "smoke-test": "bash scripts/smoke-test.sh"
   },
   "workspaces": [
