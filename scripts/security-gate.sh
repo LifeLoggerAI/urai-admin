@@ -27,6 +27,16 @@ required_pattern() {
   fi
 }
 
+forbidden_recursive() {
+  local pattern="$1"
+  local target="$2"
+  local message="$3"
+
+  if grep -RInE --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git "$pattern" "$target" 2>/dev/null; then
+    fail "$message"
+  fi
+}
+
 echo "--- URAI Admin security gate ---"
 
 require_file "firestore.rules"
@@ -34,6 +44,7 @@ require_file "storage.rules"
 require_file "apps/urai-admin/src/lib/admin/require-admin-session.ts"
 require_file "apps/urai-admin/src/app/api/auth/login/route.ts"
 require_file "apps/urai-admin/src/app/api/auth/logout/route.ts"
+require_file "apps/urai-admin/src/app/api/auth/admin-session/route.ts"
 require_file "apps/urai-admin/src/middleware.ts"
 
 forbidden_pattern "firestore.rules" "allow[[:space:]]+(read|write|create|update|delete|list|get)(,[[:space:]]*(read|write|create|update|delete|list|get))*:[[:space:]]*if[[:space:]]+true"
@@ -49,7 +60,17 @@ required_pattern "apps/urai-admin/src/lib/admin/require-admin-session.ts" "isAct
 required_pattern "apps/urai-admin/src/app/api/auth/login/route.ts" "verifyIdToken"
 required_pattern "apps/urai-admin/src/app/api/auth/login/route.ts" "createSessionCookie"
 required_pattern "apps/urai-admin/src/app/api/auth/logout/route.ts" "maxAge: 0"
-required_pattern "apps/urai-admin/src/middleware.ts" "__session"
+required_pattern "apps/urai-admin/src/app/api/auth/admin-session/route.ts" "requireAdminSession"
+required_pattern "apps/urai-admin/src/middleware.ts" "admin-session"
+required_pattern "apps/urai-admin/src/middleware.ts" "verification.ok"
+
+forbidden_recursive "headers\.get\(['\"]x-user-id['\"]\)" "apps/urai-admin/src/app/api" "Trusted x-user-id header found in API route"
+forbidden_recursive "request\.headers\.get\(['\"]Authorization['\"]\)\?\.split\(['\"]Bearer " "apps/urai-admin/src/app/api/admin" "Admin route using Authorization bearer session parsing found"
+
+if [[ -d "apps/urai-admin/src/app/api/qa" ]]; then
+  required_pattern "apps/urai-admin/src/app/api/qa/logs/route.ts" "requireAdminSession"
+  required_pattern "apps/urai-admin/src/app/api/qa/logs/route.ts" "\['owner'\]"
+fi
 
 if grep -R "NEXT_PUBLIC_.*SECRET\|SECRET_KEY\|PRIVATE_KEY" apps/urai-admin/src functions/src 2>/dev/null; then
   fail "Potential secret-like public variable or hardcoded secret marker found"
