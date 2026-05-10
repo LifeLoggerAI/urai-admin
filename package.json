@@ -3,10 +3,11 @@
   "private": true,
   "scripts": {
     "clean:legacy": "bash scripts/clean-functions-legacy.sh && bash scripts/clean-app-generated.sh",
+    "security:gate": "bash scripts/security-gate.sh",
     "lint": "pnpm clean:legacy && pnpm --dir apps/urai-admin lint && pnpm --dir functions lint",
     "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm --dir functions typecheck",
-    "test": "pnpm --dir apps/urai-admin test && pnpm --dir functions test",
-    "build": "pnpm clean:legacy && pnpm --dir apps/urai-admin build && pnpm --dir functions build",
+    "test": "pnpm security:gate && pnpm --dir apps/urai-admin test && pnpm --dir functions test",
+    "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm --dir functions build",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
