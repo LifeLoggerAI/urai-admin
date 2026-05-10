@@ -1,44 +1,79 @@
-import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+
+const TAG_PATTERN = /^[a-zA-Z0-9_-]{1,80}$/;
+
+type Snapshot = {
+  screenshots?: Record<string, string>;
+};
+
+function resolveDeployPath(homeDir: string, directory: string, fileOrDir: string) {
+  const baseDir = path.resolve(homeDir, directory);
+  const resolved = path.resolve(baseDir, fileOrDir);
+
+  if (resolved !== baseDir && !resolved.startsWith(`${baseDir}${path.sep}`)) {
+    throw new Error('Invalid deploy artifact path');
+  }
+
+  return resolved;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    await requireAdminSession(req, ['owner']);
+
+    const { searchParams } = new URL(req.url);
     const prevTag = searchParams.get('prevTag');
     const currTag = searchParams.get('currTag');
 
-    if (!prevTag || !currTag) {
-        return NextResponse.json({ error: 'prevTag and currTag are required' }, { status: 400 });
+    if (!prevTag || !currTag || !TAG_PATTERN.test(prevTag) || !TAG_PATTERN.test(currTag)) {
+      return NextResponse.json({ error: 'Valid prevTag and currTag are required' }, { status: 400 });
     }
 
-    const currSnapshotFile = path.resolve(process.env.HOME, 'deploy_logs', `urai-admin_curr_snapshot_${currTag}.json`);
-    const prevSnapshotFile = path.resolve(process.env.HOME, 'deploy_logs', `urai-admin_curr_snapshot_${prevTag}.json`);
-    const diffDir = path.resolve(process.env.HOME, 'deploy_diffs', `urai-admin_${currTag}`);
+    const homeDir = process.env.HOME;
 
-    try {
-        const [currSnapshotStr, prevSnapshotStr] = await Promise.all([
-            fs.readFile(currSnapshotFile, 'utf-8'),
-            fs.readFile(prevSnapshotFile, 'utf-8')
-        ]);
-
-        const currSnapshot = JSON.parse(currSnapshotStr);
-        const prevSnapshot = JSON.parse(prevSnapshotStr);
-
-        const visualRegressions = Object.keys(currSnapshot.screenshots)
-            .filter(key => prevSnapshot.screenshots[key] && prevSnapshot.screenshots[key] !== currSnapshot.screenshots[key])
-            .map(key => {
-                const safeKey = key.replace(/\//g, '_');
-                return {
-                    key,
-                    diff: path.join(diffDir, `${safeKey}_diff.png`),
-                    prev: path.join(process.env.HOME, 'deploy_screenshots', `urai-admin_${prevTag}`, `${safeKey}.png`),
-                    curr: path.join(process.env.HOME, 'deploy_screenshots', `urai-admin_${currTag}`, `${safeKey}.png`),
-                };
-            });
-
-        return NextResponse.json({ visualRegressions });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: 'Failed to generate diff' }, { status: 500 });
+    if (!homeDir) {
+      return NextResponse.json({ error: 'Deploy artifact directory is not configured' }, { status: 500 });
     }
+
+    const currSnapshotFile = resolveDeployPath(homeDir, 'deploy_logs', `urai-admin_curr_snapshot_${currTag}.json`);
+    const prevSnapshotFile = resolveDeployPath(homeDir, 'deploy_logs', `urai-admin_curr_snapshot_${prevTag}.json`);
+    const diffDir = resolveDeployPath(homeDir, 'deploy_diffs', `urai-admin_${currTag}`);
+    const prevScreenshotDir = resolveDeployPath(homeDir, 'deploy_screenshots', `urai-admin_${prevTag}`);
+    const currScreenshotDir = resolveDeployPath(homeDir, 'deploy_screenshots', `urai-admin_${currTag}`);
+
+    const [currSnapshotStr, prevSnapshotStr] = await Promise.all([
+      fs.readFile(currSnapshotFile, 'utf-8'),
+      fs.readFile(prevSnapshotFile, 'utf-8'),
+    ]);
+
+    const currSnapshot = JSON.parse(currSnapshotStr) as Snapshot;
+    const prevSnapshot = JSON.parse(prevSnapshotStr) as Snapshot;
+    const currScreenshots = currSnapshot.screenshots ?? {};
+    const prevScreenshots = prevSnapshot.screenshots ?? {};
+
+    const visualRegressions = Object.keys(currScreenshots)
+      .filter((key) => prevScreenshots[key] && prevScreenshots[key] !== currScreenshots[key])
+      .map((key) => {
+        const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+        return {
+          key,
+          diff: path.join(diffDir, `${safeKey}_diff.png`),
+          prev: path.join(prevScreenshotDir, `${safeKey}.png`),
+          curr: path.join(currScreenshotDir, `${safeKey}.png`),
+        };
+      });
+
+    return NextResponse.json({ visualRegressions });
+  } catch (error) {
+    if (error instanceof Error && 'status' in error) {
+      return adminAuthErrorResponse(error);
+    }
+
+    console.error('Failed to generate QA diff:', error);
+    return NextResponse.json({ error: 'Failed to generate diff' }, { status: 500 });
+  }
 }
