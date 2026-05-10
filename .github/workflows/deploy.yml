@@ -1,0 +1,54 @@
+name: Deploy URAI Admin
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: urai-admin-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Firebase Hosting and Functions
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Validate before deploy
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+
+      - name: Deploy Firebase project
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: pnpm deploy
+
+      - name: Smoke test production
+        env:
+          URAI_ADMIN_BASE_URL: https://www.uraiadmin.com
+          URAI_ADMIN_FUNCTIONS_BASE_URL: https://us-central1-urai-4dc1d.cloudfunctions.net
+        run: pnpm smoke-test
