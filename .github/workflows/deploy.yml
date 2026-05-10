@@ -57,8 +57,8 @@ jobs:
       - name: Deploy Firebase project
         run: pnpm deploy
 
-      - name: Smoke test production
+      - name: Verify production live deployment
         env:
           URAI_ADMIN_BASE_URL: https://www.uraiadmin.com
           URAI_ADMIN_FUNCTIONS_BASE_URL: https://us-central1-urai-4dc1d.cloudfunctions.net
-        run: pnpm smoke-test
+        run: pnpm verify:production
