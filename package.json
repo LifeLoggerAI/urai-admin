@@ -12,7 +12,8 @@
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
     "preflight:production": "bash scripts/preflight-production.sh",
     "bootstrap:owner": "node scripts/bootstrap-owner.mjs",
-    "smoke-test": "bash scripts/smoke-test.sh"
+    "smoke-test": "bash scripts/smoke-test.sh",
+    "verify:production": "bash scripts/verify-production-live.sh"
   },
   "workspaces": [
     "apps/*"
