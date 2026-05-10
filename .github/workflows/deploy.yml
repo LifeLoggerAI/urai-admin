@@ -17,6 +17,15 @@ jobs:
     environment: production
     permissions:
       contents: read
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +41,9 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Production preflight
+        run: bash scripts/preflight-production.sh
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
@@ -43,8 +55,6 @@ jobs:
           pnpm build
 
       - name: Deploy Firebase project
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: pnpm deploy
 
       - name: Smoke test production
