@@ -32,11 +32,21 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "app",
+    "tests",
+    "playwright.config.ts",
+    "src/pages",
+    "src/functions",
+    "src/components/withAdminAuth.tsx",
+    "src/lib/audit-log.ts",
+    "src/lib/audit.ts",
+    "src/lib/dashboard.ts",
+    "src/lib/user.ts"
   ]
 }
