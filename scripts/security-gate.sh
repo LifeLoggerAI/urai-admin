@@ -72,8 +72,14 @@ if [[ -d "apps/urai-admin/src/app/api/qa" ]]; then
   required_pattern "apps/urai-admin/src/app/api/qa/logs/route.ts" "\['owner'\]"
 fi
 
-if grep -R "NEXT_PUBLIC_.*SECRET\|SECRET_KEY\|PRIVATE_KEY" apps/urai-admin/src functions/src 2>/dev/null; then
-  fail "Potential secret-like public variable or hardcoded secret marker found"
+# Public client code must never reference secret-like env vars. Server-only Admin SDK
+# config may reference FIREBASE_PRIVATE_KEY or service-account env vars intentionally.
+if grep -R "NEXT_PUBLIC_.*SECRET\|NEXT_PUBLIC_.*PRIVATE_KEY\|SECRET_KEY" apps/urai-admin/src functions/src 2>/dev/null; then
+  fail "Potential public secret-like variable or hardcoded secret marker found"
+fi
+
+if grep -RInE "-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----|AIza[0-9A-Za-z_-]{20,}" apps/urai-admin/src functions/src 2>/dev/null; then
+  fail "Potential hardcoded private key or Firebase API key literal found"
 fi
 
 echo "--- Security gate passed ---"
