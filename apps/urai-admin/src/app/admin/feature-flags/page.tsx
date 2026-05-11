@@ -1,16 +1,24 @@
+import { AdminCollectionTable } from '../_components/AdminCollectionTable';
+
 export default function FeatureFlagsPage() {
   return (
     <main className="space-y-6 p-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Feature Flags</h1>
-        <p className="text-sm text-muted-foreground">
-          Live feature flag state from Firestore. Mutations go through hardened admin APIs and audit logs.
-        </p>
+        <p className="text-sm text-muted-foreground">Live feature flag records from the runtime admin API.</p>
       </div>
 
-      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-        Feature flag records load through authenticated runtime APIs after deployment. Static build renders this safe shell without opening Firebase credentials.
-      </div>
+      <AdminCollectionTable
+        collection="featureFlags"
+        emptyLabel="No feature flags found."
+        columns={[
+          { key: 'id', label: 'Flag ID' },
+          { key: 'name', label: 'Name' },
+          { key: 'enabled', label: 'Enabled' },
+          { key: 'rollout', label: 'Rollout' },
+          { key: 'updatedAt', label: 'Updated' }
+        ]}
+      />
     </main>
   );
 }
