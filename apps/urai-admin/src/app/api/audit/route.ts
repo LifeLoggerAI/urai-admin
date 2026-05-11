@@ -1,41 +1,50 @@
-
-import { getFirestore } from 'firebase-admin/firestore';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase/admin';
 
-const db = getFirestore();
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { writeAuditLog } from '@/lib/firebase/admin';
+
+export const dynamic = 'force-dynamic';
+
+type AuditPayload = {
+  action?: unknown;
+  target?: unknown;
+  metadata?: unknown;
+};
+
+function isAuditTarget(value: unknown): value is { id: string; type: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'type' in value &&
+    typeof value.id === 'string' &&
+    typeof value.type === 'string'
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get('__session')?.value;
-    if (!sessionCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await requireAdminSession(req, ['owner', 'admin']);
+    const { action, target, metadata } = (await req.json()) as AuditPayload;
+
+    if (typeof action !== 'string' || !isAuditTarget(target)) {
+      return NextResponse.json({ error: 'Missing or invalid required fields' }, { status: 400 });
     }
 
-    const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
-    const { uid, email, role } = decodedToken;
-
-    if (!role || !['owner', 'admin'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const { action, target, metadata } = await req.json();
-
-    if (!action || !target) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    await db.collection('auditLogs').add({
-      actorUid: uid,
-      actorEmail: email,
+    await writeAuditLog({
+      actorUid: session.uid,
+      actorEmail: session.email ?? 'unknown-admin@urai.local',
       action,
       target,
-      metadata: metadata || {},
-      createdAt: new Date(),
+      metadata: typeof metadata === 'object' && metadata !== null ? metadata as Record<string, unknown> : {},
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
+    if (error instanceof Error && 'status' in error) {
+      return adminAuthErrorResponse(error);
+    }
+
     console.error('Error writing audit log:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
