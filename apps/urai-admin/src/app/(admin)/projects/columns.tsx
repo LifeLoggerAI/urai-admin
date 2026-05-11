@@ -6,7 +6,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 const columnHelper = createColumnHelper<ProjectRegistry>();
 
 export const columns = [
-  columnHelper.accessor('projectId', {
+  columnHelper.accessor('id', {
     header: 'Project ID',
   }),
   columnHelper.accessor('name', {
