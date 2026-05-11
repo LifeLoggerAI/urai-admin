@@ -24,21 +24,26 @@ type AdminUserRow = {
 };
 
 async function getAdminUsers(): Promise<AdminUserRow[]> {
-  const snapshot = await firestore.collection('adminUsers').orderBy('createdAt', 'desc').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('adminUsers').orderBy('createdAt', 'desc').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      uid: doc.id,
-      email: typeof data.email === 'string' ? data.email : null,
-      role: typeof data.role === 'string' ? data.role : null,
-      isActive: data.isActive === true,
-      createdAt: data.createdAt ?? null,
-      updatedAt: data.updatedAt ?? null,
-      lastLoginAt: data.lastLoginAt ?? null,
-    };
-  });
+      return {
+        uid: doc.id,
+        email: typeof data.email === 'string' ? data.email : null,
+        role: typeof data.role === 'string' ? data.role : null,
+        isActive: data.isActive === true,
+        createdAt: data.createdAt ?? null,
+        updatedAt: data.updatedAt ?? null,
+        lastLoginAt: data.lastLoginAt ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load admin users during admin render:', error);
+    return [];
+  }
 }
 
 export default async function AdminUsersPage() {
