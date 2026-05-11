@@ -1,15 +1,18 @@
-
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { app } from '@/lib/firebase/client';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
-const auth = getAuth(app);
+import { auth } from '@/lib/firebase/client';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -21,7 +24,6 @@ export function useAuth() {
   const signOut = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      // Force a reload to clear all state and redirect via middleware
       window.location.href = '/login';
     } catch (error) {
       console.error('Error signing out:', error);
