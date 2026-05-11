@@ -20,18 +20,23 @@ type RoleRow = {
 };
 
 async function getRoles(): Promise<RoleRow[]> {
-  const snapshot = await firestore.collection('roles').limit(100).get();
+  try {
+    const snapshot = await firestore.collection('roles').limit(100).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      permissions: Array.isArray(data.permissions) ? data.permissions.map(String) : [],
-      description: typeof data.description === 'string' ? data.description : null,
-      updatedAt: data.updatedAt ?? data.createdAt ?? null,
-    };
-  });
+      return {
+        id: doc.id,
+        permissions: Array.isArray(data.permissions) ? data.permissions.map(String) : [],
+        description: typeof data.description === 'string' ? data.description : null,
+        updatedAt: data.updatedAt ?? data.createdAt ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load roles during admin render:', error);
+    return [];
+  }
 }
 
 export default async function PoliciesPage() {
