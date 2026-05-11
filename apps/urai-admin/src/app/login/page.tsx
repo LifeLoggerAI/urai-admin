@@ -1,12 +1,8 @@
-
 'use client';
 
 import { useEffect } from 'react';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { app } from '@/lib/firebase/client';
-import { useAuth } from '@/hooks/useAuth';
 
-const auth = getAuth(app);
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const { user, loading } = useAuth();
@@ -18,8 +14,14 @@ export default function LoginPage() {
   }, [user]);
 
   const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     try {
+      const [{ getAuth, GoogleAuthProvider, signInWithPopup }, { app }] = await Promise.all([
+        import('firebase/auth'),
+        import('@/lib/firebase/client'),
+      ]);
+
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
@@ -34,7 +36,7 @@ export default function LoginPage() {
       if (res.ok) {
         window.location.href = '/admin';
       } else {
-        // Handle login failure
+        await auth.signOut();
         console.error('Login failed');
       }
     } catch (error) {
