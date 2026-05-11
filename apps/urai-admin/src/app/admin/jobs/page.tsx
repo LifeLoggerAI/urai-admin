@@ -23,21 +23,26 @@ type JobRow = {
 };
 
 async function getJobs(): Promise<JobRow[]> {
-  const snapshot = await firestore.collection('jobs').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('jobs').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      name: typeof data.name === 'string' ? data.name : doc.id,
-      type: typeof data.type === 'string' ? data.type : '—',
-      status: typeof data.status === 'string' ? data.status : 'unknown',
-      enabled: data.enabled === true,
-      schedule: typeof data.schedule === 'string' ? data.schedule : null,
-      updatedAt: data.updatedAt ?? data.createdAt ?? null,
-    };
-  });
+      return {
+        id: doc.id,
+        name: typeof data.name === 'string' ? data.name : doc.id,
+        type: typeof data.type === 'string' ? data.type : '—',
+        status: typeof data.status === 'string' ? data.status : 'unknown',
+        enabled: data.enabled === true,
+        schedule: typeof data.schedule === 'string' ? data.schedule : null,
+        updatedAt: data.updatedAt ?? data.createdAt ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load jobs during admin render:', error);
+    return [];
+  }
 }
 
 export default async function JobsPage() {
@@ -70,10 +75,7 @@ export default async function JobsPage() {
             ) : (
               jobs.map((job) => (
                 <tr key={job.id} className="border-t">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{job.name}</div>
-                    <div className="text-xs text-muted-foreground">{job.id}</div>
-                  </td>
+                  <td className="px-4 py-3"><div className="font-medium">{job.name}</div><div className="text-xs text-muted-foreground">{job.id}</div></td>
                   <td className="px-4 py-3">{job.type}</td>
                   <td className="px-4 py-3">{job.status}</td>
                   <td className="px-4 py-3">{job.enabled ? 'Yes' : 'No'}</td>
