@@ -2,8 +2,13 @@ import Link from 'next/link';
 import { firestore } from '@/lib/firebase/admin';
 
 async function getCount(collectionName: string) {
-  const snapshot = await firestore.collection(collectionName).limit(500).get();
-  return snapshot.size;
+  try {
+    const snapshot = await firestore.collection(collectionName).limit(500).get();
+    return snapshot.size;
+  } catch (error) {
+    console.warn(`Unable to load ${collectionName} count during admin render:`, error);
+    return 0;
+  }
 }
 
 async function getDashboardMetrics() {
