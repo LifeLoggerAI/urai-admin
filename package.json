@@ -4,10 +4,14 @@
   "scripts": {
     "clean:legacy": "bash scripts/clean-functions-legacy.sh && bash scripts/clean-app-generated.sh",
     "security:gate": "bash scripts/security-gate.sh",
-    "lint": "pnpm clean:legacy && pnpm --dir apps/urai-admin lint && pnpm --dir functions lint",
-    "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm --dir functions typecheck",
-    "test": "pnpm security:gate && pnpm --dir apps/urai-admin test && pnpm --dir functions test",
-    "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm --dir functions build",
+    "analytics:core:test": "pnpm --dir packages/analytics-core test",
+    "analytics:typecheck": "pnpm --dir packages/analytics-core typecheck && pnpm --dir apps/urai-analytics typecheck",
+    "analytics:test": "pnpm analytics:core:test && pnpm --dir apps/urai-analytics test",
+    "analytics:build": "pnpm --dir packages/analytics-core build && pnpm --dir apps/urai-analytics build",
+    "lint": "pnpm clean:legacy && pnpm --dir apps/urai-admin lint && pnpm --dir apps/urai-analytics lint && pnpm --dir functions lint",
+    "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm analytics:typecheck && pnpm --dir functions typecheck",
+    "test": "pnpm security:gate && pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
+    "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm analytics:build && pnpm --dir functions build",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
@@ -17,7 +21,8 @@
     "verify:production": "bash scripts/verify-production-live.sh"
   },
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.2.0",
