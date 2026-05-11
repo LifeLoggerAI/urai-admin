@@ -1,16 +1,28 @@
-
 "use client";
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../../../../lib/firebase/firebase";
+
+import { auth } from "@/lib/firebase/client";
 
 export default function LoginPage() {
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // The user is now signed in. The auth state listener in the root layout
-      // will handle the redirect to the admin dashboard.
+      const credential = await signInWithPopup(auth, provider);
+      const idToken = await credential.user.getIdToken();
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (response.ok) {
+        window.location.href = '/admin';
+      } else {
+        await auth.signOut();
+        console.error("Unable to create admin session");
+      }
     } catch (error) {
       console.error("Error signing in with Google: ", error);
     }
