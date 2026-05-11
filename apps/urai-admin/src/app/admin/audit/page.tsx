@@ -36,24 +36,29 @@ type AuditLogRow = {
 };
 
 async function getAuditLogs(): Promise<AuditLogRow[]> {
-  const snapshot = await firestore.collection('auditLogs').orderBy('createdAt', 'desc').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('auditLogs').orderBy('createdAt', 'desc').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    const target = data.target && typeof data.target === 'object' ? data.target : null;
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const target = data.target && typeof data.target === 'object' ? data.target : null;
 
-    return {
-      id: doc.id,
-      actorUid: typeof data.actorUid === 'string' ? data.actorUid : null,
-      actorEmail: typeof data.actorEmail === 'string' ? data.actorEmail : null,
-      actorRole: typeof data.actorRole === 'string' ? data.actorRole : null,
-      action: typeof data.action === 'string' ? data.action : 'unknown',
-      targetType: target && 'type' in target ? String(target.type) : typeof data.targetType === 'string' ? data.targetType : null,
-      targetId: target && 'id' in target ? String(target.id) : typeof data.targetId === 'string' ? data.targetId : null,
-      metadata: data.metadata ?? data.meta ?? data.diff ?? null,
-      createdAt: data.createdAt ?? data.ts ?? null,
-    };
-  });
+      return {
+        id: doc.id,
+        actorUid: typeof data.actorUid === 'string' ? data.actorUid : null,
+        actorEmail: typeof data.actorEmail === 'string' ? data.actorEmail : null,
+        actorRole: typeof data.actorRole === 'string' ? data.actorRole : null,
+        action: typeof data.action === 'string' ? data.action : 'unknown',
+        targetType: target && 'type' in target ? String(target.type) : typeof data.targetType === 'string' ? data.targetType : null,
+        targetId: target && 'id' in target ? String(target.id) : typeof data.targetId === 'string' ? data.targetId : null,
+        metadata: data.metadata ?? data.meta ?? data.diff ?? null,
+        createdAt: data.createdAt ?? data.ts ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load audit logs during admin render:', error);
+    return [];
+  }
 }
 
 export default async function AuditPage() {
