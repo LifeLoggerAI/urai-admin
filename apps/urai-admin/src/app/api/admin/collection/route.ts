@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
     }
 
     const config = COLLECTIONS[collectionKey];
-    await requireAdminSession(req, config.roles as readonly AdminRole[]);
+    await requireAdminSession(req, [...config.roles] as AdminRole[]);
 
     let query = firestore.collection(config.collection).limit(parseLimit(searchParams.get('limit')));
 
