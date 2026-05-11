@@ -23,21 +23,26 @@ type JobRunRow = {
 };
 
 async function getJobRuns(): Promise<JobRunRow[]> {
-  const snapshot = await firestore.collection('jobRuns').orderBy('startedAt', 'desc').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('jobRuns').orderBy('startedAt', 'desc').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      jobId: typeof data.jobId === 'string' ? data.jobId : '—',
-      status: typeof data.status === 'string' ? data.status : typeof data.state === 'string' ? data.state : 'unknown',
-      startedAt: data.startedAt ?? data.createdAt ?? null,
-      endedAt: data.endedAt ?? data.completedAt ?? null,
-      durationMs: typeof data.durationMs === 'number' ? data.durationMs : null,
-      error: typeof data.error === 'string' ? data.error : typeof data.lastError === 'string' ? data.lastError : null,
-    };
-  });
+      return {
+        id: doc.id,
+        jobId: typeof data.jobId === 'string' ? data.jobId : '—',
+        status: typeof data.status === 'string' ? data.status : typeof data.state === 'string' ? data.state : 'unknown',
+        startedAt: data.startedAt ?? data.createdAt ?? null,
+        endedAt: data.endedAt ?? data.completedAt ?? null,
+        durationMs: typeof data.durationMs === 'number' ? data.durationMs : null,
+        error: typeof data.error === 'string' ? data.error : typeof data.lastError === 'string' ? data.lastError : null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load job runs during admin render:', error);
+    return [];
+  }
 }
 
 export default async function JobRunsPage() {
