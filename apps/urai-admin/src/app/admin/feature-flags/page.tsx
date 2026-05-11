@@ -24,21 +24,26 @@ type FeatureFlagRow = {
 };
 
 async function getFeatureFlags(): Promise<FeatureFlagRow[]> {
-  const snapshot = await firestore.collection('featureFlags').orderBy('name').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('featureFlags').orderBy('name').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      name: typeof data.name === 'string' ? data.name : doc.id,
-      enabled: data.enabled === true,
-      rollout: typeof data.rollout === 'number' ? data.rollout : null,
-      description: typeof data.description === 'string' ? data.description : null,
-      updatedAt: data.updatedAt ?? null,
-      updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : null,
-    };
-  });
+      return {
+        id: doc.id,
+        name: typeof data.name === 'string' ? data.name : doc.id,
+        enabled: data.enabled === true,
+        rollout: typeof data.rollout === 'number' ? data.rollout : null,
+        description: typeof data.description === 'string' ? data.description : null,
+        updatedAt: data.updatedAt ?? null,
+        updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load feature flags during admin render:', error);
+    return [];
+  }
 }
 
 export default async function FeatureFlagsPage() {
@@ -80,9 +85,7 @@ export default async function FeatureFlagsPage() {
                   <td className="px-4 py-3">{flag.rollout === null ? '—' : `${flag.rollout}%`}</td>
                   <td className="px-4 py-3">{formatDate(flag.updatedAt)}</td>
                   <td className="px-4 py-3">{flag.updatedBy ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <FeatureFlagActions flagId={flag.id} enabled={flag.enabled} rollout={flag.rollout} />
-                  </td>
+                  <td className="px-4 py-3"><FeatureFlagActions flagId={flag.id} enabled={flag.enabled} rollout={flag.rollout} /></td>
                 </tr>
               ))
             )}
