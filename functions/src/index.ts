@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+export { aggregateUraiAnalyticsV1 } from './uraiAnalyticsV1';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -35,11 +36,9 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 
         const batch = db.batch();
         
-        // Idempotent write for DAU
         const dauRef = db.collection("analytics_aggregates").doc(`dau_${dateStr}`);
         batch.set(dauRef, { date: dateStr, count: dau.size });
 
-        // Idempotent write for event counts
         const eventsRef = db.collection("analytics_aggregates").doc(`events_${dateStr}`);
         batch.set(eventsRef, { date: dateStr, counts: eventsByName });
 
@@ -59,11 +58,9 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 });
 
 // --- Next.js Hosting ---
-// This function is the server-side renderer for the Next.js app.
 import next from 'next';
 
 const isDev = process.env.NODE_ENV !== 'production';
-// Assumes the script is run from the monorepo root
 const nextApp = next({ dev: isDev, conf: { distDir: '../apps/urai-admin/.next' } });
 const handle = nextApp.getRequestHandler();
 
