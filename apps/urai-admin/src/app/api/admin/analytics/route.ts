@@ -1,52 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server';
 
-import { NextResponse } from 'next/server';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { firestore } from '@/lib/firebase/admin';
 
-if (!getApps().length) {
-  if (!process.env.FIREBASE_ADMIN_SDK_JSON) {
-    throw new Error('The FIREBASE_ADMIN_SDK_JSON environment variable is not set.');
-  }
-  initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
-  });
-}
+export const dynamic = 'force-dynamic';
 
-const db = getFirestore();
-
-// Basic YYYY-MM-DD date string validation
 function isValidDateString(dateStr: string): boolean {
-    return /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
 }
 
-export async function GET(request: Request) {
+function getAnalyticsDate(dateParam: string | null) {
+  if (dateParam && isValidDateString(dateParam)) {
+    return dateParam;
+  }
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().split('T')[0];
+}
+
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const dateParam = searchParams.get('date');
+    await requireAdminSession(req, ['owner', 'admin', 'viewer']);
 
-    let dateStr;
-    if (dateParam && isValidDateString(dateParam)) {
-        dateStr = dateParam;
-    } else {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        dateStr = yesterday.toISOString().split('T')[0];
-    }
+    const { searchParams } = new URL(req.url);
+    const dateStr = getAnalyticsDate(searchParams.get('date'));
 
-    const dauRef = db.collection("analytics_aggregates").doc(`dau_${dateStr}`);
-    const dauDoc = await dauRef.get();
-    const dauData = dauDoc.exists ? dauDoc.data() : { count: 0, date: dateStr };
-
-    const eventsRef = db.collection("analytics_aggregates").doc(`events_${dateStr}`);
-    const eventsDoc = await eventsRef.get();
-    const eventsData = eventsDoc.exists ? eventsDoc.data() : { counts: {}, date: dateStr };
+    const dauDoc = await firestore.collection('analytics_aggregates').doc(`dau_${dateStr}`).get();
+    const eventsDoc = await firestore.collection('analytics_aggregates').doc(`events_${dateStr}`).get();
 
     return NextResponse.json({
-      dau: dauData,
-      events: eventsData,
+      dau: dauDoc.exists ? dauDoc.data() : { count: 0, date: dateStr },
+      events: eventsDoc.exists ? eventsDoc.data() : { counts: {}, date: dateStr },
     });
   } catch (error) {
-    console.error("ANALYTICS_API_ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    if (error instanceof Error && 'status' in error) {
+      return adminAuthErrorResponse(error);
+    }
+
+    console.error('ANALYTICS_API_ERROR:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
