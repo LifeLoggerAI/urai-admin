@@ -6,6 +6,12 @@ import { firestore } from '@/lib/firebase/admin';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
+type FirestoreDoc = {
+  id: string;
+  exists?: boolean;
+  data: () => Record<string, unknown>;
+};
+
 function parseLimit(value: string | null) {
   if (!value) {
     return DEFAULT_LIMIT;
@@ -41,11 +47,11 @@ export async function GET(req: NextRequest) {
     }
 
     const auditLogsSnapshot = await query.get();
-    const docs = auditLogsSnapshot.docs;
+    const docs = auditLogsSnapshot.docs as FirestoreDoc[];
     const pageDocs = docs.slice(0, limit);
     const hasMore = docs.length > limit;
 
-    const logs = pageDocs.map((doc) => ({
+    const logs = pageDocs.map((doc: FirestoreDoc) => ({
       id: doc.id,
       ...doc.data(),
     }));
