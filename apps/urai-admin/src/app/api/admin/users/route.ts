@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase/admin';
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
+type FirestoreDoc = {
+  id: string;
+  data: () => Record<string, unknown>;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const session = await requireAdminSession(req, ['owner', 'admin']);
 
     const usersSnapshot = await firestore.collection('adminUsers').orderBy('createdAt', 'desc').limit(100).get();
-    const users = usersSnapshot.docs.map((doc) => {
+    const users = (usersSnapshot.docs as FirestoreDoc[]).map((doc: FirestoreDoc) => {
       const data = doc.data();
 
       return {
