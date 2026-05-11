@@ -1,7 +1,8 @@
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
-const isNextProductionBuild = process.env.NEXT_PHASE === 'phase-production-build';
+const shouldStubFirebaseAdmin =
+  process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
 
 function createEmptySnapshot() {
   return {
@@ -61,7 +62,7 @@ function createBuildAuthStub(): any {
   };
 }
 
-if (!isNextProductionBuild && !admin.apps.length) {
+if (!shouldStubFirebaseAdmin && !admin.apps.length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
     admin.initializeApp({
@@ -72,8 +73,8 @@ if (!isNextProductionBuild && !admin.apps.length) {
   }
 }
 
-const firestore = isNextProductionBuild ? createBuildFirestoreStub() : getFirestore();
-const auth = isNextProductionBuild ? createBuildAuthStub() : admin.auth();
+const firestore = shouldStubFirebaseAdmin ? createBuildFirestoreStub() : getFirestore();
+const auth = shouldStubFirebaseAdmin ? createBuildAuthStub() : admin.auth();
 
 interface AuditLog {
   actorUid: string;
@@ -84,7 +85,7 @@ interface AuditLog {
 }
 
 export const writeAuditLog = async (log: AuditLog) => {
-  if (isNextProductionBuild) {
+  if (shouldStubFirebaseAdmin) {
     return;
   }
 
