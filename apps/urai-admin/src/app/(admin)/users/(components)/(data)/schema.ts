@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const userSchema = z.object({
@@ -7,6 +6,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   role: z.enum(["admin", "user", "editor"]),
   status: z.enum(["active", "inactive", "pending"]),
+  label: z.string().optional(),
 });
 
 export type User = z.infer<typeof userSchema>;
