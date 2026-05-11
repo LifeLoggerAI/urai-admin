@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isInternalAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
+    function isOrgMember(orgId) {
+      return signedIn() && exists(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid));
+    }
+    function hasOrgRole(orgId, roles) {
+      return isOrgMember(orgId) && get(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid)).data.role in roles;
+    }
+    function canViewWorkspace(orgId, workspaceId) {
+      return isInternalAdmin() || (isOrgMember(orgId) && (
+        workspaceId in get(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid)).data.workspaceIds ||
+        get(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid)).data.role in ['owner', 'admin']
+      ));
+    }
+    function canAdminWorkspace(orgId, workspaceId) {
+      return isInternalAdmin() || hasOrgRole(orgId, ['owner', 'admin']);
+    }
+
+    match /organizations/{orgId} {
+      allow read: if isInternalAdmin() || isOrgMember(orgId);
+      allow create: if signedIn();
+      allow update, delete: if isInternalAdmin() || hasOrgRole(orgId, ['owner', 'admin']);
+
+      match /memberships/{userId} {
+        allow read: if isInternalAdmin() || isOrgMember(orgId);
+        allow write: if isInternalAdmin() || hasOrgRole(orgId, ['owner', 'admin']);
+      }
+
+      match /workspaces/{workspaceId} {
+        allow read: if canViewWorkspace(orgId, workspaceId);
+        allow write: if canAdminWorkspace(orgId, workspaceId);
+
+        match /apiKeys/{apiKeyId} {
+          allow read: if canAdminWorkspace(orgId, workspaceId);
+          allow write: if false;
+        }
+
+        match /metricsDaily/{date} {
+          allow read: if canViewWorkspace(orgId, workspaceId);
+          allow write: if false;
+        }
+
+        match /reports/{reportId} {
+          allow read: if canViewWorkspace(orgId, workspaceId);
+          allow write: if canAdminWorkspace(orgId, workspaceId);
+        }
+
+        match /exports/{exportId} {
+          allow read: if canViewWorkspace(orgId, workspaceId);
+          allow write: if canAdminWorkspace(orgId, workspaceId);
+        }
+
+        match /privacyRequests/{requestId} {
+          allow read, create: if canViewWorkspace(orgId, workspaceId);
+          allow update, delete: if false;
+        }
+
+        match /auditLogs/{logId} {
+          allow read: if canAdminWorkspace(orgId, workspaceId);
+          allow write: if false;
+        }
+      }
+
+      match /subscriptions/{subscriptionId} {
+        allow read: if isInternalAdmin() || hasOrgRole(orgId, ['owner', 'admin', 'billing']);
+        allow write: if false;
+      }
+
+      match /featureEntitlements/{entitlementId} {
+        allow read: if isInternalAdmin() || isOrgMember(orgId);
+        allow write: if false;
+      }
+    }
+
+    match /analyticsDailyWorkspaceMetrics/{metricId} {
+      allow read: if isInternalAdmin() || (signedIn() && resource.data.organizationId is string && resource.data.workspaceId is string && canViewWorkspace(resource.data.organizationId, resource.data.workspaceId));
+      allow write: if false;
+    }
+
+    match /analytics_events_raw_{date}/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /analyticsAuditLogs/{logId} {
+      allow read: if isInternalAdmin();
+      allow write: if false;
+    }
+
+    match /analyticsJobRuns/{runId} {
+      allow read: if isInternalAdmin();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
