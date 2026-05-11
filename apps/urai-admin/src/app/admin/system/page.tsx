@@ -35,37 +35,53 @@ type JobSummary = {
 };
 
 async function getSystemConfig(): Promise<SystemConfigRow[]> {
-  const snapshot = await firestore.collection('systemConfig').orderBy('updatedAt', 'desc').limit(100).get();
+  try {
+    const snapshot = await firestore.collection('systemConfig').orderBy('updatedAt', 'desc').limit(100).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      value: data.value ?? data,
-      updatedAt: data.updatedAt ?? null,
-      updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : null,
-    };
-  });
+      return {
+        id: doc.id,
+        value: data.value ?? data,
+        updatedAt: data.updatedAt ?? null,
+        updatedBy: typeof data.updatedBy === 'string' ? data.updatedBy : null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load system config during admin render:', error);
+    return [];
+  }
 }
 
 async function getJobSummary(): Promise<JobSummary> {
-  const [jobsSnapshot, recentRunsSnapshot, failedRunsSnapshot, deadLettersSnapshot] = await Promise.all([
-    firestore.collection('jobs').limit(500).get(),
-    firestore.collection('jobRuns').orderBy('createdAt', 'desc').limit(100).get(),
-    firestore.collection('jobRuns').where('status', 'in', ['failed', 'error']).limit(100).get(),
-    firestore.collection('deadLetters').limit(100).get(),
-  ]);
+  try {
+    const [jobsSnapshot, recentRunsSnapshot, failedRunsSnapshot, deadLettersSnapshot] = await Promise.all([
+      firestore.collection('jobs').limit(500).get(),
+      firestore.collection('jobRuns').orderBy('createdAt', 'desc').limit(100).get(),
+      firestore.collection('jobRuns').where('status', 'in', ['failed', 'error']).limit(100).get(),
+      firestore.collection('deadLetters').limit(100).get(),
+    ]);
 
-  const enabledJobs = jobsSnapshot.docs.filter((doc) => doc.data().enabled === true).length;
+    const enabledJobs = jobsSnapshot.docs.filter((doc) => doc.data().enabled === true).length;
 
-  return {
-    totalJobs: jobsSnapshot.size,
-    enabledJobs,
-    recentRuns: recentRunsSnapshot.size,
-    recentFailures: failedRunsSnapshot.size,
-    deadLetters: deadLettersSnapshot.size,
-  };
+    return {
+      totalJobs: jobsSnapshot.size,
+      enabledJobs,
+      recentRuns: recentRunsSnapshot.size,
+      recentFailures: failedRunsSnapshot.size,
+      deadLetters: deadLettersSnapshot.size,
+    };
+  } catch (error) {
+    console.warn('Unable to load job summary during admin render:', error);
+    return {
+      totalJobs: 0,
+      enabledJobs: 0,
+      recentRuns: 0,
+      recentFailures: 0,
+      deadLetters: 0,
+    };
+  }
 }
 
 export default async function SystemPage() {
