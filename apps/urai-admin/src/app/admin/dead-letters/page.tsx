@@ -22,20 +22,25 @@ type DeadLetterRow = {
 };
 
 async function getDeadLetters(): Promise<DeadLetterRow[]> {
-  const snapshot = await firestore.collection('deadLetters').limit(200).get();
+  try {
+    const snapshot = await firestore.collection('deadLetters').limit(200).get();
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
 
-    return {
-      id: doc.id,
-      source: typeof data.source === 'string' ? data.source : '—',
-      reason: typeof data.reason === 'string' ? data.reason : '—',
-      lastError: typeof data.lastError === 'string' ? data.lastError : '—',
-      attempts: typeof data.attempts === 'number' ? data.attempts : null,
-      createdAt: data.createdAt ?? data.updatedAt ?? null,
-    };
-  });
+      return {
+        id: doc.id,
+        source: typeof data.source === 'string' ? data.source : '—',
+        reason: typeof data.reason === 'string' ? data.reason : '—',
+        lastError: typeof data.lastError === 'string' ? data.lastError : '—',
+        attempts: typeof data.attempts === 'number' ? data.attempts : null,
+        createdAt: data.createdAt ?? data.updatedAt ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('Unable to load dead letters during admin render:', error);
+    return [];
+  }
 }
 
 export default async function DeadLettersPage() {
