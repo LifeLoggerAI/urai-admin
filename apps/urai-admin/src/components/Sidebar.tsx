@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +30,7 @@ export default function Sidebar() {
         <nav aria-label="Admin navigation">
           <ul className="space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive = pathname === item.href || Boolean(pathname?.startsWith(`${item.href}/`));
 
               return (
                 <li key={item.href}>
