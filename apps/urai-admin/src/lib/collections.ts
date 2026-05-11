@@ -1,4 +1,5 @@
-import { collection, CollectionReference } from 'firebase/firestore';
+import { collection, CollectionReference, DocumentData } from 'firebase/firestore';
+
 import { firestore } from './firebase/client';
 import { AdminUser, AuditLog, ProjectRegistry, Job, JobRun, DeadLetter, FeatureFlag, Role } from './types';
 

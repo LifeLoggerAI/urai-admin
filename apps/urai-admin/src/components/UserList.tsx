@@ -1,7 +1,11 @@
+import { AdminUser } from '@/lib/types';
 
-import { User } from '@/lib/types';
+type UserListItem = AdminUser & {
+  id?: string;
+  createdAt?: { toDate: () => Date };
+};
 
-export default function UserList({ users }: { users: User[] }) {
+export default function UserList({ users }: { users: UserListItem[] }) {
   return (
     <div className="bg-white shadow rounded-lg">
       <table className="min-w-full divide-y divide-gray-200">
@@ -20,11 +24,11 @@ export default function UserList({ users }: { users: User[] }) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {users.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.id ?? user.uid}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.email}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {user.createdAt?.toDate().toLocaleDateString()}
+                {user.createdAt?.toDate().toLocaleDateString() ?? '—'}
               </td>
             </tr>
           ))}

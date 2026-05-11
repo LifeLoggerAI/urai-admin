@@ -1,24 +1,4 @@
 import Link from 'next/link';
-import { firestore } from '@/lib/firebase/admin';
-
-async function getCount(collectionName: string) {
-  const snapshot = await firestore.collection(collectionName).limit(500).get();
-  return snapshot.size;
-}
-
-async function getDashboardMetrics() {
-  const [adminUsers, jobs, jobRuns, deadLetters, featureFlags, auditLogs, projects] = await Promise.all([
-    getCount('adminUsers'),
-    getCount('jobs'),
-    getCount('jobRuns'),
-    getCount('deadLetters'),
-    getCount('featureFlags'),
-    getCount('auditLogs'),
-    getCount('projectRegistry'),
-  ]);
-
-  return { adminUsers, jobs, jobRuns, deadLetters, featureFlags, auditLogs, projects };
-}
 
 const sections = [
   { href: '/admin/users', label: 'Admin Users', description: 'Review owners, admins, viewers, and active access.' },
@@ -31,9 +11,7 @@ const sections = [
   { href: '/admin/audit', label: 'Audit Log', description: 'Review admin actions and before/after metadata.' },
 ];
 
-export default async function AdminDashboardPage() {
-  const metrics = await getDashboardMetrics();
-
+export default function AdminDashboardPage() {
   return (
     <main className="space-y-8 p-8">
       <div>
@@ -43,14 +21,8 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Admin users" value={metrics.adminUsers} />
-        <MetricCard label="Projects" value={metrics.projects} />
-        <MetricCard label="Feature flags" value={metrics.featureFlags} />
-        <MetricCard label="Jobs" value={metrics.jobs} />
-        <MetricCard label="Job runs" value={metrics.jobRuns} />
-        <MetricCard label="Dead letters" value={metrics.deadLetters} />
-        <MetricCard label="Audit events" value={metrics.auditLogs} />
+      <section className="rounded-2xl border bg-muted/20 p-5 text-sm text-muted-foreground">
+        Live Firestore metrics load through authenticated runtime APIs after deployment. Static build renders this safe shell without opening Firebase credentials.
       </section>
 
       <section>
@@ -65,14 +37,5 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
     </main>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border p-5">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
-    </div>
   );
 }

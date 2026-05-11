@@ -2,9 +2,10 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { User, onIdTokenChanged } from 'firebase/auth';
+import { usePathname, useRouter } from 'next/navigation';
+
 import { auth } from '@/config/firebase';
 import { AuthContext } from './auth-context';
-import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -37,14 +38,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   useEffect(() => {
-    if (!loading && !user && !pathname.startsWith('/login')) {
+    if (!loading && !user && pathname && !pathname.startsWith('/login')) {
       router.push('/login');
     }
   }, [loading, user, pathname, router]);
 
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
 }
