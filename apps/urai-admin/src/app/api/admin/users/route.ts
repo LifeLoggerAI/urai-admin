@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase/admin';
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
+export const dynamic = 'force-dynamic';
+
 type FirestoreDoc = {
   id: string;
   data: () => Record<string, unknown>;
