@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const TAG_PATTERN = /^[a-zA-Z0-9_-]{1,80}$/;
+const isFirebaseBuildStub =
+  process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
 
 type Snapshot = {
   screenshots?: Record<string, string>;
@@ -25,6 +27,10 @@ function resolveDeployPath(homeDir: string, directory: string, fileOrDir: string
 }
 
 export async function GET(req: NextRequest) {
+  if (isFirebaseBuildStub) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await requireAdminSession(req, ['owner']);
 
