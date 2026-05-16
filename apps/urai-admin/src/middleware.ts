@@ -6,6 +6,31 @@ function redirectToLogin(req: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
+function getSessionCookie(req: NextRequest) {
+  const cookieHeader = req.headers.get('cookie');
+
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const sessionCookie = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith('__session='));
+
+  if (!sessionCookie) {
+    return null;
+  }
+
+  const value = sessionCookie.slice('__session='.length);
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 async function verifyAdminSession(req: NextRequest) {
   const verifyUrl = new URL('/api/auth/admin-session', req.url);
 
@@ -29,7 +54,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie = req.cookies.get('__session')?.value;
+  const sessionCookie = getSessionCookie(req);
 
   if (!sessionCookie) {
     if (isAdminApi) {
