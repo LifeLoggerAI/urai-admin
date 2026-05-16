@@ -5,11 +5,17 @@ async function read(path) {
   return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 }
 
+async function readRoot(path) {
+  return readFile(new URL(`../../../${path}`, import.meta.url), 'utf8');
+}
+
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
 assert.match(requireAdminSession, /adminUsers/, 'admin sessions must check the adminUsers collection');
 assert.match(requireAdminSession, /isActive\s*!==\s*true/, 'inactive admin users must be rejected');
 assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom claim role must match adminUsers role');
+assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
+assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
 
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
@@ -22,5 +28,19 @@ const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
 assert.match(roleRoute, /requireAdminSession\(req,\s*\['owner'\]\)/, 'role mutation must require owner role');
 assert.match(roleRoute, /Cannot change your own role/, 'role mutation must prevent self-demotion');
 assert.match(roleRoute, /writeAuditLog/, 'role mutation must write an audit log');
+
+const firestoreRules = await readRoot('firestore.rules');
+assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
+assert.match(firestoreRules, /request\.auth\.token\.admin\s*==\s*true/, 'Firestore admin access must require the admin custom claim');
+assert.match(firestoreRules, /get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data\.isActive\s*==\s*true/, 'Firestore admin access must require active adminUsers record');
+assert.match(firestoreRules, /allow write: if false;/, 'client-side Firestore writes to protected admin collections must remain disabled');
+assert.doesNotMatch(firestoreRules, /allow\s+(read|write|create|update|delete)(,\s*(read|write|create|update|delete))*:\s*if\s*true/, 'Firestore rules must not allow unconditional access');
+
+const storageRules = await readRoot('storage.rules');
+assert.match(storageRules, /allow read, write: if false;/, 'Storage must remain deny-all until explicit admin storage paths are designed and tested');
+assert.doesNotMatch(storageRules, /allow\s+(read|write|create|update|delete)(,\s*(read|write|create|update|delete))*:\s*if\s*true/, 'Storage rules must not allow unconditional access');
+
+const securityGate = await readRoot('scripts/security-gate.sh');
+assert.match(securityGate, /urai_admin_finish\.sh/, 'security gate must block unsafe legacy finish script patterns');
 
 console.log('app admin source contract checks passed');
