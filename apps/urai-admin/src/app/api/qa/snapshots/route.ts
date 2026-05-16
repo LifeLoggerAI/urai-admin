@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const SNAPSHOT_FILE_PATTERN = /^urai-admin_curr_snapshot_([a-zA-Z0-9_-]{1,80})\.json$/;
 
 export async function GET(req: NextRequest) {
