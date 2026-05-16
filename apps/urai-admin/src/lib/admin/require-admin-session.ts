@@ -22,16 +22,26 @@ export class AdminAuthError extends Error {
 type NextDynamicServerError = Error & {
   digest?: string;
   description?: string;
+  message?: string;
 };
 
 const isFirebaseBuildStub =
   process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
 
 export function isNextDynamicServerError(error: unknown): error is NextDynamicServerError {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as NextDynamicServerError;
+  const description = typeof candidate.description === 'string' ? candidate.description : '';
+  const message = typeof candidate.message === 'string' ? candidate.message : '';
+
   return (
-    error instanceof Error &&
-    ((error as NextDynamicServerError).digest === 'DYNAMIC_SERVER_USAGE' ||
-      (error as NextDynamicServerError).description?.includes('Dynamic server usage') === true)
+    candidate.digest === 'DYNAMIC_SERVER_USAGE' ||
+    description.includes('Dynamic server usage') ||
+    message.includes('Dynamic server usage') ||
+    message.includes("couldn't be rendered statically")
   );
 }
 
