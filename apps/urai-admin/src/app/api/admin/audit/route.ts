@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 import { firestore } from '@/lib/firebase/admin';
 
+export const dynamic = 'force-dynamic';
+
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
