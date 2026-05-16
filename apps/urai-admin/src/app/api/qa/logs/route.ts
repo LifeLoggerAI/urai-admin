@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuthErrorResponse, isNextDynamicServerError, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -18,7 +18,11 @@ export async function GET(req: NextRequest) {
 
   try {
     await requireAdminSession(req, ['owner']);
+  } catch (error) {
+    return adminAuthErrorResponse(error);
+  }
 
+  try {
     const { searchParams } = new URL(req.url);
     const tag = searchParams.get('tag');
 
@@ -52,14 +56,6 @@ export async function GET(req: NextRequest) {
       consoleErrors: snapshot.console ?? [],
     });
   } catch (error) {
-    if (isNextDynamicServerError(error)) {
-      throw error;
-    }
-
-    if (error instanceof Error && 'status' in error) {
-      return adminAuthErrorResponse(error);
-    }
-
     console.error('Failed to read QA logs:', error);
     return NextResponse.json({ error: 'Failed to read snapshot file' }, { status: 500 });
   }
