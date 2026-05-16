@@ -1,10 +1,11 @@
+import type { ComponentType } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 import { useAuth } from '../hooks/useAuth';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 
-export const withAdminAuth = (Component: any) => {
-  const AuthenticatedComponent = (props: any) => {
+export const withAdminAuth = <P extends object>(Component: ComponentType<P>) => {
+  const AuthenticatedComponent = (props: P) => {
     const { user, role, loading } = useAuth();
     const router = useRouter();
 
