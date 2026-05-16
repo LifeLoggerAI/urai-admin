@@ -5,11 +5,20 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: urai-admin-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
     name: Verify URAI Admin
     runs-on: ubuntu-latest
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -26,12 +35,6 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Clean stale Functions sources
-        run: bash scripts/clean-functions-legacy.sh
-
-      - name: Clean generated app artifacts
-        run: bash scripts/clean-app-generated.sh
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
@@ -43,14 +46,29 @@ jobs:
           pnpm functions:typecheck:active
           pnpm functions:build:active
 
-      - name: Lint
-        run: pnpm lint
+      - name: Local release gate
+        run: pnpm release:local
 
-      - name: Typecheck
-        run: pnpm typecheck
+      - name: Verify production preflight script is callable without env
+        run: |
+          set +e
+          pnpm preflight:production > /tmp/urai-admin-preflight.log 2>&1
+          status=$?
+          cat /tmp/urai-admin-preflight.log
+          if [[ "$status" -eq 0 ]]; then
+            echo "ERROR: production preflight unexpectedly passed in CI without production secrets" >&2
+            exit 1
+          fi
+          grep -q "Missing required environment variable" /tmp/urai-admin-preflight.log
 
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
+      - name: Upload CI evidence logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: urai-admin-ci-evidence
+          path: |
+            /tmp/urai-admin-preflight.log
+            docs/EVIDENCE_LOG.md
+            docs/DEPLOYMENT_RUNBOOK.md
+            docs/URAI_ADMIN_STANDALONE_READINESS.md
+          if-no-files-found: warn
