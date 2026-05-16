@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "eslint src/index.ts",
     "typecheck": "tsc -p tsconfig.active.json --noEmit",
-    "test": "echo 'No tests in functions' && exit 0",
+    "test": "node test/source-contracts.test.mjs",
     "build": "tsc -p tsconfig.active.json"
   },
   "dependencies": {
