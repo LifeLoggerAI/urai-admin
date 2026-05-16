@@ -1,86 +1,129 @@
 # URAI Admin Console
 
-This document provides instructions for setting up and managing the URAI Admin Console.
+URAI Admin is the privileged administrative control plane for the URAI ecosystem. It includes protected dashboards, role-based administration, feature flag control, operational job visibility, audit logging, and system management.
 
-## Project Overview
+This README is intentionally conservative: do not treat the admin system as production-ready unless every release gate below is verified with evidence.
 
-The URAI Admin Console is a web-based interface for managing the URAI platform. It provides role-based access control (RBAC) to various administrative functions, including user management, feature flag control, and audit logging.
+## Canonical repo structure
+
+- Repository: `LifeLoggerAI/urai-admin`
+- Default branch: `main`
+- App source: `apps/urai-admin`
+- Functions source: `functions`
+- Shared packages: `packages/*`
+- Firebase config: `firebase.json`, `.firebaserc`, `firestore.rules`, `storage.rules`, `firestore.indexes.json`
+
+## Source-of-truth warning
+
+The repo currently references `urai-4dc1d` as the intended admin project in release scripts and readiness docs. `.firebaserc` also contains a separate `default` project value. Before any production deployment, an authorized operator must verify the active Firebase project, hosting site, DNS, Auth domains, and secrets.
+
+Do not deploy from a shell where the active Firebase project is uncertain.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following:
+- Node.js 20 or later
+- pnpm 9.15.0 or compatible with the root `packageManager`
+- Firebase CLI with access to the intended Firebase project
+- Access to required admin environment variables and service account credentials
+- Approval to run deploy commands against the selected environment
 
-*   Node.js (v20 or later)
-*   Firebase CLI (latest version)
-*   Access to the URAI Firebase project
-*   A Google Cloud service account key file with appropriate permissions for the project.
+## Local setup
 
-## Setup Instructions
+Install dependencies from the repo root:
 
-1.  **Install Dependencies:**
+```bash
+pnpm install
+```
 
-    ```bash
-    npm install
-    ```
+Copy and fill the admin app environment file:
 
-2.  **Configure Firebase:**
+```bash
+cp apps/urai-admin/.env.example apps/urai-admin/.env.local
+```
 
-    *   Log in to Firebase:
+The standalone readiness doc lists the expected production values:
 
-        ```bash
-        firebase login
-        ```
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `URAI_ADMIN_BASE_URL`
+- `URAI_ADMIN_FUNCTIONS_BASE_URL`
+- `FIREBASE_SERVICE_ACCOUNT_KEY` for local/server admin flows where required
 
-    *   Set the active Firebase project:
+## Bootstrap first admin
 
-        ```bash
-        firebase use urai-4dc1d
-        ```
+Use the repo bootstrap command after the target Firebase project and credentials are verified:
 
-3.  **Bootstrap the First Superadmin:**
+```bash
+pnpm bootstrap:owner
+```
 
-    *   Create a new user in the Firebase Authentication console (or use an existing one).
-    *   Copy the user's email and UID.
-    *   Create a `.env.local` file by copying the `.env.example` file:
+Do not bootstrap against production unless the UID/email and project ID have been independently checked.
 
-        ```bash
-        cp .env.example .env.local
-        ```
+## Required release gates
 
-    *   Open `.env.local` and set the `SUPERADMIN_EMAIL` and `SUPERADMIN_UID` with the user's credentials.
-    *   Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of your service account key file:
+Run from the repo root and record evidence in `docs/EVIDENCE_LOG.md`:
 
-        ```bash
-        export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
-        ```
+```bash
+pnpm install
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm smoke-test
+```
 
-    *   Run the bootstrap script:
-
-        ```bash
-        npx ts-node scripts/bootstrap-superadmin.ts
-        ```
+Also verify Firestore and Storage rules with emulator-backed tests where available. Rules are not GREEN until denial and allow cases are proven for unauthenticated users, authenticated non-admin users, and active admins.
 
 ## Deployment
 
-To deploy the admin console and all associated Firebase resources, run the following command:
+Use the documented deployment runbook, not ad hoc shell commands:
+
+- `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/URAI_ADMIN_STANDALONE_READINESS.md`
+
+After all gates are GREEN and deployment is authorized:
 
 ```bash
-firebase deploy
+pnpm deploy
 ```
 
-This will deploy:
+Do not run production deployment if any of these are unresolved:
 
-*   Firestore rules (`firestore.rules`)
-*   Storage rules (`storage.rules`)
-*   Firebase Functions (from the `functions` directory)
-*   The admin console web app (from the `apps/admin-web/public` directory)
+- Firebase project is uncertain
+- Hosting target/site is uncertain
+- Required env/secrets are missing or unverified
+- CI/build/test gates fail without explicit documented override
+- Firestore or Storage rules are untested
+- Admin auth/session enforcement is unverified
+- Rollback path is missing
 
-## Verification Checklist
+## Post-deploy smoke checks
 
-After deployment, verify the following:
+Verify the public and protected surfaces documented in `docs/URAI_ADMIN_STANDALONE_READINESS.md`, including that unauthenticated access to `/api/admin/users` returns `401`.
 
-*   [ ] **Login:** You can log in to the admin console with the superadmin account.
-*   [ ] **Role Gates:** Access to superadmin-only pages (like `/admins`) is restricted for non-superadmin users.
-*   [ ] **Rules:** Non-admin users cannot access or modify data in Firestore or Storage.
-*   [ ] **Audit Logs:** Admin actions (like setting a user's role) create new entries in the `auditLogs` collection.
-*   [ ] **Hosting:** The admin console is accessible at the project's hosting URL, and protected routes redirect to the login page.
+## Unsafe legacy paths
+
+Do not use legacy references to `apps/admin-web/public`. The canonical app source is `apps/urai-admin`.
+
+Do not use `urai_admin_finish.sh` as a production deployment path. It is not a safe admin release gate and must not replace the documented release process.
+
+## Verification checklist
+
+- [ ] Correct GitHub repo and branch verified
+- [ ] Correct Firebase project verified
+- [ ] Correct hosting site/target verified
+- [ ] Env/secrets verified
+- [ ] First admin bootstrap target verified
+- [ ] Lint passing
+- [ ] Typecheck passing
+- [ ] Tests passing
+- [ ] Build passing
+- [ ] Firestore rules tested
+- [ ] Storage rules tested
+- [ ] Smoke tests passing
+- [ ] Rollback path documented
+- [ ] Evidence recorded
