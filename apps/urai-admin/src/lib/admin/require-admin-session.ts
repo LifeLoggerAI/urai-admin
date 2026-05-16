@@ -28,6 +28,35 @@ type NextDynamicServerError = Error & {
 const isFirebaseBuildStub =
   process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
 
+function parseCookieHeader(cookieHeader: string | null) {
+  if (!cookieHeader) {
+    return new Map<string, string>();
+  }
+
+  return new Map(
+    cookieHeader
+      .split(';')
+      .map((cookie) => cookie.trim())
+      .filter(Boolean)
+      .map((cookie) => {
+        const separatorIndex = cookie.indexOf('=');
+
+        if (separatorIndex === -1) {
+          return [cookie, ''] as const;
+        }
+
+        const name = cookie.slice(0, separatorIndex).trim();
+        const value = cookie.slice(separatorIndex + 1).trim();
+
+        try {
+          return [name, decodeURIComponent(value)] as const;
+        } catch {
+          return [name, value] as const;
+        }
+      }),
+  );
+}
+
 export function isNextDynamicServerError(error: unknown): error is NextDynamicServerError {
   if (!error || typeof error !== 'object') {
     return false;
@@ -53,7 +82,7 @@ export async function requireAdminSession(
     throw new AdminAuthError('Unauthorized', 401);
   }
 
-  const sessionCookie = req.cookies.get('__session')?.value;
+  const sessionCookie = parseCookieHeader(req.headers.get('cookie')).get('__session');
 
   if (!sessionCookie) {
     throw new AdminAuthError('Unauthorized', 401);
