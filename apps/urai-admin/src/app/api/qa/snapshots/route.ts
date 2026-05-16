@@ -8,8 +8,14 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const SNAPSHOT_FILE_PATTERN = /^urai-admin_curr_snapshot_([a-zA-Z0-9_-]{1,80})\.json$/;
+const isFirebaseBuildStub =
+  process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
 
 export async function GET(req: NextRequest) {
+  if (isFirebaseBuildStub) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await requireAdminSession(req, ['owner']);
 
