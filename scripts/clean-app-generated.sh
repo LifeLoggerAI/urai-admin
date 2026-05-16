@@ -37,4 +37,12 @@ if [[ -d apps/urai-admin/out ]]; then
   rm -r apps/urai-admin/out
 fi
 
+# Guard against reintroducing NextRequest.cookies in active source. That API triggers
+# noisy DYNAMIC_SERVER_USAGE stack traces when Next probes route handlers at build time.
+if grep -RInE '(^|[^A-Za-z0-9_])(req|request)\.cookies|cookies\(\)' apps/urai-admin/src --include='*.ts' --include='*.tsx'; then
+  echo "ERROR: Active source still uses Next cookies APIs that break clean production builds." >&2
+  echo "Use raw Cookie header parsing in server routes instead." >&2
+  exit 1
+fi
+
 echo "--- App generated artifact cleanup complete ---"
