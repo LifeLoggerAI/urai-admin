@@ -19,6 +19,19 @@ export class AdminAuthError extends Error {
   }
 }
 
+type NextDynamicServerError = Error & {
+  digest?: string;
+  description?: string;
+};
+
+export function isNextDynamicServerError(error: unknown): error is NextDynamicServerError {
+  return (
+    error instanceof Error &&
+    ((error as NextDynamicServerError).digest === 'DYNAMIC_SERVER_USAGE' ||
+      (error as NextDynamicServerError).description?.includes('Dynamic server usage') === true)
+  );
+}
+
 export async function requireAdminSession(
   req: NextRequest,
   allowedRoles: AdminRole[] = ['owner', 'admin'],
@@ -51,6 +64,10 @@ export async function requireAdminSession(
 }
 
 export function adminAuthErrorResponse(error: unknown) {
+  if (isNextDynamicServerError(error)) {
+    throw error;
+  }
+
   if (error instanceof AdminAuthError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
