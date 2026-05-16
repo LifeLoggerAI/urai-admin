@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuthErrorResponse, isNextDynamicServerError, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -33,7 +33,11 @@ export async function GET(req: NextRequest) {
 
   try {
     await requireAdminSession(req, ['owner']);
+  } catch (error) {
+    return adminAuthErrorResponse(error);
+  }
 
+  try {
     const { searchParams } = new URL(req.url);
     const prevTag = searchParams.get('prevTag');
     const currTag = searchParams.get('currTag');
@@ -78,14 +82,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ visualRegressions });
   } catch (error) {
-    if (isNextDynamicServerError(error)) {
-      throw error;
-    }
-
-    if (error instanceof Error && 'status' in error) {
-      return adminAuthErrorResponse(error);
-    }
-
     console.error('Failed to generate QA diff:', error);
     return NextResponse.json({ error: 'Failed to generate diff' }, { status: 500 });
   }
