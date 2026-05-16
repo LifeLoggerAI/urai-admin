@@ -14,7 +14,7 @@ const COLLECTIONS = {
   deadLetters: { collection: 'deadLetters', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
   roles: { collection: 'roles', roles: ['owner', 'admin', 'viewer'] },
   systemConfig: { collection: 'systemConfig', orderBy: 'updatedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
-  auditLogs: { collection: 'auditLogs', orderBy: 'ts', direction: 'desc', roles: ['owner', 'admin'] },
+  auditLogs: { collection: 'auditLogs', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
 } as const;
 
 const REDACTED = '[REDACTED]';
