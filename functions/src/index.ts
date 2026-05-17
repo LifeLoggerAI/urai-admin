@@ -99,14 +99,21 @@ export const admin_whoami = functions.https.onRequest(async (req, res) => {
 });
 
 // --- Next.js Hosting ---
-// The launch script packages apps/urai-admin/.next into functions/.next before deploy.
+// The launch script packages apps/urai-admin/.next and app source into functions/ before deploy.
 const isDev = process.env.NODE_ENV !== "production";
 const appDir = path.resolve(__dirname, "..");
 const nextApp = next({ dev: isDev, dir: appDir, conf: { distDir: ".next" } });
 const handle = nextApp.getRequestHandler();
-const nextReady = nextApp.prepare();
+let nextReady: Promise<void> | undefined;
+
+function prepareNext() {
+  if (!nextReady) {
+    nextReady = nextApp.prepare();
+  }
+  return nextReady;
+}
 
 export const nextServer = functions.runWith({ memory: "1GB", timeoutSeconds: 60 }).https.onRequest(async (req, res) => {
-  await nextReady;
+  await prepareNext();
   return handle(req, res);
 });
