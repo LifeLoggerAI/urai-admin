@@ -65,7 +65,8 @@ required_pattern "firebase.json" '"target": "admin"'
 required_pattern "firebase.json" '"public": "apps/urai-admin/public"'
 required_pattern "firebase.json" '"function": "nextServer"'
 required_pattern "functions/src/index.ts" "const nextApp = next"
-required_pattern "functions/src/index.ts" "distDir: \"../.next\""
+required_pattern "functions/src/index.ts" "const appDir = path.resolve"
+required_pattern "functions/src/index.ts" "distDir: \".next\""
 required_pattern "scripts/package-next-for-functions.sh" "APP_DIR="
 required_pattern "scripts/package-next-for-functions.sh" "FUNCTIONS_DIR="
 required_pattern "scripts/package-next-for-functions.sh" "NEXT_PACKAGE_DIR="
