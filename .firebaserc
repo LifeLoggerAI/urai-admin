@@ -1,8 +1,16 @@
 {
   "projects": {
-    "default": "urai-8025b",
+    "default": "urai-4dc1d",
     "admin": "urai-4dc1d"
   },
-  "targets": {},
+  "targets": {
+    "urai-4dc1d": {
+      "hosting": {
+        "admin": [
+          "urai-admin"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
