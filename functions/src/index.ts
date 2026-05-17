@@ -29,8 +29,10 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 
         rawEventsSnapshot.forEach(doc => {
             const event = doc.data();
-            if (event.userId) dau.add(event.userId);
-            eventsByName[event.eventName] = (eventsByName[event.eventName] || 0) + 1;
+            if (typeof event.userId === "string") dau.add(event.userId);
+            if (typeof event.eventName === "string") {
+                eventsByName[event.eventName] = (eventsByName[event.eventName] || 0) + 1;
+            }
         });
 
         const batch = db.batch();
@@ -52,9 +54,10 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
             results: { dau: dau.size, uniqueEvents: Object.keys(eventsByName).length }
         });
         
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         console.error(`[${jobId}:${runId}] FAILED:`, error);
-        await runRef.update({ status: "failed", finishedAt: new Date(), error: error.message });
+        await runRef.update({ status: "failed", finishedAt: new Date(), error: message });
     }
 });
 
