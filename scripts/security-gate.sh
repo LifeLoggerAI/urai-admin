@@ -66,7 +66,11 @@ required_pattern "firebase.json" '"public": "apps/urai-admin/public"'
 required_pattern "firebase.json" '"function": "nextServer"'
 required_pattern "functions/src/index.ts" "const nextApp = next"
 required_pattern "functions/src/index.ts" "distDir: \"../.next\""
-required_pattern "scripts/package-next-for-functions.sh" "cp -R \"\$\{APP_DIR\}/\.next/\.\""
+required_pattern "scripts/package-next-for-functions.sh" "APP_DIR="
+required_pattern "scripts/package-next-for-functions.sh" "FUNCTIONS_DIR="
+required_pattern "scripts/package-next-for-functions.sh" "NEXT_PACKAGE_DIR="
+required_pattern "scripts/package-next-for-functions.sh" "cp -R"
+required_pattern "scripts/package-next-for-functions.sh" "\.next"
 required_pattern ".firebaserc" '"default": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": \['
