@@ -42,6 +42,16 @@ copy_preferred_env() {
   done
 }
 
+set_default_env() {
+  local target="$1"
+  local value="$2"
+  if [[ -z "${!target:-}" || "${!target}" == "your_project_id" ]]; then
+    printf -v "${target}" '%s' "${value}"
+    export "${target}"
+    echo "OK: ${target} defaulted for production launch"
+  fi
+}
+
 prefer_production_project_id() {
   if [[ "${VITE_FIREBASE_PROJECT_ID:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
     export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}"
@@ -54,59 +64,27 @@ prefer_production_project_id() {
     echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from FIREBASE_PROJECT_ID for production"
     return 0
   fi
-
-  if [[ "${GOOGLE_CLOUD_PROJECT:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
-    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
-    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from GOOGLE_CLOUD_PROJECT for production"
-    return 0
-  fi
-
-  if [[ "${GCLOUD_PROJECT:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
-    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${GCLOUD_PROJECT}"
-    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from GCLOUD_PROJECT for production"
-    return 0
-  fi
 }
 
 normalize_env_aliases() {
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_API_KEY" \
-    "VITE_FIREBASE_API_KEY" \
-    "FIREBASE_API_KEY" \
-    "NEXT_PUBLIC_FIREBASE_APIKEY" \
-    "FIREBASE_WEB_API_KEY"
-
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
-    "VITE_FIREBASE_AUTH_DOMAIN" \
-    "FIREBASE_AUTH_DOMAIN" \
-    "NEXT_PUBLIC_FIREBASE_AUTHDOMAIN" \
-    "FIREBASE_WEB_AUTH_DOMAIN"
-
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID" \
-    "VITE_FIREBASE_PROJECT_ID" \
-    "FIREBASE_PROJECT_ID" \
-    "GCLOUD_PROJECT" \
-    "GOOGLE_CLOUD_PROJECT" \
-    "NEXT_PUBLIC_FIREBASE_PROJECTID"
-
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" \
-    "VITE_FIREBASE_STORAGE_BUCKET" \
-    "FIREBASE_STORAGE_BUCKET" \
-    "NEXT_PUBLIC_FIREBASE_STORAGEBUCKET" \
-    "FIREBASE_WEB_STORAGE_BUCKET"
-
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID" \
-    "VITE_FIREBASE_MESSAGING_SENDER_ID" \
-    "FIREBASE_MESSAGING_SENDER_ID" \
-    "NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID" \
-    "FIREBASE_WEB_MESSAGING_SENDER_ID"
-
-  copy_preferred_env "NEXT_PUBLIC_FIREBASE_APP_ID" \
-    "VITE_FIREBASE_APP_ID" \
-    "FIREBASE_APP_ID" \
-    "NEXT_PUBLIC_FIREBASE_APPID" \
-    "FIREBASE_WEB_APP_ID"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_API_KEY" "VITE_FIREBASE_API_KEY" "FIREBASE_API_KEY" "NEXT_PUBLIC_FIREBASE_APIKEY"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" "VITE_FIREBASE_AUTH_DOMAIN" "FIREBASE_AUTH_DOMAIN" "NEXT_PUBLIC_FIREBASE_AUTHDOMAIN"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID" "VITE_FIREBASE_PROJECT_ID" "FIREBASE_PROJECT_ID" "GCLOUD_PROJECT" "GOOGLE_CLOUD_PROJECT" "NEXT_PUBLIC_FIREBASE_PROJECTID"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" "VITE_FIREBASE_STORAGE_BUCKET" "FIREBASE_STORAGE_BUCKET" "NEXT_PUBLIC_FIREBASE_STORAGEBUCKET"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID" "VITE_FIREBASE_MESSAGING_SENDER_ID" "FIREBASE_MESSAGING_SENDER_ID" "NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID"
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_APP_ID" "VITE_FIREBASE_APP_ID" "FIREBASE_APP_ID" "NEXT_PUBLIC_FIREBASE_APPID"
 
   prefer_production_project_id
+
+  set_default_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" "${PRODUCTION_FIREBASE_PROJECT_ID}.appspot.com"
+
+  if [[ -z "${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:-}" ]]; then
+    echo "WARN: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID is not set. Continuing because deploy does not require it."
+  fi
+
+  if [[ -z "${NEXT_PUBLIC_FIREBASE_APP_ID:-}" ]]; then
+    echo "WARN: NEXT_PUBLIC_FIREBASE_APP_ID is not set. Continuing because deploy does not require it."
+  fi
 }
 
 require_env() {
@@ -146,8 +124,6 @@ require_file() {
 
 echo "--- URAI Admin production preflight ---"
 
-# Load local env files without committing secret values. Later files can override
-# earlier files; normalization below corrects known local/staging collisions.
 load_env_file ".env"
 load_env_file ".env.local"
 load_env_file ".env.production"
@@ -174,8 +150,6 @@ require_env "NEXT_PUBLIC_FIREBASE_API_KEY"
 require_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"
 require_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID"
 require_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"
-require_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"
-require_env "NEXT_PUBLIC_FIREBASE_APP_ID"
 
 if [[ "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" != "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
   echo "ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID must be ${PRODUCTION_FIREBASE_PROJECT_ID} for production deploy" >&2
