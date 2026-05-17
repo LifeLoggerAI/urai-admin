@@ -1,11 +1,12 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import next from "next";
 
 admin.initializeApp();
 const db = admin.firestore();
 
 // --- SCHEDULED AGGREGATION JOB ---
-export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSeconds: 300 }).pubsub.schedule("every 24 hours").onRun(async (context) => {
+export const aggregateAnalytics = functions.runWith({ memory: "512MB", timeoutSeconds: 300 }).pubsub.schedule("every 24 hours").onRun(async (context) => {
     const jobId = "aggregateAnalytics";
     const runId = context.eventId;
     const runRef = db.collection("analytics_job_runs").doc(jobId).collection("runs").doc(runId);
@@ -15,7 +16,7 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
     try {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const dateStr = yesterday.toISOString().split('T')[0];
+        const dateStr = yesterday.toISOString().split("T")[0];
         const rawCollectionName = `analytics_events_raw_${dateStr}`;
 
         const rawEventsSnapshot = await db.collection(rawCollectionName).get();
@@ -36,24 +37,19 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
         });
 
         const batch = db.batch();
-        
-        // Idempotent write for DAU
         const dauRef = db.collection("analytics_aggregates").doc(`dau_${dateStr}`);
         batch.set(dauRef, { date: dateStr, count: dau.size });
 
-        // Idempotent write for event counts
         const eventsRef = db.collection("analytics_aggregates").doc(`events_${dateStr}`);
         batch.set(eventsRef, { date: dateStr, counts: eventsByName });
 
         await batch.commit();
-        
-        await runRef.update({ 
-            status: "completed", 
-            finishedAt: new Date(), 
+        await runRef.update({
+            status: "completed",
+            finishedAt: new Date(),
             processedCount: rawEventsSnapshot.size,
             results: { dau: dau.size, uniqueEvents: Object.keys(eventsByName).length }
         });
-        
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`[${jobId}:${runId}] FAILED:`, error);
@@ -62,14 +58,13 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 });
 
 // --- Next.js Hosting ---
-// This function is the server-side renderer for the Next.js app.
-import next from 'next';
-
-const isDev = process.env.NODE_ENV !== 'production';
-// Assumes the script is run from the monorepo root
-const nextApp = next({ dev: isDev, conf: { distDir: '../apps/urai-admin/.next' } });
+// The launch script packages apps/urai-admin/.next into functions/.next before deploy.
+const isDev = process.env.NODE_ENV !== "production";
+const nextApp = next({ dev: isDev, dir: __dirname, conf: { distDir: "../.next" } });
 const handle = nextApp.getRequestHandler();
+const nextReady = nextApp.prepare();
 
-export const nextServer = functions.https.onRequest((req, res) => {
-  return nextApp.prepare().then(() => handle(req, res));
+export const nextServer = functions.runWith({ memory: "1GB", timeoutSeconds: 60 }).https.onRequest(async (req, res) => {
+  await nextReady;
+  return handle(req, res);
 });
