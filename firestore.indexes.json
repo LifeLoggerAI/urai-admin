@@ -1,12 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "analytics_aggregates",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }
