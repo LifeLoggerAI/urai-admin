@@ -9,16 +9,6 @@ const updateUserRoleSchema = z.object({
   role: z.enum(['owner', 'admin', 'viewer']),
 });
 
-type FirestoreDoc = {
-  exists: boolean;
-  data: () => Record<string, unknown> | undefined;
-};
-
-type FirestoreTransaction = {
-  get: (ref: unknown) => Promise<FirestoreDoc>;
-  set: (ref: unknown, data: unknown, options?: unknown) => void;
-};
-
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAdminSession(request, ['owner']);
@@ -28,7 +18,7 @@ export async function POST(request: NextRequest) {
     const userRef = firestore.collection('adminUsers').doc(payload.uid);
     const auditLogRef = firestore.collection('auditLogs').doc();
 
-    await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+    await firestore.runTransaction(async (transaction) => {
       const current = await transaction.get(userRef);
 
       if (!current.exists) {
