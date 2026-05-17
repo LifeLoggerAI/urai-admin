@@ -68,8 +68,8 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /analytics_events_raw_{date}/{eventId} {
-      allow read: if isOwnerOrAdmin();
+    match /{rawAnalyticsCollection}/{eventId} {
+      allow read: if rawAnalyticsCollection.matches('analytics_events_raw_.*') && isOwnerOrAdmin();
       allow write: if false;
     }
 
