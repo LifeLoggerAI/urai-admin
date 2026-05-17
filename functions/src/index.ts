@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import next from "next";
+import path from "path";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -100,7 +101,8 @@ export const admin_whoami = functions.https.onRequest(async (req, res) => {
 // --- Next.js Hosting ---
 // The launch script packages apps/urai-admin/.next into functions/.next before deploy.
 const isDev = process.env.NODE_ENV !== "production";
-const nextApp = next({ dev: isDev, dir: __dirname, conf: { distDir: "../.next" } });
+const appDir = path.resolve(__dirname, "..");
+const nextApp = next({ dev: isDev, dir: appDir, conf: { distDir: ".next" } });
 const handle = nextApp.getRequestHandler();
 const nextReady = nextApp.prepare();
 
