@@ -144,6 +144,7 @@ require_file "apps/urai-admin/src/lib/admin/require-admin-session.ts"
 require_file "apps/urai-admin/src/hooks/useAuth.tsx"
 require_file "functions/package.json"
 require_file "functions/src/index.ts"
+require_file "scripts/package-next-for-functions.sh"
 
 require_firebase_auth
 require_env "NEXT_PUBLIC_FIREBASE_API_KEY"
@@ -158,11 +159,18 @@ else
   echo "OK: production Firebase project is ${PRODUCTION_FIREBASE_PROJECT_ID}"
 fi
 
-if ! grep -q '"source": "apps/urai-admin"' firebase.json; then
-  echo "ERROR: firebase.json hosting source must be apps/urai-admin" >&2
+if ! grep -q '"public": "apps/urai-admin/public"' firebase.json; then
+  echo "ERROR: firebase.json hosting public must be apps/urai-admin/public for explicit Functions hosting" >&2
   missing=1
 else
-  echo "OK: firebase.json hosting source points to apps/urai-admin"
+  echo "OK: firebase.json hosting public points to apps/urai-admin/public"
+fi
+
+if ! grep -q '"function": "nextServer"' firebase.json; then
+  echo "ERROR: firebase.json hosting rewrite must point to nextServer" >&2
+  missing=1
+else
+  echo "OK: firebase.json hosting rewrites point to nextServer"
 fi
 
 if ! grep -q '"runtime": "nodejs20"' firebase.json; then
