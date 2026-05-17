@@ -1,13 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "analytics_events_raw",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "analytics_aggregates",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
