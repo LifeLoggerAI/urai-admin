@@ -16,6 +16,58 @@ load_env_file() {
   set +a
 }
 
+copy_first_env() {
+  local target="$1"
+  shift
+
+  if [[ -n "${!target:-}" ]]; then
+    return 0
+  fi
+
+  local source
+  for source in "$@"; do
+    if [[ -n "${!source:-}" ]]; then
+      printf -v "${target}" '%s' "${!source}"
+      export "${target}"
+      echo "OK: ${target} normalized from ${source}"
+      return 0
+    fi
+  done
+}
+
+normalize_env_aliases() {
+  copy_first_env "NEXT_PUBLIC_FIREBASE_API_KEY" \
+    "FIREBASE_API_KEY" \
+    "NEXT_PUBLIC_FIREBASE_APIKEY" \
+    "FIREBASE_WEB_API_KEY"
+
+  copy_first_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
+    "FIREBASE_AUTH_DOMAIN" \
+    "NEXT_PUBLIC_FIREBASE_AUTHDOMAIN" \
+    "FIREBASE_WEB_AUTH_DOMAIN"
+
+  copy_first_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID" \
+    "FIREBASE_PROJECT_ID" \
+    "GCLOUD_PROJECT" \
+    "GOOGLE_CLOUD_PROJECT" \
+    "NEXT_PUBLIC_FIREBASE_PROJECTID"
+
+  copy_first_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" \
+    "FIREBASE_STORAGE_BUCKET" \
+    "NEXT_PUBLIC_FIREBASE_STORAGEBUCKET" \
+    "FIREBASE_WEB_STORAGE_BUCKET"
+
+  copy_first_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID" \
+    "FIREBASE_MESSAGING_SENDER_ID" \
+    "NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID" \
+    "FIREBASE_WEB_MESSAGING_SENDER_ID"
+
+  copy_first_env "NEXT_PUBLIC_FIREBASE_APP_ID" \
+    "FIREBASE_APP_ID" \
+    "NEXT_PUBLIC_FIREBASE_APPID" \
+    "FIREBASE_WEB_APP_ID"
+}
+
 require_env() {
   local name="$1"
   if [[ -z "${!name:-}" ]]; then
@@ -48,6 +100,7 @@ load_env_file "apps/urai-admin/.env"
 load_env_file "apps/urai-admin/.env.local"
 load_env_file "apps/urai-admin/.env.production"
 load_env_file "apps/urai-admin/.env.production.local"
+normalize_env_aliases
 
 require_file "firebase.json"
 require_file "firestore.rules"
