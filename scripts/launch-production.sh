@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-export URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL:-https://www.uraiadmin.com}"
+export URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL:-https://urai-admin.web.app}"
 export URAI_ADMIN_FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL:-https://us-central1-urai-4dc1d.cloudfunctions.net}"
 export URAI_ADMIN_FIREBASE_PROJECT="${URAI_ADMIN_FIREBASE_PROJECT:-urai-4dc1d}"
 
