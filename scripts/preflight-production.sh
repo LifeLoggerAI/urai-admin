@@ -3,6 +3,19 @@ set -euo pipefail
 
 missing=0
 
+load_env_file() {
+  local path="$1"
+  if [[ ! -f "${path}" ]]; then
+    return 0
+  fi
+
+  echo "OK: loading environment from ${path}"
+  set -a
+  # shellcheck disable=SC1090
+  source "${path}"
+  set +a
+}
+
 require_env() {
   local name="$1"
   if [[ -z "${!name:-}" ]]; then
@@ -24,6 +37,17 @@ require_file() {
 }
 
 echo "--- URAI Admin production preflight ---"
+
+# Load local env files in the same spirit as Next/Firebase tooling, without
+# committing secret values to the repository. Later files override earlier ones.
+load_env_file ".env"
+load_env_file ".env.local"
+load_env_file ".env.production"
+load_env_file ".env.production.local"
+load_env_file "apps/urai-admin/.env"
+load_env_file "apps/urai-admin/.env.local"
+load_env_file "apps/urai-admin/.env.production"
+load_env_file "apps/urai-admin/.env.production.local"
 
 require_file "firebase.json"
 require_file "firestore.rules"
@@ -47,6 +71,8 @@ require_env "NEXT_PUBLIC_FIREBASE_APP_ID"
 if [[ "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" != "urai-4dc1d" ]]; then
   echo "ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID must be urai-4dc1d for production deploy" >&2
   missing=1
+else
+  echo "OK: production Firebase project is urai-4dc1d"
 fi
 
 if ! grep -q '"source": "apps/urai-admin"' firebase.json; then
