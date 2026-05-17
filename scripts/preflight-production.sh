@@ -2,6 +2,7 @@
 set -euo pipefail
 
 missing=0
+PRODUCTION_FIREBASE_PROJECT_ID="urai-4dc1d"
 
 load_env_file() {
   local path="$1"
@@ -16,17 +17,23 @@ load_env_file() {
   set +a
 }
 
-copy_first_env() {
+is_placeholder_or_legacy() {
+  local value="${1:-}"
+  [[ -z "${value}" || "${value}" == "your_project_id" || "${value}" == "urai-8025b" ]]
+}
+
+copy_preferred_env() {
   local target="$1"
   shift
 
-  if [[ -n "${!target:-}" ]]; then
+  local current="${!target:-}"
+  if ! is_placeholder_or_legacy "${current}"; then
     return 0
   fi
 
   local source
   for source in "$@"; do
-    if [[ -n "${!source:-}" ]]; then
+    if [[ -n "${!source:-}" && "${!source}" != "your_project_id" ]]; then
       printf -v "${target}" '%s' "${!source}"
       export "${target}"
       echo "OK: ${target} normalized from ${source}"
@@ -35,37 +42,71 @@ copy_first_env() {
   done
 }
 
+prefer_production_project_id() {
+  if [[ "${VITE_FIREBASE_PROJECT_ID:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
+    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}"
+    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from VITE_FIREBASE_PROJECT_ID for production"
+    return 0
+  fi
+
+  if [[ "${FIREBASE_PROJECT_ID:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
+    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}"
+    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from FIREBASE_PROJECT_ID for production"
+    return 0
+  fi
+
+  if [[ "${GOOGLE_CLOUD_PROJECT:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
+    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${GOOGLE_CLOUD_PROJECT}"
+    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from GOOGLE_CLOUD_PROJECT for production"
+    return 0
+  fi
+
+  if [[ "${GCLOUD_PROJECT:-}" == "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
+    export NEXT_PUBLIC_FIREBASE_PROJECT_ID="${GCLOUD_PROJECT}"
+    echo "OK: NEXT_PUBLIC_FIREBASE_PROJECT_ID forced from GCLOUD_PROJECT for production"
+    return 0
+  fi
+}
+
 normalize_env_aliases() {
-  copy_first_env "NEXT_PUBLIC_FIREBASE_API_KEY" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_API_KEY" \
+    "VITE_FIREBASE_API_KEY" \
     "FIREBASE_API_KEY" \
     "NEXT_PUBLIC_FIREBASE_APIKEY" \
     "FIREBASE_WEB_API_KEY"
 
-  copy_first_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN" \
+    "VITE_FIREBASE_AUTH_DOMAIN" \
     "FIREBASE_AUTH_DOMAIN" \
     "NEXT_PUBLIC_FIREBASE_AUTHDOMAIN" \
     "FIREBASE_WEB_AUTH_DOMAIN"
 
-  copy_first_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID" \
+    "VITE_FIREBASE_PROJECT_ID" \
     "FIREBASE_PROJECT_ID" \
     "GCLOUD_PROJECT" \
     "GOOGLE_CLOUD_PROJECT" \
     "NEXT_PUBLIC_FIREBASE_PROJECTID"
 
-  copy_first_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET" \
+    "VITE_FIREBASE_STORAGE_BUCKET" \
     "FIREBASE_STORAGE_BUCKET" \
     "NEXT_PUBLIC_FIREBASE_STORAGEBUCKET" \
     "FIREBASE_WEB_STORAGE_BUCKET"
 
-  copy_first_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID" \
+    "VITE_FIREBASE_MESSAGING_SENDER_ID" \
     "FIREBASE_MESSAGING_SENDER_ID" \
     "NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID" \
     "FIREBASE_WEB_MESSAGING_SENDER_ID"
 
-  copy_first_env "NEXT_PUBLIC_FIREBASE_APP_ID" \
+  copy_preferred_env "NEXT_PUBLIC_FIREBASE_APP_ID" \
+    "VITE_FIREBASE_APP_ID" \
     "FIREBASE_APP_ID" \
     "NEXT_PUBLIC_FIREBASE_APPID" \
     "FIREBASE_WEB_APP_ID"
+
+  prefer_production_project_id
 }
 
 require_env() {
@@ -76,6 +117,21 @@ require_env() {
   else
     echo "OK: ${name} is set"
   fi
+}
+
+require_firebase_auth() {
+  if [[ -n "${FIREBASE_TOKEN:-}" ]]; then
+    echo "OK: FIREBASE_TOKEN is set"
+    return 0
+  fi
+
+  if command -v firebase >/dev/null 2>&1 && firebase login:list >/dev/null 2>&1; then
+    echo "OK: Firebase CLI login is available"
+    return 0
+  fi
+
+  echo "ERROR: Missing Firebase deploy auth. Set FIREBASE_TOKEN or run firebase login." >&2
+  missing=1
 }
 
 require_file() {
@@ -90,8 +146,8 @@ require_file() {
 
 echo "--- URAI Admin production preflight ---"
 
-# Load local env files in the same spirit as Next/Firebase tooling, without
-# committing secret values to the repository. Later files override earlier ones.
+# Load local env files without committing secret values. Later files can override
+# earlier files; normalization below corrects known local/staging collisions.
 load_env_file ".env"
 load_env_file ".env.local"
 load_env_file ".env.production"
@@ -113,7 +169,7 @@ require_file "apps/urai-admin/src/hooks/useAuth.tsx"
 require_file "functions/package.json"
 require_file "functions/src/index.ts"
 
-require_env "FIREBASE_TOKEN"
+require_firebase_auth
 require_env "NEXT_PUBLIC_FIREBASE_API_KEY"
 require_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"
 require_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID"
@@ -121,11 +177,11 @@ require_env "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"
 require_env "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"
 require_env "NEXT_PUBLIC_FIREBASE_APP_ID"
 
-if [[ "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" != "urai-4dc1d" ]]; then
-  echo "ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID must be urai-4dc1d for production deploy" >&2
+if [[ "${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}" != "${PRODUCTION_FIREBASE_PROJECT_ID}" ]]; then
+  echo "ERROR: NEXT_PUBLIC_FIREBASE_PROJECT_ID must be ${PRODUCTION_FIREBASE_PROJECT_ID} for production deploy" >&2
   missing=1
 else
-  echo "OK: production Firebase project is urai-4dc1d"
+  echo "OK: production Firebase project is ${PRODUCTION_FIREBASE_PROJECT_ID}"
 fi
 
 if ! grep -q '"source": "apps/urai-admin"' firebase.json; then
