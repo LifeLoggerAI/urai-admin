@@ -50,6 +50,8 @@ require_file "apps/urai-admin/src/app/api/auth/login/route.ts"
 require_file "apps/urai-admin/src/app/api/auth/logout/route.ts"
 require_file "apps/urai-admin/src/app/api/auth/admin-session/route.ts"
 require_file "apps/urai-admin/src/middleware.ts"
+require_file "functions/src/index.ts"
+require_file "scripts/package-next-for-functions.sh"
 
 forbidden_pattern "firestore.rules" "allow[[:space:]]+(read|write|create|update|delete|list|get)(,[[:space:]]*(read|write|create|update|delete|list|get))*:[[:space:]]*if[[:space:]]+true"
 forbidden_pattern "storage.rules" "allow[[:space:]]+(read|write|create|update|delete|list|get)(,[[:space:]]*(read|write|create|update|delete|list|get))*:[[:space:]]*if[[:space:]]+true"
@@ -60,8 +62,11 @@ required_pattern "firestore.rules" "request.auth.token.role in \['owner', 'admin
 required_pattern "firestore.rules" "request.auth.token.admin == true"
 required_pattern "storage.rules" "allow read, write: if false"
 required_pattern "firebase.json" '"target": "admin"'
-required_pattern "firebase.json" '"source": "apps/urai-admin"'
+required_pattern "firebase.json" '"public": "apps/urai-admin/public"'
 required_pattern "firebase.json" '"function": "nextServer"'
+required_pattern "functions/src/index.ts" "const nextApp = next"
+required_pattern "functions/src/index.ts" "distDir: \"../.next\""
+required_pattern "scripts/package-next-for-functions.sh" "cp -R \"\$\{APP_DIR\}/\.next/\.\""
 required_pattern ".firebaserc" '"default": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": \['
