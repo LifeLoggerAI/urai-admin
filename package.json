@@ -8,13 +8,15 @@
     "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm --dir functions typecheck",
     "test": "pnpm security:gate && pnpm --dir apps/urai-admin test && pnpm --dir functions test",
     "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm --dir functions build",
+    "release:local": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
     "preflight:production": "bash scripts/preflight-production.sh",
     "bootstrap:owner": "node scripts/bootstrap-owner.mjs",
     "smoke-test": "bash scripts/smoke-test.sh",
-    "verify:production": "bash scripts/verify-production-live.sh"
+    "verify:production": "bash scripts/verify-production-live.sh",
+    "rollback:production": "bash scripts/rollback-production.sh"
   },
   "workspaces": [
     "apps/*"
