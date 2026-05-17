@@ -4,6 +4,8 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'URAI Admin | Secure admin OS for AI products',
   description: 'URAI Admin is a standalone operations console for AI apps, Firebase products, feature flags, jobs, audit logs, and internal teams.',
