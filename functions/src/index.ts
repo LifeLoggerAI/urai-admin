@@ -57,6 +57,46 @@ export const aggregateAnalytics = functions.runWith({ memory: "512MB", timeoutSe
     }
 });
 
+// --- Production verification endpoints ---
+export const api_health = functions.https.onRequest((_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+export const admin_whoami = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
+    return;
+  }
+
+  const authorization = req.get("authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    res.status(401).json({ error: "UNAUTHENTICATED" });
+    return;
+  }
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(match[1]);
+    const role = typeof decoded.role === "string" ? decoded.role : null;
+    const isAdmin = decoded.admin === true || role === "owner" || role === "admin";
+
+    if (!isAdmin) {
+      res.status(403).json({ error: "PERMISSION_DENIED" });
+      return;
+    }
+
+    res.status(200).json({
+      uid: decoded.uid,
+      email: decoded.email ?? null,
+      role,
+      admin: decoded.admin === true,
+    });
+  } catch (error: unknown) {
+    console.error("admin_whoami verification failed", error);
+    res.status(403).json({ error: "PERMISSION_DENIED" });
+  }
+});
+
 // --- Next.js Hosting ---
 // The launch script packages apps/urai-admin/.next into functions/.next before deploy.
 const isDev = process.env.NODE_ENV !== "production";
