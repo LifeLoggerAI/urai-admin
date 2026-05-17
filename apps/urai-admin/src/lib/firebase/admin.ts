@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import type { Auth } from 'firebase-admin/auth';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 const shouldStubFirebaseAdmin =
   process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1' || process.env.NEXT_PHASE === 'phase-production-build';
@@ -20,8 +21,9 @@ function createEmptyDocument(id = 'build-stub') {
   };
 }
 
-function createBuildFirestoreStub(): any {
-  const query: any = {
+function createBuildFirestoreStub(): Firestore {
+  let query: FirebaseFirestore.CollectionReference;
+  query = {
     limit: () => query,
     orderBy: () => query,
     where: () => query,
@@ -36,7 +38,7 @@ function createBuildFirestoreStub(): any {
       delete: async () => undefined,
       collection: () => query,
     }),
-  };
+  } as unknown as FirebaseFirestore.CollectionReference;
 
   return {
     collection: () => query,
@@ -46,10 +48,10 @@ function createBuildFirestoreStub(): any {
       delete: () => undefined,
       commit: async () => undefined,
     }),
-  };
+  } as unknown as Firestore;
 }
 
-function createBuildAuthStub(): any {
+function createBuildAuthStub(): Auth {
   return {
     verifySessionCookie: async () => {
       throw Object.assign(new Error('Admin auth is unavailable during build'), { status: 401 });
@@ -59,12 +61,12 @@ function createBuildAuthStub(): any {
     },
     setCustomUserClaims: async () => undefined,
     getUser: async () => ({ uid: 'build-stub', email: null }),
-  };
+  } as unknown as Auth;
 }
 
 if (!shouldStubFirebaseAdmin && !admin.apps.length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) as admin.ServiceAccount;
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -81,7 +83,7 @@ interface AuditLog {
   actorEmail: string;
   action: string;
   target: { id: string; type: string };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export const writeAuditLog = async (log: AuditLog) => {
