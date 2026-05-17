@@ -9,6 +9,7 @@
     "test": "pnpm security:gate && pnpm --dir apps/urai-admin test && pnpm --dir functions test",
     "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm --dir functions build",
     "release:local": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "full:check": "pnpm release:local",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
@@ -19,7 +20,8 @@
     "rollback:production": "bash scripts/rollback-production.sh"
   },
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.2.0",
