@@ -22,8 +22,7 @@ function createEmptyDocument(id = 'build-stub') {
 }
 
 function createBuildFirestoreStub(): Firestore {
-  let query: FirebaseFirestore.CollectionReference;
-  query = {
+  const query = {
     limit: () => query,
     orderBy: () => query,
     where: () => query,
