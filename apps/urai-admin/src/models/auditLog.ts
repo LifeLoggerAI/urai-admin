@@ -1,4 +1,3 @@
-
 export interface AuditLog {
   id: string;
   ts: number;
@@ -7,5 +6,5 @@ export interface AuditLog {
   action: string;
   targetType: string;
   targetId: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
