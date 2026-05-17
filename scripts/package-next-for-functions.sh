@@ -15,8 +15,7 @@ fi
 rm -rf "${NEXT_PACKAGE_DIR}" "${PUBLIC_PACKAGE_DIR}"
 mkdir -p "${NEXT_PACKAGE_DIR}" "${PUBLIC_PACKAGE_DIR}"
 
-cp -R "${APP_DIR}/.next/standalone" "${NEXT_PACKAGE_DIR}/standalone"
-cp -R "${APP_DIR}/.next/static" "${NEXT_PACKAGE_DIR}/static"
+cp -R "${APP_DIR}/.next/." "${NEXT_PACKAGE_DIR}/"
 
 if [[ -d "${APP_DIR}/public" ]]; then
   cp -R "${APP_DIR}/public/." "${PUBLIC_PACKAGE_DIR}/"
