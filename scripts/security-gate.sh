@@ -39,8 +39,12 @@ forbidden_recursive() {
 
 echo "--- URAI Admin security gate ---"
 
+require_file "firebase.json"
+require_file ".firebaserc"
 require_file "firestore.rules"
 require_file "storage.rules"
+require_file "apps/urai-admin/src/lib/firebase-admin.ts"
+require_file "apps/urai-admin/src/lib/firebase/admin.ts"
 require_file "apps/urai-admin/src/lib/admin/require-admin-session.ts"
 require_file "apps/urai-admin/src/app/api/auth/login/route.ts"
 require_file "apps/urai-admin/src/app/api/auth/logout/route.ts"
@@ -55,6 +59,17 @@ required_pattern "firestore.rules" "allow read, write: if false"
 required_pattern "firestore.rules" "request.auth.token.role in \['owner', 'admin', 'viewer'\]"
 required_pattern "firestore.rules" "request.auth.token.admin == true"
 required_pattern "storage.rules" "allow read, write: if false"
+required_pattern "firebase.json" '"target": "admin"'
+required_pattern "firebase.json" '"source": "apps/urai-admin"'
+required_pattern "firebase.json" '"function": "nextServer"'
+required_pattern ".firebaserc" '"default": "urai-4dc1d"'
+required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
+required_pattern ".firebaserc" '"admin": \['
+required_pattern ".firebaserc" '"urai-admin"'
+required_pattern "apps/urai-admin/src/lib/firebase-admin.ts" "firestore as db|const db = firestore|export const db = firestore"
+required_pattern "apps/urai-admin/src/lib/firebase-admin.ts" "adminApp"
+required_pattern "apps/urai-admin/src/lib/firebase-admin.ts" "adminDb"
+required_pattern "apps/urai-admin/src/lib/firebase-admin.ts" "from './firebase/admin'"
 required_pattern "apps/urai-admin/src/lib/admin/require-admin-session.ts" "verifySessionCookie"
 required_pattern "apps/urai-admin/src/lib/admin/require-admin-session.ts" "isActive"
 required_pattern "apps/urai-admin/src/app/api/auth/login/route.ts" "verifyIdToken"
