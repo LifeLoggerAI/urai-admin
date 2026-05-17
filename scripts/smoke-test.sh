@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "--- RUNNING URAI ADMIN SMOKE TESTS ---"
 
-HOSTING_URL="${URAI_ADMIN_BASE_URL:-https://www.uraiadmin.com}"
+HOSTING_URL="${URAI_ADMIN_BASE_URL:-https://urai-admin.web.app}"
 FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL:-https://us-central1-urai-4dc1d.cloudfunctions.net}"
 
 HOSTING_URL="${HOSTING_URL%/}"
