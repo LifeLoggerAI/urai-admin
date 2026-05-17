@@ -17,6 +17,7 @@
     }
   ],
   "hosting": {
+    "target": "admin",
     "source": "apps/urai-admin",
     "ignore": [
       "firebase.json",
