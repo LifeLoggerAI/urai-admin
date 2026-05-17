@@ -68,7 +68,7 @@ run_step() {
 
   run_step "Full local release check" pnpm full:check
   run_step "Production preflight" pnpm preflight:production
-  run_step "Deploy Firebase Hosting, Functions, Firestore, and Storage" pnpm deploy
+  run_step "Deploy Firebase Hosting, Functions, Firestore, and Storage" pnpm run deploy
   deployed=1
   run_step "Smoke test deployed service" pnpm smoke-test
   run_step "Verify production live" pnpm verify:production
