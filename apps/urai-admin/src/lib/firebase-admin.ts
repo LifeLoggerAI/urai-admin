@@ -1,11 +1,7 @@
-
-import admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
-}
+import { admin, auth, firestore, writeAuditLog } from './firebase/admin';
 
 export const adminApp = admin.app();
-export const adminDb = admin.firestore();
+export const adminDb = firestore;
+export const db = firestore;
+
+export { admin, auth, firestore, writeAuditLog };
