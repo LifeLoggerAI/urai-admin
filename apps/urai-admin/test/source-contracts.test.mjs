@@ -45,6 +45,12 @@ assert.match(loginRoute, /admin:\s*true/, 'all active admin roles, including vie
 assert.match(loginRoute, /role:\s*adminUser\.role/, 'login custom claims must preserve exact adminUsers role');
 assert.match(loginRoute, /auth\.setCustomUserClaims/, 'login must refresh Firebase custom claims before session creation');
 
+const sessionRoute = await read('src/app/api/auth/session/route.ts');
+assert.match(sessionRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'session refresh must recognize owner, admin, and viewer roles');
+assert.match(sessionRoute, /admin:\s*true/, 'session refresh must keep all active admin roles behind the admin claim');
+assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refresh must set the hardened __session cookie');
+assert.match(sessionRoute, /export\s+async\s+function\s+DELETE/, 'session endpoint must support session clearing');
+
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
 assert.match(collectionRoute, /auditLogs:\s*\{[^}]*orderBy:\s*'createdAt'/s, 'audit logs must order by the canonical createdAt field');
@@ -55,6 +61,9 @@ assert.doesNotMatch(collectionRoute, /collection\(collectionKey\)/, 'collection 
 const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
 assert.match(roleRoute, /requireAdminSession\(req,\s*\['owner'\]\)/, 'role mutation must require owner role');
 assert.match(roleRoute, /Cannot change your own role/, 'role mutation must prevent self-demotion');
+assert.match(roleRoute, /z\.enum\(\['owner',\s*'admin',\s*'viewer'\]\)/, 'role mutation must use schema validation for allowed roles');
+assert.match(roleRoute, /auth\.setCustomUserClaims\(uid,\s*\{\s*admin:\s*true,\s*role\s*\}/s, 'role mutation must keep viewer behind admin claim while preserving exact role');
+assert.match(roleRoute, /previousRole/, 'role mutation audit metadata must include previous role');
 assert.match(roleRoute, /writeAuditLog/, 'role mutation must write an audit log');
 
 const firestoreRules = await readRoot('firestore.rules');
