@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase/client';
+import { getClientAuth } from '@/lib/firebase/client';
 
 type AuthContextValue = {
   user: User | null;
@@ -21,15 +21,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
-      setLoading(false);
-    });
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
 
-    return () => unsubscribe();
+    getClientAuth()
+      .then((auth) => {
+        if (cancelled) return;
+        unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+          setUser(nextUser);
+          setLoading(false);
+        });
+      })
+      .catch((error) => {
+        console.error('Unable to initialize Firebase Auth:', error);
+        if (!cancelled) {
+          setUser(null);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   const signOut = useCallback(async () => {
+    const auth = await getClientAuth();
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
     await firebaseSignOut(auth);
     window.location.href = '/login';
