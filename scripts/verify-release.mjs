@@ -62,6 +62,7 @@ console.log('--- URAI Admin release verification ---');
 const packageJson = requireJson('package.json');
 const firebaseJson = requireJson('firebase.json');
 const firebaserc = requireJson('.firebaserc');
+const ownershipManifest = requireJson('config/system-ownership.manifest.json');
 const firestoreRules = requireFile('firestore.rules');
 const storageRules = requireFile('storage.rules');
 const packageNext = requireFile('scripts/package-next-for-functions.sh');
@@ -70,6 +71,8 @@ const deployProduction = requireFile('scripts/deploy-production.sh');
 const smokeTest = requireFile('scripts/smoke-test.sh');
 const verifyProduction = requireFile('scripts/verify-production-live.sh');
 const preflightProduction = requireFile('scripts/preflight-production.sh');
+const ownershipGuard = requireFile('scripts/check-system-ownership.mjs');
+const reconciliationDoc = requireFile('docs/SYSTEM_OF_SYSTEMS_RECONCILIATION.md');
 
 requireFile('scripts/clean-functions-legacy.sh');
 requireFile('scripts/clean-app-generated.sh');
@@ -89,8 +92,10 @@ requireScript(packageJson, 'test', 'pnpm security:gate');
 requireScript(packageJson, 'build', 'package-next-for-functions.sh');
 requireScript(packageJson, 'preflight', 'pnpm build');
 requireScript(packageJson, 'release:lock', 'pnpm verify:release');
+requireScript(packageJson, 'release:lock', 'check:ownership');
 requireScript(packageJson, 'verify:release', 'scripts/verify-release.mjs');
-requireScript(packageJson, 'deploy', 'deploy:production');
+requireScript(packageJson, 'check:ownership', 'scripts/check-system-ownership.mjs');
+requireScript(packageJson, 'deploy', 'firebase deploy');
 requireScript(packageJson, 'deploy:production', 'scripts/deploy-production.sh');
 requireScript(packageJson, 'preflight:production', 'preflight-production.sh');
 requireScript(packageJson, 'launch:production', 'launch-production.sh');
@@ -115,6 +120,24 @@ if (firebaserc?.projects?.default !== 'urai-4dc1d') {
   fail('.firebaserc default project must be urai-4dc1d');
 }
 
+if (ownershipManifest?.firebaseProject !== 'urai-4dc1d') {
+  fail('system ownership manifest must target urai-4dc1d');
+}
+
+if (ownershipManifest?.currentRepo !== 'LifeLoggerAI/urai-admin') {
+  fail('system ownership manifest must identify LifeLoggerAI/urai-admin as currentRepo');
+}
+
+for (const owner of ['LifeLoggerAI/urai-admin', 'LifeLoggerAI/UrAi', 'LifeLoggerAI/UrAiProd', 'LifeLoggerAI/asset-factory']) {
+  if (!ownershipManifest?.owners?.[owner]) fail(`system ownership manifest missing owner ${owner}`);
+}
+
+for (const sharedFn of ['buildBloom', 'createXrSession', 'assetFactoryHealth', 'ingestLifeMapEvent']) {
+  if (!ownershipManifest?.knownSharedLiveFunctionsNotOwnedByAdmin?.includes(sharedFn)) {
+    fail(`system ownership manifest must mark ${sharedFn} as not owned by urai-admin`);
+  }
+}
+
 requireIncludes(firestoreRules, 'allow read, write: if false', 'firestore.rules must keep default deny');
 requireIncludes(storageRules, 'allow read, write: if false', 'storage.rules must keep default deny');
 requireIncludes(packageNext, 'apps/urai-admin', 'package-next-for-functions.sh must package apps/urai-admin');
@@ -125,6 +148,10 @@ requireIncludes(deployProduction, 'pnpm launch:production', 'deploy-production.s
 requireIncludes(smokeTest, 'https://urai-admin.web.app', 'smoke-test must target production Hosting URL');
 requireIncludes(verifyProduction, 'https://urai-admin.web.app', 'verify-production-live must target production Hosting URL');
 requireIncludes(preflightProduction, 'urai-4dc1d', 'preflight-production must enforce urai-4dc1d');
+requireIncludes(ownershipGuard, 'knownSharedLiveFunctionsNotOwnedByAdmin', 'ownership guard must check shared live functions');
+requireIncludes(ownershipGuard, 'must not delete functions', 'ownership guard must prohibit function deletes');
+requireIncludes(reconciliationDoc, 'Ownership map', 'system reconciliation doc must include ownership map');
+requireIncludes(reconciliationDoc, 'must not delete', 'system reconciliation doc must document destructive deploy policy');
 
 const deploymentCriticalText = [
   readFileSync('package.json', 'utf8'),
