@@ -135,6 +135,14 @@ if (existsSync(adminCollectionTablePath)) {
   }
 }
 
+const adminSessionGuardPath = 'apps/urai-admin/src/lib/admin/require-admin-session.ts';
+if (existsSync(adminSessionGuardPath)) {
+  const adminSessionGuard = readFileSync(adminSessionGuardPath, 'utf8');
+  for (const expected of ['noStoreHeaders', 'Cache-Control', 'no-store', 'headers: noStoreHeaders']) {
+    if (!adminSessionGuard.includes(expected)) failures.push(`admin session guard missing expected no-store behavior: ${expected}`);
+  }
+}
+
 if (failures.length) {
   console.error('Admin route contract failed:');
   for (const failure of failures) console.error(`- ${failure}`);
