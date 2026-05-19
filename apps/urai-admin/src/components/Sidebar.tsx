@@ -14,6 +14,7 @@ const navItems = [
   { href: '/admin/dead-letters', label: 'Dead Letters' },
   { href: '/admin/feature-flags', label: 'Feature Flags' },
   { href: '/admin/policies', label: 'Roles & Policies' },
+  { href: '/admin/privacy-requests', label: 'Privacy Requests' },
   { href: '/admin/system', label: 'System' },
   { href: '/admin/audit', label: 'Audit Log' },
   { href: '/admin/settings', label: 'Settings' },
