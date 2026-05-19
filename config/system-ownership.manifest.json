@@ -1,0 +1,170 @@
+{
+  "firebaseProject": "urai-4dc1d",
+  "currentRepo": "LifeLoggerAI/urai-admin",
+  "resourcePolicy": {
+    "adminDeploysMustNotDeleteSharedFunctions": true,
+    "adminDeploysMustNotDeleteSharedIndexes": true,
+    "destructiveChangesRequireReleaseManagerApproval": true
+  },
+  "owners": {
+    "LifeLoggerAI/urai-admin": {
+      "type": "admin-surface",
+      "functions": [
+        "aggregateAnalytics",
+        "api_health",
+        "admin_whoami",
+        "nextServer"
+      ],
+      "hostingSites": [
+        "urai-admin"
+      ],
+      "routes": [
+        "/",
+        "/login",
+        "/admin",
+        "/admin/users",
+        "/admin/projects",
+        "/admin/jobs",
+        "/admin/job-runs",
+        "/admin/dead-letters",
+        "/admin/feature-flags",
+        "/admin/policies",
+        "/admin/privacy-requests",
+        "/admin/system",
+        "/admin/audit",
+        "/admin/settings",
+        "/api/admin",
+        "/api/admin/users",
+        "/api/admin/collection",
+        "/api/admin/audit",
+        "/api/admin/analytics",
+        "/api/auth/login",
+        "/api/auth/logout",
+        "/api/auth/session",
+        "/api/auth/admin-session",
+        "/api/auth/verify",
+        "/api/health"
+      ],
+      "collections": [
+        "adminUsers",
+        "projectRegistry",
+        "featureFlags",
+        "jobs",
+        "jobRuns",
+        "deadLetters",
+        "roles",
+        "systemConfig",
+        "privacyRequests",
+        "auditLogs",
+        "analytics_events_raw_*",
+        "analytics_aggregates",
+        "analytics_job_runs"
+      ],
+      "deployPath": "pnpm deploy:production",
+      "testPath": "pnpm release:lock",
+      "productionVerification": "pnpm smoke-test && pnpm verify:production"
+    },
+    "LifeLoggerAI/UrAi": {
+      "type": "core-app-index-owner",
+      "firestoreIndexes": [
+        "forecast:userId:ASCENDING,week:DESCENDING",
+        "insights:userId:ASCENDING,timestamp:DESCENDING",
+        "narratorLogs:userId:ASCENDING,timestamp:DESCENDING",
+        "obscuraPatterns:userId:ASCENDING,timestamp:DESCENDING",
+        "recoveryEvents:userId:ASCENDING,timestamp:DESCENDING",
+        "shadowCognition:userId:ASCENDING,timestamp:DESCENDING",
+        "chronoMirrorSnapshots:ownerUid:ASCENDING,createdAt:DESCENDING",
+        "chrono_validation_events:ownerUid:ASCENDING,createdAt:DESCENDING",
+        "timelineEvents:userId:ASCENDING,occurredAt:DESCENDING",
+        "memoryBlooms:userId:ASCENDING,emotionalTone:ASCENDING",
+        "moodForecasts:userId:ASCENDING,generatedAt:DESCENDING",
+        "weeklyReflections:userId:ASCENDING,weekOf:DESCENDING",
+        "companionMessages:sessionId:ASCENDING,createdAt:ASCENDING",
+        "narratorInsights:userId:ASCENDING,createdAt:DESCENDING",
+        "passiveSignals:userId:ASCENDING,observedAt:DESCENDING",
+        "relationshipSignals:userId:ASCENDING,personKey:ASCENDING,observedAt:DESCENDING",
+        "ancientSignals:ownerUid:ASCENDING,createdAt:DESCENDING",
+        "ancientSignals:ownerUid:ASCENDING,source:ASCENDING,rollupDate:ASCENDING"
+      ],
+      "deployPath": "UrAi repo Firebase deploy path",
+      "productionVerification": "UrAi index drift check"
+    },
+    "LifeLoggerAI/UrAiProd": {
+      "type": "core-product-functions",
+      "functions": [
+        "health",
+        "buildBloom",
+        "transcribeBloomAudio",
+        "generateDailyPassiveIntelligence",
+        "runPassiveIntelligenceNow",
+        "createXrSession",
+        "logXrEvent",
+        "resolveAnchor"
+      ],
+      "collections": [
+        "xrSessions",
+        "xrEvents",
+        "xrAnchors",
+        "moodForecasts",
+        "narratorInsights",
+        "passiveSignals"
+      ],
+      "deployPath": "UrAiProd functions deploy path",
+      "productionVerification": "UrAiProd health, callable auth, scheduled/manual job checks"
+    },
+    "LifeLoggerAI/asset-factory": {
+      "type": "asset-and-lifemap-functions",
+      "functions": [
+        "assetFactoryHealth",
+        "createAssetRequest",
+        "getAssetStatus",
+        "ingestLifeMapEvent",
+        "processLifeMapEvent"
+      ],
+      "collections": [
+        "systemStatus",
+        "assetFactoryRequests",
+        "assetFactoryQueue",
+        "assetManifests",
+        "lifeMapEvents",
+        "lifeMaps"
+      ],
+      "deployPath": "asset-factory deploy path",
+      "productionVerification": "assetFactoryHealth plus asset request/status and lifemap event smoke checks"
+    }
+  },
+  "knownSharedLiveFunctionsNotOwnedByAdmin": [
+    "buildBloom",
+    "createXrSession",
+    "logXrEvent",
+    "resolveAnchor",
+    "transcribeBloomAudio",
+    "assetFactoryHealth",
+    "createAssetRequest",
+    "generateDailyPassiveIntelligence",
+    "getAssetStatus",
+    "health",
+    "ingestLifeMapEvent",
+    "processLifeMapEvent",
+    "runPassiveIntelligenceNow"
+  ],
+  "knownSharedIndexesNotOwnedByAdmin": [
+    "ancientSignals",
+    "recoveryEvents",
+    "insights",
+    "chronoMirrorSnapshots",
+    "timelineEvents",
+    "relationshipSignals",
+    "moodForecasts",
+    "obscuraPatterns",
+    "companionMessages",
+    "chrono_validation_events",
+    "weeklyReflections",
+    "shadowCognition",
+    "narratorInsights",
+    "passiveSignals",
+    "memoryBlooms",
+    "narratorLogs",
+    "forecast"
+  ]
+}
