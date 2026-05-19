@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SpatialAdminFrame, SpatialSection, SpatialStatusCard } from '@/components/SpatialAdminFrame';
 
 const sections = [
   { href: '/admin/users', label: 'Admin Users', description: 'Review owners, admins, viewers, and active access.' },
@@ -11,31 +12,43 @@ const sections = [
   { href: '/admin/audit', label: 'Audit Log', description: 'Review admin actions and before/after metadata.' },
 ];
 
+const signals = [
+  { label: 'Shell', value: 'Spatial 3D' },
+  { label: 'Auth', value: 'Protected' },
+  { label: 'Runtime', value: 'Live APIs' },
+];
+
 export default function AdminDashboardPage() {
   return (
-    <main className="space-y-8 p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">URAI Admin Command Center</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Protected operational control surface for users, projects, flags, jobs, audit logs, and system health.
-        </p>
+    <SpatialAdminFrame
+      eyebrow="URAI admin command world"
+      title="Spatial operations center for the URAI stack"
+      description="A premium, protected command surface for users, projects, flags, jobs, audit trails, dead letters, and live system health. The visual layer now shares one cohesive moonlit 3D admin language across the app shell."
+      signals={signals}
+    >
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <SpatialStatusCard label="Access" value="Authenticated" detail="Routes remain behind the existing user session guard and redirect safely to login when unavailable." />
+        <SpatialStatusCard label="Data" value="Runtime loaded" detail="Firestore metrics and admin records continue loading through authenticated deployment APIs." />
+        <SpatialStatusCard label="Experience" value="Cohesive shell" detail="Navigation, background atmosphere, glass panels, and dashboard modules now share the spatial design foundation." />
       </div>
 
-      <section className="rounded-2xl border bg-muted/20 p-5 text-sm text-muted-foreground">
-        Live Firestore metrics load through authenticated runtime APIs after deployment. Static build renders this safe shell without opening Firebase credentials.
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">Operations modules</h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <SpatialSection
+        title="Operations modules"
+        description="Every module is presented as part of the same spatial command world while preserving direct operational readability."
+      >
+        <div className="spatial-module-grid">
           {sections.map((section) => (
-            <Link key={section.href} href={section.href} className="rounded-2xl border p-5 transition hover:bg-muted/50">
-              <h3 className="font-semibold">{section.label}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.description}</p>
+            <Link key={section.href} href={section.href} className="spatial-module-card">
+              <h3>{section.label}</h3>
+              <p>{section.description}</p>
             </Link>
           ))}
         </div>
+      </SpatialSection>
+
+      <section className="spatial-alert-card mt-8 text-sm">
+        Live Firebase and privileged admin data still load only through authenticated runtime APIs after deployment. Static builds render this production-safe shell without exposing service credentials.
       </section>
-    </main>
+    </SpatialAdminFrame>
   );
 }
