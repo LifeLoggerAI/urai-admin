@@ -2,44 +2,34 @@
 import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const appRoot = 'apps/urai-admin/app';
+const appRoot = 'apps/urai-admin/src/app';
 const failures = [];
 
 const expectedRoutePaths = [
-  'page.jsx',
-  'login/page.jsx',
-  'status/page.jsx',
-  'privacy/page.jsx',
-  'terms/page.jsx',
-  'admin/page.jsx',
-  'admin/users/page.jsx',
-  'admin/jobs/page.jsx',
-  'admin/audit/page.jsx',
-  'admin/privacy-requests/page.jsx',
-  'admin/system/page.jsx',
-  'admin/releases/page.jsx',
-  'admin/governance/page.jsx',
-  'admin/communications/page.jsx',
-  'admin/analytics/page.jsx'
+  'page.tsx',
+  'login/page.tsx',
+  'login/LoginClient.tsx',
+  'features/page.tsx',
+  'security/page.tsx',
+  'pricing/page.tsx',
+  'contact/page.tsx',
+  'admin/page.tsx',
+  'admin/users/page.tsx',
+  'admin/jobs/page.tsx',
+  'admin/audit/page.tsx',
+  'admin/privacy-requests/page.tsx',
 ];
 
-const optionalRoutePaths = [
-  'admin/projects/page.jsx',
-  'admin/feature-flags/page.jsx',
-  'admin/job-runs/page.jsx',
-  'admin/dead-letters/page.jsx',
-  'admin/policies/page.jsx',
-  'admin/settings/page.jsx'
+const expectedApiPaths = [
+  'api/auth/login/route.ts',
+  'api/auth/logout/route.ts',
+  'api/auth/admin-session/route.ts',
+  'api/admin/users/route.ts',
 ];
 
-for (const route of expectedRoutePaths) {
+for (const route of [...expectedRoutePaths, ...expectedApiPaths]) {
   const path = join(appRoot, route);
   if (!existsSync(path)) failures.push(`missing expected route file: ${path}`);
-}
-
-for (const route of optionalRoutePaths) {
-  const path = join(appRoot, route);
-  if (!existsSync(path)) console.warn(`WARN: optional route not yet implemented: ${path}`);
 }
 
 function collectFiles(dir) {
@@ -63,12 +53,20 @@ for (const requiredText of [
   'users',
   'privacy',
   'system',
-  'release',
-  'governance',
-  'communications',
-  'analytics'
+  'login',
+  'firebase',
+  'session',
+  'error',
 ]) {
   if (!joined.includes(requiredText)) failures.push(`app source missing required admin concept: ${requiredText}`);
+}
+
+const loginClientPath = join(appRoot, 'login/LoginClient.tsx');
+if (existsSync(loginClientPath)) {
+  const loginClient = readFileSync(loginClientPath, 'utf8');
+  for (const expected of ['signInWithEmailAndPassword', '/api/auth/login', 'Missing Firebase browser config', 'setError', 'window.location.assign']) {
+    if (!loginClient.includes(expected)) failures.push(`login client missing expected behavior: ${expected}`);
+  }
 }
 
 if (failures.length) {
