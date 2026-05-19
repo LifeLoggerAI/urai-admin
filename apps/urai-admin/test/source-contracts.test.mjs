@@ -1,12 +1,34 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import path from 'node:path';
 
-async function read(path) {
-  return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+async function read(pathname) {
+  return readFile(new URL(`../${pathname}`, import.meta.url), 'utf8');
 }
 
-async function readRoot(path) {
-  return readFile(new URL(`../../../${path}`, import.meta.url), 'utf8');
+async function readRoot(pathname) {
+  return readFile(new URL(`../../../${pathname}`, import.meta.url), 'utf8');
+}
+
+async function walk(dir) {
+  const root = new URL(`../${dir}`, import.meta.url);
+  const out = [];
+
+  async function visit(fsPath) {
+    const entries = await readdir(fsPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const next = path.join(fsPath, entry.name);
+      if (entry.isDirectory()) {
+        if (['.next', 'node_modules', 'coverage'].includes(entry.name)) continue;
+        await visit(next);
+      } else if (/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) {
+        out.push(next);
+      }
+    }
+  }
+
+  await visit(root);
+  return out;
 }
 
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
@@ -42,5 +64,19 @@ assert.doesNotMatch(storageRules, /allow\s+(read|write|create|update|delete)(,\s
 
 const securityGate = await readRoot('scripts/security-gate.sh');
 assert.match(securityGate, /urai_admin_finish\.sh/, 'security gate must block unsafe legacy finish script patterns');
+
+const firebaseClient = await read('src/lib/firebase/client.ts');
+assert.match(firebaseClient, /__\/firebase\/init\.json/, 'browser Firebase client must fall back to Firebase Hosting runtime config');
+assert.match(firebaseClient, /getClientAuth\(\)/, 'browser Firebase client must expose async auth initialization');
+assert.match(firebaseClient, /PASTE_/, 'browser Firebase client must reject placeholder Firebase config values');
+
+const activeSources = await walk('src');
+for (const fsPath of activeSources) {
+  const rel = path.relative(new URL('../', import.meta.url).pathname, fsPath);
+  const source = await readFile(fsPath, 'utf8');
+  if (rel.endsWith('src/lib/firebase/client.ts')) continue;
+  assert.doesNotMatch(source, /PASTE_AUTH_DOMAIN_HERE|YOUR_API_KEY|YOUR_AUTH_DOMAIN/, `${rel} must not contain placeholder Firebase config`);
+  assert.doesNotMatch(source, /initializeApp\s*\(/, `${rel} must not initialize a separate Firebase app`);
+}
 
 console.log('app admin source contract checks passed');
