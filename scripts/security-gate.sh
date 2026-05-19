@@ -86,7 +86,7 @@ required_pattern "scripts/preflight-production.sh" "legacy Firebase project urai
 required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_HOSTING_SITE"
 required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_ROLLBACK_RELEASE"
 required_pattern "scripts/rollback-production.sh" "firebase hosting:clone"
-required_pattern "docs/DEPLOYMENT_RUNBOOK.md" "Do not run `urai_admin_finish.sh`"
+required_pattern "docs/DEPLOYMENT_RUNBOOK.md" 'Do not run `urai_admin_finish.sh`'
 required_pattern "docs/EVIDENCE_LOG.md" "Final status:"
 
 if grep -RIn --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git "urai-8025b" .firebaserc package.json firebase.json scripts docs 2>/dev/null; then

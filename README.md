@@ -2,7 +2,7 @@
 
 URAI Admin is the standalone operations console for URAI products and AI-native applications.
 
-It powers `uraiadmin.com` as a public product site and `/admin/*` as a protected operational command center for users, feature flags, jobs, job runs, dead letters, system config, roles, projects, and audit logs.
+It powers `uraiadmin.com` as a public product site and `/admin/*` as a protected operational command center for users, feature flags, jobs, job runs, dead letters, system config, roles, projects, system-of-systems release readiness, governance evidence, analytics status, communications status, and audit logs.
 
 ## Product surfaces
 
@@ -59,10 +59,15 @@ Run these before a release:
 ```bash
 pnpm preflight:production
 pnpm security:gate
+pnpm check:types
 pnpm lint
-pnpm typecheck
-pnpm test
+pnpm test:unit
+pnpm test:rules
+pnpm test:e2e
+pnpm test:smoke
 pnpm build
+pnpm verify:release
+pnpm release:lock
 ```
 
 After production deploy, verify the live site:
@@ -71,10 +76,24 @@ After production deploy, verify the live site:
 pnpm verify:production
 ```
 
+## Production lock status
+
+The final release verdict lives in `FINAL_LOCK.md`.
+
+Do not claim `PRODUCTION READY` unless `FINAL_LOCK.md` and `docs/EVIDENCE_LOG.md` contain evidence for clean install, typecheck, lint, unit tests, rules tests, E2E/route tests, smoke tests, build, release verification, Firebase env, Firebase rules/index/storage deploy, Hosting preview, admin seed, communications integration or approved deferral, analytics integration or approved deferral, legal links, staging smoke, DNS/SSL, monitoring, rollback, and owner approval.
+
 ## Production launch path
 
 The production release path is documented in:
 
+- `FINAL_LOCK.md`
+- `docs/PRODUCTION_AUDIT.md`
+- `docs/DEPLOYMENT.md`
+- `docs/SECURITY.md`
+- `docs/ADMIN_OPERATIONS.md`
+- `docs/SYSTEM_OF_SYSTEMS.md`
+- `docs/TESTING.md`
+- `docs/RUNBOOK.md`
 - `docs/PRODUCTION_LAUNCH.md`
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/ROLLBACK_AND_INCIDENTS.md`
@@ -82,14 +101,13 @@ The production release path is documented in:
 Minimum launch sequence:
 
 ```bash
-pnpm preflight:production
-pnpm security:gate
+pnpm release:lock
 pnpm bootstrap:owner
 pnpm deploy
 pnpm verify:production
 ```
 
-Do not claim production launch complete until the release checklist is complete, GitHub Actions deployment is green, and `pnpm verify:production` passes against `https://www.uraiadmin.com`.
+Do not claim production launch complete until the release checklist is complete, GitHub Actions deployment is green, staging smoke passes, owner approval is recorded, and `pnpm verify:production` passes against `https://www.uraiadmin.com`.
 
 ## Production environment
 
@@ -101,7 +119,19 @@ Required categories:
 - Firebase deploy token
 - optional Firebase service account key
 - initial owner bootstrap UID/email
-- production verification URLs
+- Firebase project and hosting site IDs
+- staging and production verification URLs
+- rollback release/SHA inputs
+
+## Privacy boundary
+
+URAI Admin may display operational metadata, release evidence, system health, admin audit events, governance records, aggregate analytics status, communications status, and partner/admin review state.
+
+URAI Admin must not expose raw consumer passive telemetry, raw audio, private transcripts, raw location trails, consumer identity vectors, or unreviewed health/mental-health inference records unless a privacy review explicitly approves the route, role, fields, retention model, and audit trail.
+
+## System-of-systems registry
+
+The canonical static registry lives in `docs/SYSTEM_OF_SYSTEMS.md` until the Firestore `systemRegistry` seed is verified. Systems without verified live health contracts must display `Not connected`, `Blocked`, or `Degraded`, never `Healthy`.
 
 ## One-command green-ship script
 
@@ -179,6 +209,17 @@ Verify in Firebase Console:
 
 ## More docs
 
+- `FINAL_LOCK.md`
+- `AGENTS.md`
+- `docs/ARCHITECTURE.md`
+- `docs/PRODUCTION_AUDIT.md`
+- `docs/DEPLOYMENT.md`
+- `docs/SECURITY.md`
+- `docs/ADMIN_OPERATIONS.md`
+- `docs/SYSTEM_OF_SYSTEMS.md`
+- `docs/TESTING.md`
+- `docs/RUNBOOK.md`
+- `docs/EVIDENCE_LOG.md`
 - `docs/PRODUCTION_LAUNCH.md`
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/ROLLBACK_AND_INCIDENTS.md`
