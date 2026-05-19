@@ -1,24 +1,21 @@
-import { AdminCollectionTable } from '../_components/AdminCollectionTable';
+import { SpatialCollectionPage } from '../_components/SpatialCollectionPage';
 
 export default function AdminUsersPage() {
   return (
-    <main className="space-y-6 p-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Users</h1>
-        <p className="text-sm text-muted-foreground">Live user records from the runtime admin API.</p>
-      </div>
-
-      <AdminCollectionTable
-        collection="adminUsers"
-        emptyLabel="No admin users found."
-        columns={[
-          { key: 'id', label: 'UID' },
-          { key: 'email', label: 'Email' },
-          { key: 'role', label: 'Role' },
-          { key: 'isActive', label: 'Active' },
-          { key: 'lastLoginAt', label: 'Last Login' }
-        ]}
-      />
-    </main>
+    <SpatialCollectionPage
+      eyebrow="Identity control"
+      title="Admin users"
+      description="Review owners, admins, viewers, active access, and recent session state through the authenticated runtime admin API."
+      signalValue="Access registry"
+      collection="adminUsers"
+      emptyLabel="No admin users found."
+      columns={[
+        { key: 'id', label: 'UID' },
+        { key: 'email', label: 'Email' },
+        { key: 'role', label: 'Role' },
+        { key: 'isActive', label: 'Active' },
+        { key: 'lastLoginAt', label: 'Last Login' },
+      ]}
+    />
   );
 }
