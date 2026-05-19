@@ -1,10 +1,10 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
-import { User, onIdTokenChanged } from 'firebase/auth';
+import { onIdTokenChanged, type User } from 'firebase/auth';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { auth } from '@/config/firebase';
+import { getClientAuth } from '@/lib/firebase/client';
 import { AuthContext } from './auth-context';
 
 interface AuthProviderProps {
@@ -18,23 +18,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      setUser(user);
-      setLoading(false);
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
 
-      if (user) {
-        const idToken = await user.getIdToken();
-        await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
+    getClientAuth()
+      .then((auth) => {
+        if (cancelled) return;
+        unsubscribe = onIdTokenChanged(auth, async (nextUser) => {
+          setUser(nextUser);
+          setLoading(false);
+
+          if (nextUser) {
+            const idToken = await nextUser.getIdToken();
+            await fetch('/api/auth/session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken }),
+            });
+          } else {
+            await fetch('/api/auth/session', { method: 'DELETE' });
+          }
         });
-      } else {
-        await fetch('/api/auth/session', { method: 'DELETE' });
-      }
-    });
+      })
+      .catch((error) => {
+        console.error('Unable to initialize Firebase Auth:', error);
+        if (!cancelled) {
+          setUser(null);
+          setLoading(false);
+        }
+      });
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
