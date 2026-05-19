@@ -17,7 +17,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted-foreground">Loading admin session...</div>;
+    return (
+      <div className="spatial-admin-os spatial-session-loader">
+        <div>Loading secure URAI spatial command session...</div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -25,9 +29,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="spatial-admin-os flex text-foreground">
       <Sidebar />
-      <div className="min-w-0 flex-1 overflow-auto">{children}</div>
+      <div className="spatial-admin-content">{children}</div>
     </div>
   );
 }
