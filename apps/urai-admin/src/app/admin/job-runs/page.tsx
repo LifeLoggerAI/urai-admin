@@ -1,24 +1,21 @@
-import { AdminCollectionTable } from '../_components/AdminCollectionTable';
+import { SpatialCollectionPage } from '../_components/SpatialCollectionPage';
 
 export default function JobRunsPage() {
   return (
-    <main className="space-y-6 p-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Job Runs</h1>
-        <p className="text-sm text-muted-foreground">Live job run records from the runtime admin API.</p>
-      </div>
-
-      <AdminCollectionTable
-        collection="jobRuns"
-        emptyLabel="No job runs found."
-        columns={[
-          { key: 'id', label: 'Run ID' },
-          { key: 'jobId', label: 'Job ID' },
-          { key: 'status', label: 'Status' },
-          { key: 'startedAt', label: 'Started' },
-          { key: 'endedAt', label: 'Ended' }
-        ]}
-      />
-    </main>
+    <SpatialCollectionPage
+      eyebrow="Execution telemetry"
+      title="Job runs"
+      description="Review recent execution status, timing, and outcomes from the authenticated runtime admin API."
+      signalValue="Run ledger"
+      collection="jobRuns"
+      emptyLabel="No job runs found."
+      columns={[
+        { key: 'id', label: 'Run' },
+        { key: 'jobId', label: 'Job' },
+        { key: 'status', label: 'Status' },
+        { key: 'startedAt', label: 'Started' },
+        { key: 'endedAt', label: 'Ended' },
+      ]}
+    />
   );
 }
