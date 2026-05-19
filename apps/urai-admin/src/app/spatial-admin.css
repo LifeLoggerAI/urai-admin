@@ -108,4 +108,174 @@
     padding: 1.5rem 1.8rem;
     backdrop-filter: blur(24px);
   }
+
+  .spatial-admin-frame {
+    padding: 2rem;
+  }
+
+  .spatial-hero {
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    overflow: hidden;
+    border-radius: 2rem;
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+  }
+
+  .spatial-hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 58rem;
+  }
+
+  .spatial-eyebrow {
+    margin-bottom: 0.75rem;
+    width: fit-content;
+    border-radius: 999px;
+    border: 1px solid rgba(103, 232, 249, 0.34);
+    background: rgba(8, 145, 178, 0.14);
+    padding: 0.4rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: rgb(207, 250, 254);
+  }
+
+  .spatial-hero h1 {
+    max-width: 54rem;
+    font-size: clamp(2.2rem, 5vw, 4.9rem);
+    line-height: 0.9;
+    letter-spacing: -0.08em;
+    color: white;
+    text-wrap: balance;
+  }
+
+  .spatial-hero-copy > p:last-child {
+    margin-top: 1rem;
+    max-width: 45rem;
+    color: rgb(203, 213, 225);
+    line-height: 1.8;
+  }
+
+  .spatial-signal-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .spatial-signal-card,
+  .spatial-status-card {
+    border-radius: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.64));
+    padding: 1rem;
+  }
+
+  .spatial-signal-card span,
+  .spatial-status-card span {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(148, 163, 184);
+  }
+
+  .spatial-signal-card strong,
+  .spatial-status-card strong {
+    margin-top: 0.3rem;
+    display: block;
+    color: white;
+    font-size: 1.05rem;
+  }
+
+  .spatial-section {
+    margin-top: 2rem;
+  }
+
+  .spatial-section-heading {
+    margin-bottom: 1rem;
+  }
+
+  .spatial-section-heading h2 {
+    font-size: 1.2rem;
+    color: white;
+  }
+
+  .spatial-section-heading p,
+  .spatial-status-card p {
+    margin-top: 0.35rem;
+    color: rgb(148, 163, 184);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .spatial-module-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  }
+
+  .spatial-module-card {
+    position: relative;
+    min-height: 11rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: radial-gradient(circle at 20% 0%, rgba(103, 232, 249, 0.16), transparent 11rem), linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.86));
+    padding: 1.15rem;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .spatial-module-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(103, 232, 249, 0.45);
+    box-shadow: 0 26px 90px rgba(8, 145, 178, 0.24);
+  }
+
+  .spatial-module-card h3 {
+    color: white;
+    font-weight: 700;
+  }
+
+  .spatial-module-card p {
+    margin-top: 0.65rem;
+    color: rgb(148, 163, 184);
+    line-height: 1.7;
+    font-size: 0.9rem;
+  }
+
+  .spatial-alert-card {
+    border-radius: 1.5rem;
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    background: linear-gradient(135deg, rgba(113, 63, 18, 0.18), rgba(2, 6, 23, 0.68));
+    padding: 1rem 1.15rem;
+    color: rgb(226, 232, 240);
+  }
+}
+
+@media (max-width: 920px) {
+  .spatial-admin-os {
+    flex-direction: column;
+  }
+
+  .spatial-admin-sidebar {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+  }
+
+  .spatial-admin-nav {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .spatial-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spatial-admin-frame {
+    padding: 1rem;
+  }
 }
