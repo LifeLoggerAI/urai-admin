@@ -1,5 +1,8 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import next from 'next';
+import { join } from 'node:path';
+
 export { aggregateUraiAnalyticsV1 } from './uraiAnalyticsV1';
 
 admin.initializeApp();
@@ -58,10 +61,11 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 });
 
 // --- Next.js Hosting ---
-import next from 'next';
-
+// The production build step packages apps/urai-admin into functions/apps/urai-admin
+// so Firebase Functions deploys a self-contained server-rendered Next app.
+const packagedNextAppDir = join(__dirname, '..', 'apps', 'urai-admin');
 const isDev = process.env.NODE_ENV !== 'production';
-const nextApp = next({ dev: isDev, conf: { distDir: '../apps/urai-admin/.next' } });
+const nextApp = next({ dev: isDev, dir: packagedNextAppDir });
 const handle = nextApp.getRequestHandler();
 
 export const nextServer = functions.https.onRequest((req, res) => {
