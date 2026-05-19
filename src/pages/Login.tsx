@@ -1,48 +1,46 @@
+import React from 'react';
+import { GoogleAuthProvider, signInWithPopup, type User } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-import React from "react";
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
-import { getFirebaseAuth, getFirebaseDb } from "../lib/firebase/client";
-import { useNavigate } from "react-router-dom";
+import { getFirebaseAuthAsync, getFirebaseDbAsync } from '../lib/firebase/client';
 
 const Login = () => {
   const navigate = useNavigate();
-  const auth = getFirebaseAuth();
-  const db = getFirebaseDb();
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
+      const auth = await getFirebaseAuthAsync();
+      const db = await getFirebaseDbAsync();
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const user: User = result.user;
 
-      if (user) {
-        const adminDocRef = doc(db, "adminUsers", user.uid);
-        const adminDocSnap = await getDoc(adminDocRef);
+      const adminDocRef = doc(db, 'adminUsers', user.uid);
+      const adminDocSnap = await getDoc(adminDocRef);
 
-        if (adminDocSnap.exists() && adminDocSnap.data().isActive) {
-          navigate("/");
-        } else {
-          const adminUsersCollection = collection(db, 'adminUsers');
-          const adminUsersSnapshot = await getDocs(adminUsersCollection);
-
-          if (adminUsersSnapshot.empty && import.meta.env.VITE_ALLOW_ADMIN_BOOTSTRAP === 'true') {
-            await setDoc(adminDocRef, {
-              email: user.email,
-              role: "owner",
-              isActive: true,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-            navigate("/");
-          } else {
-            navigate("/access-denied");
-          }
-        }
+      if (adminDocSnap.exists() && adminDocSnap.data().isActive) {
+        navigate('/');
+        return;
       }
+
+      const adminUsersSnapshot = await getDocs(collection(db, 'adminUsers'));
+      if (adminUsersSnapshot.empty && import.meta.env.VITE_ALLOW_ADMIN_BOOTSTRAP === 'true') {
+        await setDoc(adminDocRef, {
+          email: user.email,
+          role: 'owner',
+          isActive: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        navigate('/');
+        return;
+      }
+
+      navigate('/access-denied');
     } catch (error) {
-      console.error("Error signing in with Google:", error);
-      alert("Failed to sign in with Google.");
+      console.error('Error signing in with Google:', error);
+      alert('Failed to sign in with Google.');
     }
   };
 
