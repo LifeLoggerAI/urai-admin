@@ -14,6 +14,7 @@ const COLLECTIONS = {
   deadLetters: { collection: 'deadLetters', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
   roles: { collection: 'roles', roles: ['owner', 'admin', 'viewer'] },
   systemConfig: { collection: 'systemConfig', orderBy: 'updatedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
+  privacyRequests: { collection: 'privacyRequests', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
   auditLogs: { collection: 'auditLogs', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
 } as const;
 
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
       ...sanitizeRecord(doc.data()),
     }));
 
-    return NextResponse.json({ collection: collectionKey, records });
+    return NextResponse.json({ collection: collectionKey, records }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof Error && 'status' in error) {
       return adminAuthErrorResponse(error);
