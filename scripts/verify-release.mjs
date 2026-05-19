@@ -90,9 +90,9 @@ requireScript(packageJson, 'lint', 'pnpm clean:legacy');
 requireScript(packageJson, 'typecheck', 'pnpm clean:legacy');
 requireScript(packageJson, 'test', 'pnpm security:gate');
 requireScript(packageJson, 'build', 'package-next-for-functions.sh');
-requireScript(packageJson, 'preflight', 'pnpm build');
-requireScript(packageJson, 'release:lock', 'pnpm verify:release');
-requireScript(packageJson, 'release:lock', 'check:ownership');
+requireScript(packageJson, 'preflight', 'pnpm run build');
+requireScript(packageJson, 'release:lock', 'pnpm run verify:release');
+requireScript(packageJson, 'release:lock', 'pnpm run check:ownership');
 requireScript(packageJson, 'verify:release', 'scripts/verify-release.mjs');
 requireScript(packageJson, 'check:ownership', 'scripts/check-system-ownership.mjs');
 requireScript(packageJson, 'deploy', 'firebase deploy');
@@ -143,7 +143,7 @@ requireIncludes(storageRules, 'allow read, write: if false', 'storage.rules must
 requireIncludes(packageNext, 'apps/urai-admin', 'package-next-for-functions.sh must package apps/urai-admin');
 requireIncludes(packageNext, '.next', 'package-next-for-functions.sh must package Next build output');
 requireIncludes(launchProduction, 'pnpm preflight:production', 'launch-production.sh must run production preflight');
-requireIncludes(launchProduction, 'firebase deploy', 'launch-production.sh must deploy through Firebase');
+requireIncludes(launchProduction, 'pnpm run deploy', 'launch-production.sh must deploy through the package deploy script');
 requireIncludes(deployProduction, 'pnpm launch:production', 'deploy-production.sh must delegate to launch:production');
 requireIncludes(smokeTest, 'https://urai-admin.web.app', 'smoke-test must target production Hosting URL');
 requireIncludes(verifyProduction, 'https://urai-admin.web.app', 'verify-production-live must target production Hosting URL');
@@ -153,17 +153,30 @@ requireIncludes(ownershipGuard, 'must not delete functions', 'ownership guard mu
 requireIncludes(reconciliationDoc, 'Ownership map', 'system reconciliation doc must include ownership map');
 requireIncludes(reconciliationDoc, 'must not delete', 'system reconciliation doc must document destructive deploy policy');
 
+const deployScript = String(packageJson?.scripts?.deploy ?? '');
+if (!deployScript.includes('firebase deploy')) {
+  fail('Package deploy script must invoke firebase deploy');
+}
+if (!deployScript.includes('-P urai-4dc1d')) {
+  fail('Package deploy script must target urai-4dc1d');
+}
+if (deployScript.includes('--force')) {
+  fail('Package deploy script must not use --force because it can bypass destructive prompts');
+}
+if (deployScript.includes('functions:delete')) {
+  fail('Package deploy script must not delete functions');
+}
+
 const deploymentCriticalText = [
   readFileSync('package.json', 'utf8'),
   readFileSync('firebase.json', 'utf8'),
   readFileSync('.firebaserc', 'utf8'),
   launchProduction,
   deployProduction,
-  preflightProduction,
 ].join('\n');
 
 if (deploymentCriticalText.includes('urai-8025b')) {
-  fail('Found legacy Firebase project urai-8025b in deployment-critical files');
+  fail('Found legacy Firebase project urai-8025b in deployment target files');
 }
 
 if ((packageJson?.scripts?.verifyRelease ?? packageJson?.scripts?.['verify:release'] ?? '').includes('|| echo')) {
