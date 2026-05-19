@@ -1,1 +1,10 @@
-run: pnpm --prefix apps/urai-admin run start
+run: pnpm --dir apps/urai-admin start
+env:
+  - variable: NODE_ENV
+    value: production
+  - variable: NEXT_PUBLIC_URAI_ADMIN_BASE_URL
+    value: https://urai-admin.web.app
+  - variable: URAI_ADMIN_BASE_URL
+    value: https://urai-admin.web.app
+  - variable: URAI_ADMIN_FUNCTIONS_BASE_URL
+    value: https://us-central1-urai-4dc1d.cloudfunctions.net
