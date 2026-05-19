@@ -9,6 +9,7 @@ const sections = [
   { href: '/admin/job-runs', label: 'Job Runs', description: 'Review recent executions, status, duration, and errors.' },
   { href: '/admin/dead-letters', label: 'Dead Letters', description: 'Surface failed queue events requiring follow-up.' },
   { href: '/admin/policies', label: 'Roles & Policies', description: 'Review admin governance, role definitions, and permission intent.' },
+  { href: '/admin/privacy-requests', label: 'Privacy Requests', description: 'Review data export, deletion, correction, and consent operations.' },
   { href: '/admin/system', label: 'System', description: 'View live system config and operational health.' },
   { href: '/admin/settings', label: 'Settings', description: 'Inspect runtime settings and production control-plane configuration.' },
   { href: '/admin/audit', label: 'Audit Log', description: 'Review admin actions and before/after metadata.' },
@@ -25,7 +26,7 @@ export default function AdminDashboardPage() {
     <SpatialAdminFrame
       eyebrow="URAI admin command world"
       title="Spatial operations center for the URAI stack"
-      description="A premium, protected command surface for users, projects, flags, jobs, audit trails, dead letters, roles, settings, and live system health. The visual layer now shares one cohesive moonlit 3D admin language across the app shell."
+      description="A premium, protected command surface for users, projects, flags, jobs, audit trails, dead letters, roles, privacy requests, settings, and live system health. The visual layer now shares one cohesive moonlit 3D admin language across the app shell."
       signals={signals}
     >
       <div className="mt-6 grid gap-4 md:grid-cols-3">
