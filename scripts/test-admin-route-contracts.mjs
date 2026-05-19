@@ -21,6 +21,7 @@ const expectedRoutePaths = [
   'admin/dead-letters/page.tsx',
   'admin/feature-flags/page.tsx',
   'admin/policies/page.tsx',
+  'admin/privacy-requests/page.tsx',
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
   'admin/settings/page.tsx',
@@ -65,6 +66,7 @@ for (const requiredText of [
   'feature',
   'system',
   'settings',
+  'privacy',
   'login',
   'firebase',
   'session',
@@ -108,7 +110,7 @@ if (existsSync(healthRoutePath)) {
 const collectionRoutePath = join(appRoot, 'api/admin/collection/route.ts');
 if (existsSync(collectionRoutePath)) {
   const collectionRoute = readFileSync(collectionRoutePath, 'utf8');
-  for (const expected of ['COLLECTIONS', 'SENSITIVE_KEY_PATTERN', 'REDACTED', 'requireAdminSession']) {
+  for (const expected of ['COLLECTIONS', 'privacyRequests', 'SENSITIVE_KEY_PATTERN', 'REDACTED', 'requireAdminSession']) {
     if (!collectionRoute.includes(expected)) failures.push(`collection API missing expected behavior: ${expected}`);
   }
 }
