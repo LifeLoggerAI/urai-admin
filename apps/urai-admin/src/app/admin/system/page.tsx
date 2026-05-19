@@ -1,23 +1,20 @@
-import { AdminCollectionTable } from '../_components/AdminCollectionTable';
+import { SpatialCollectionPage } from '../_components/SpatialCollectionPage';
 
 export default function SystemPage() {
   return (
-    <main className="space-y-8 p-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">System Control Surface</h1>
-        <p className="text-sm text-muted-foreground">Live system configuration records from the runtime admin API.</p>
-      </div>
-
-      <AdminCollectionTable
-        collection="systemConfig"
-        emptyLabel="No system config records found."
-        columns={[
-          { key: 'id', label: 'Config ID' },
-          { key: 'value', label: 'Value' },
-          { key: 'updatedAt', label: 'Updated' },
-          { key: 'updatedBy', label: 'Updated By' }
-        ]}
-      />
-    </main>
+    <SpatialCollectionPage
+      eyebrow="System control"
+      title="System control surface"
+      description="Inspect live configuration, operational health values, update provenance, and runtime state from the authenticated admin API."
+      signalValue="Config lattice"
+      collection="systemConfig"
+      emptyLabel="No system config records found."
+      columns={[
+        { key: 'id', label: 'Config' },
+        { key: 'value', label: 'Value' },
+        { key: 'updatedAt', label: 'Updated' },
+        { key: 'updatedBy', label: 'Updated By' },
+      ]}
+    />
   );
 }
