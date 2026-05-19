@@ -23,6 +23,7 @@ const expectedRoutePaths = [
   'admin/policies/page.tsx',
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
+  'admin/settings/page.tsx',
 ];
 
 const expectedApiPaths = [
@@ -62,6 +63,7 @@ for (const requiredText of [
   'jobs',
   'feature',
   'system',
+  'settings',
   'login',
   'firebase',
   'session',
