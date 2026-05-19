@@ -21,7 +21,9 @@ const requiredFiles = [
   'docs/TESTING.md',
   'docs/RUNBOOK.md',
   'scripts/test-firestore-rules-contract.mjs',
-  'scripts/test-admin-route-contracts.mjs'
+  'scripts/test-admin-route-contracts.mjs',
+  'scripts/test-system-registry-contract.mjs',
+  'scripts/seed-system-registry.mjs'
 ];
 
 const requiredScripts = [
@@ -30,11 +32,13 @@ const requiredScripts = [
   'test:unit',
   'test:rules',
   'test:e2e',
+  'test:registry',
   'test:smoke',
   'build',
   'verify:release',
   'preflight',
   'release:lock',
+  'seed:system-registry',
   'preflight:production',
   'bootstrap:owner',
   'deploy',
@@ -77,17 +81,17 @@ const requiredRoutes = [
   '/login',
   '/privacy',
   '/terms',
+  '/status',
   '/admin',
   '/admin/users',
-  '/admin/projects',
-  '/admin/feature-flags',
   '/admin/jobs',
-  '/admin/job-runs',
-  '/admin/dead-letters',
   '/admin/system',
+  '/admin/releases',
+  '/admin/governance',
+  '/admin/communications',
+  '/admin/analytics',
   '/admin/audit',
-  '/admin/policies',
-  '/admin/settings'
+  '/admin/privacy-requests'
 ];
 
 const failures = [];
@@ -125,6 +129,22 @@ if (existsSync('firestore.rules')) {
     if (!rules.includes(`match /${collection}/`)) failures.push(`firestore.rules missing collection rule: ${collection}`);
   }
   if (!rules.includes('allow update, delete: if false')) warnings.push('firestore.rules should explicitly block audit/event mutation');
+}
+
+if (existsSync('scripts/seed-system-registry.mjs')) {
+  const seed = read('scripts/seed-system-registry.mjs');
+  for (const system of ['URAI Admin', 'URAI Analytics', 'URAI Communications', 'URAI Privacy', 'URAI Foundation', 'URAI Spatial', 'URAI Studio', 'URAI Asset Factory', 'URAI B2B Portal']) {
+    if (!seed.includes(system)) failures.push(`seed-system-registry missing system: ${system}`);
+  }
+  for (const field of ['systemRegistry', 'adminOperationalEvents', 'dataBoundary', 'privacyClassification', 'operationalRisk']) {
+    if (!seed.includes(field)) failures.push(`seed-system-registry missing field/collection: ${field}`);
+  }
+}
+
+if (existsSync('apps/urai-admin/app/admin/system/page.jsx')) {
+  const systemPage = read('apps/urai-admin/app/admin/system/page.jsx');
+  if (!systemPage.includes('systemRegistry')) failures.push('/admin/system must read or mention systemRegistry');
+  if (!systemPage.includes('fallbackSystems')) failures.push('/admin/system must preserve safe fallback systems');
 }
 
 if (existsSync('docs/SYSTEM_OF_SYSTEMS.md')) {
@@ -169,7 +189,7 @@ for (const path of ['README.md', 'FINAL_LOCK.md', '.env.production.example', 'do
 }
 
 if (process.env.URAI_ADMIN_VERIFIER_RUN_COMMANDS === '1') {
-  for (const command of ['pnpm check:types', 'pnpm lint', 'pnpm test:unit', 'pnpm test:rules', 'pnpm build']) {
+  for (const command of ['pnpm check:types', 'pnpm lint', 'pnpm test:unit', 'pnpm test:rules', 'pnpm test:registry', 'pnpm build']) {
     try {
       execSync(command, { stdio: 'inherit' });
     } catch (error) {
