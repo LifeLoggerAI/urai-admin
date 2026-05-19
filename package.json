@@ -10,6 +10,7 @@
     "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && bash scripts/package-next-for-functions.sh && pnpm --dir functions build",
     "release:local": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "full:check": "pnpm release:local",
+    "env:admin:firebase": "node scripts/write-admin-firebase-env.mjs",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d",
