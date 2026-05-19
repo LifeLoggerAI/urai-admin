@@ -39,8 +39,17 @@ forbidden_recursive() {
 
 echo "--- URAI Admin security gate ---"
 
+require_file "package.json"
+require_file "firebase.json"
+require_file ".firebaserc"
 require_file "firestore.rules"
 require_file "storage.rules"
+require_file "docs/DEPLOYMENT_RUNBOOK.md"
+require_file "docs/EVIDENCE_LOG.md"
+require_file "scripts/preflight-production.sh"
+require_file "scripts/smoke-test.sh"
+require_file "scripts/verify-production-live.sh"
+require_file "scripts/rollback-production.sh"
 require_file "apps/urai-admin/src/lib/admin/require-admin-session.ts"
 require_file "apps/urai-admin/src/app/api/auth/login/route.ts"
 require_file "apps/urai-admin/src/app/api/auth/logout/route.ts"
@@ -63,6 +72,20 @@ required_pattern "apps/urai-admin/src/app/api/auth/logout/route.ts" "maxAge: 0"
 required_pattern "apps/urai-admin/src/app/api/auth/admin-session/route.ts" "requireAdminSession"
 required_pattern "apps/urai-admin/src/middleware.ts" "admin-session"
 required_pattern "apps/urai-admin/src/middleware.ts" "verification.ok"
+
+required_pattern "package.json" "\"release:local\""
+required_pattern "package.json" "\"preflight:production\""
+required_pattern "package.json" "\"verify:production\""
+required_pattern "package.json" "\"rollback:production\""
+required_pattern "package.json" "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d"
+required_pattern "firebase.json" '"source": "apps/urai-admin"'
+required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
+required_pattern "scripts/preflight-production.sh" "NEXT_PUBLIC_FIREBASE_PROJECT_ID must be urai-4dc1d"
+required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_HOSTING_SITE"
+required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_ROLLBACK_RELEASE"
+required_pattern "scripts/rollback-production.sh" "firebase hosting:clone"
+required_pattern "docs/DEPLOYMENT_RUNBOOK.md" "Do not run `urai_admin_finish.sh`"
+required_pattern "docs/EVIDENCE_LOG.md" "Final status:"
 
 forbidden_recursive "headers\.get\(['\"]x-user-id['\"]\)" "apps/urai-admin/src/app/api" "Trusted x-user-id header found in API route"
 forbidden_recursive "request\.headers\.get\(['\"]Authorization['\"]\)\?\.split\(['\"]Bearer " "apps/urai-admin/src/app/api/admin" "Admin route using Authorization bearer session parsing found"
