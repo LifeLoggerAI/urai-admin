@@ -67,18 +67,44 @@ Command:
 
 ```bash
 pnpm typecheck
+pnpm check:types
 ```
 
 Status:
 Logs:
 Blockers:
 
-### Tests
+### Unit tests
 
 Command:
 
 ```bash
 pnpm test
+pnpm test:unit
+```
+
+Status:
+Logs:
+Blockers:
+
+### Firestore rules tests
+
+Command:
+
+```bash
+pnpm test:rules
+```
+
+Status:
+Logs:
+Blockers:
+
+### E2E / route contract tests
+
+Command:
+
+```bash
+pnpm test:e2e
 ```
 
 Status:
@@ -102,7 +128,21 @@ Blockers:
 Command:
 
 ```bash
+pnpm test:smoke
 pnpm smoke-test
+```
+
+Status:
+Logs:
+Blockers:
+
+### Release verifier
+
+Command:
+
+```bash
+pnpm verify:release
+URAI_ADMIN_VERIFIER_RUN_COMMANDS=1 pnpm verify:release
 ```
 
 Status:
@@ -117,8 +157,11 @@ Required evidence:
 
 - unauthenticated user denied;
 - authenticated non-admin denied;
-- active admin allowed;
-- audit logging confirmed for sensitive mutations.
+- inactive admin denied;
+- viewer limited to viewer-safe collections;
+- active admin allowed for privileged reads;
+- audit and operational event records immutable after create;
+- no raw consumer data exposed through broad rules.
 
 Status:
 Logs:
@@ -163,11 +206,26 @@ Required evidence:
 - protected routes enforce auth;
 - unauthenticated `/api/admin/users` returns `401`;
 - no broken assets;
-- no console-critical runtime failures.
+- no console-critical runtime failures;
+- Firebase rules/indexes/storage deployed;
+- Functions deployed;
+- Hosting preview deployed;
+- production domain DNS/SSL active;
+- monitoring/alerting active;
+- rollback release/SHA recorded.
 
 Status:
 Logs:
 Blockers:
+
+---
+
+## 2026-05-18 — Production-grade system-lock scaffolding
+
+- Branch: `production-grade-system-lock`
+- Scope: root release scripts, Firestore production-lock collections, static release verifier, Firestore rules contract test, admin route contract test, final lock ledger, architecture/security/deployment/testing/runbook/system docs.
+- Production verdict: `BLOCKED`
+- Reason: no live command output, CI run, Firebase staging deploy, production deploy, DNS/SSL proof, monitoring proof, admin seed proof, rollback proof, or owner approval has been recorded in this evidence log yet.
 
 ---
 
@@ -177,8 +235,19 @@ GREEN = verified complete with evidence
 YELLOW = partial or uncertain
 RED = blocked, unsafe, broken, or unverified
 
-Final status:
+Final status: RED / BLOCKED until evidence is supplied.
 
 Final blockers:
+
+- Fresh clean install evidence
+- Typecheck/lint/unit/rules/e2e/smoke/build evidence
+- Firebase staging deployment evidence
+- Admin owner seed evidence
+- Analytics and communications integration evidence or approved deferrals
+- Legal route smoke evidence
+- Production DNS/SSL evidence
+- Monitoring evidence
+- Rollback proof
+- Owner approval
 
 Approval:
