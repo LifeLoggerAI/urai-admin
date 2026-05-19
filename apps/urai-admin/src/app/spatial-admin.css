@@ -254,6 +254,99 @@
     padding: 1rem 1.15rem;
     color: rgb(226, 232, 240);
   }
+
+  .spatial-table-shell,
+  .spatial-table-state {
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.76), rgba(2, 6, 23, 0.88));
+    box-shadow: 0 24px 90px rgba(2, 6, 23, 0.32);
+  }
+
+  .spatial-table-state {
+    padding: 1.4rem;
+    color: rgb(203, 213, 225);
+  }
+
+  .spatial-table-error {
+    border-color: rgba(248, 113, 113, 0.36);
+    background: linear-gradient(135deg, rgba(127, 29, 29, 0.24), rgba(2, 6, 23, 0.86));
+  }
+
+  .spatial-table-state span,
+  .spatial-table-meta span {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(148, 163, 184);
+  }
+
+  .spatial-table-state strong,
+  .spatial-table-meta strong {
+    margin-top: 0.25rem;
+    display: block;
+    color: white;
+    font-size: 1.05rem;
+  }
+
+  .spatial-table-state p {
+    margin-top: 0.5rem;
+    color: rgb(148, 163, 184);
+  }
+
+  .spatial-table-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 1.1rem;
+  }
+
+  .spatial-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .spatial-table thead {
+    background: rgba(15, 23, 42, 0.72);
+    color: rgb(207, 250, 254);
+    text-align: left;
+  }
+
+  .spatial-table th,
+  .spatial-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .spatial-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .spatial-table td {
+    max-width: 22rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgb(226, 232, 240);
+  }
+
+  .spatial-table tr:hover td {
+    background: rgba(103, 232, 249, 0.055);
+  }
+
+  .spatial-table-empty {
+    color: rgb(148, 163, 184) !important;
+    white-space: normal !important;
+  }
 }
 
 @media (max-width: 920px) {
