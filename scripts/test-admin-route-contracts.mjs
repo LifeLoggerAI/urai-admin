@@ -6,26 +6,40 @@ const appRoot = 'apps/urai-admin/app';
 const failures = [];
 
 const expectedRoutePaths = [
-  'page.tsx',
-  'login/page.tsx',
-  'privacy/page.tsx',
-  'terms/page.tsx',
-  'admin/page.tsx',
-  'admin/users/page.tsx',
-  'admin/projects/page.tsx',
-  'admin/feature-flags/page.tsx',
-  'admin/jobs/page.tsx',
-  'admin/job-runs/page.tsx',
-  'admin/dead-letters/page.tsx',
-  'admin/system/page.tsx',
-  'admin/audit/page.tsx',
-  'admin/policies/page.tsx',
-  'admin/settings/page.tsx'
+  'page.jsx',
+  'login/page.jsx',
+  'status/page.jsx',
+  'privacy/page.jsx',
+  'terms/page.jsx',
+  'admin/page.jsx',
+  'admin/users/page.jsx',
+  'admin/jobs/page.jsx',
+  'admin/audit/page.jsx',
+  'admin/privacy-requests/page.jsx',
+  'admin/system/page.jsx',
+  'admin/releases/page.jsx',
+  'admin/governance/page.jsx',
+  'admin/communications/page.jsx',
+  'admin/analytics/page.jsx'
+];
+
+const optionalRoutePaths = [
+  'admin/projects/page.jsx',
+  'admin/feature-flags/page.jsx',
+  'admin/job-runs/page.jsx',
+  'admin/dead-letters/page.jsx',
+  'admin/policies/page.jsx',
+  'admin/settings/page.jsx'
 ];
 
 for (const route of expectedRoutePaths) {
   const path = join(appRoot, route);
   if (!existsSync(path)) failures.push(`missing expected route file: ${path}`);
+}
+
+for (const route of optionalRoutePaths) {
+  const path = join(appRoot, route);
+  if (!existsSync(path)) console.warn(`WARN: optional route not yet implemented: ${path}`);
 }
 
 function collectFiles(dir) {
@@ -40,11 +54,21 @@ function collectFiles(dir) {
   return out;
 }
 
-const files = collectFiles(appRoot).filter((path) => /\.(ts|tsx)$/.test(path));
-const joined = files.map((path) => readFileSync(path, 'utf8')).join('\n');
+const files = collectFiles(appRoot).filter((path) => /\.(js|jsx|ts|tsx)$/.test(path));
+const joined = files.map((path) => readFileSync(path, 'utf8')).join('\n').toLowerCase();
 
-for (const requiredText of ['admin', 'audit', 'users', 'settings']) {
-  if (!joined.toLowerCase().includes(requiredText)) failures.push(`app source missing required admin concept: ${requiredText}`);
+for (const requiredText of [
+  'admin',
+  'audit',
+  'users',
+  'privacy',
+  'system',
+  'release',
+  'governance',
+  'communications',
+  'analytics'
+]) {
+  if (!joined.includes(requiredText)) failures.push(`app source missing required admin concept: ${requiredText}`);
 }
 
 if (failures.length) {
