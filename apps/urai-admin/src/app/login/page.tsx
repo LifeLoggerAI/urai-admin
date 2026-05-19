@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 function missingFirebaseConfig() {
@@ -14,66 +14,145 @@ function missingFirebaseConfig() {
   return required.filter(([, value]) => !value).map(([name]) => name);
 }
 
-function readableError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+function detailedError(error: unknown) {
+  const anyError = error as { code?: string; message?: string; customData?: unknown };
+  const code = anyError?.code || '';
+  const message = anyError?.message || String(error);
+  const customData = anyError?.customData ? ` | details: ${JSON.stringify(anyError.customData)}` : '';
 
-  if (message.includes('auth/popup-blocked')) return 'Google sign-in popup was blocked. Allow popups for this site and try again.';
-  if (message.includes('auth/popup-closed-by-user')) return 'The Google sign-in window was closed before authentication finished.';
-  if (message.includes('auth/unauthorized-domain')) return 'This domain is not authorized in Firebase Auth. Add urai-admin.web.app to Firebase Authentication authorized domains.';
-  if (message.includes('auth/operation-not-allowed')) return 'Google sign-in is not enabled in Firebase Auth providers.';
+  if (code === 'auth/popup-blocked') return `Google popup was blocked. Allow popups or use redirect sign-in. (${code})`;
+  if (code === 'auth/popup-closed-by-user') return `The Google sign-in window was closed before authentication finished. (${code})`;
+  if (code === 'auth/unauthorized-domain') return `This domain is not authorized in Firebase Auth. Add urai-admin.web.app and urai-4dc1d.firebaseapp.com in Firebase Authentication authorized domains. (${code})`;
+  if (code === 'auth/operation-not-allowed') return `This provider is not enabled in Firebase Authentication. Enable Google and/or Email/Password sign-in. (${code})`;
+  if (code === 'auth/invalid-credential') return `Email or password was not accepted. (${code})`;
+  if (code === 'auth/user-not-found') return `No Firebase Auth user exists for that email. (${code})`;
   if (message.includes('Admin access is not active')) return 'Signed in, but this user is not active in adminUsers or does not have the required admin role.';
 
-  return message || 'Login failed. Check Firebase Auth provider, authorized domains, adminUsers, and server logs.';
+  return `${message}${code ? ` (${code})` : ''}${customData}`;
+}
+
+async function createAdminSession(idToken: string) {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+
+  const payload = await res.json().catch(() => ({}));
+
+  if (!res.ok || payload?.success === false) {
+    throw new Error(payload?.error || `Admin session failed with status ${res.status}`);
+  }
 }
 
 export default function LoginPage() {
   const [status, setStatus] = useState('Ready');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const missingConfig = useMemo(missingFirebaseConfig, []);
 
-  async function handleLogin() {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function finishRedirectLogin() {
+      try {
+        if (missingConfig.length) return;
+        const [{ getAuth, getRedirectResult }, { app }] = await Promise.all([
+          import('firebase/auth'),
+          import('@/lib/firebase/client'),
+        ]);
+        const auth = getAuth(app);
+        const result = await getRedirectResult(auth);
+        if (!result || cancelled) return;
+        setStatus('Finishing redirected Google sign-in...');
+        const idToken = await result.user.getIdToken(true);
+        await createAdminSession(idToken);
+        window.location.assign('/admin');
+      } catch (nextError) {
+        if (!cancelled) {
+          setError(detailedError(nextError));
+          setStatus('Redirect login blocked');
+        }
+      }
+    }
+
+    finishRedirectLogin();
+    return () => {
+      cancelled = true;
+    };
+  }, [missingConfig.length]);
+
+  async function handleGooglePopup() {
     setError('');
-    setStatus('Starting Google sign-in...');
+    setStatus('Starting Google popup sign-in...');
     setBusy(true);
 
     try {
-      if (missingConfig.length) {
-        throw new Error(`Missing Firebase browser config: ${missingConfig.join(', ')}`);
-      }
-
+      if (missingConfig.length) throw new Error(`Missing Firebase browser config: ${missingConfig.join(', ')}`);
       const [{ getAuth, GoogleAuthProvider, signInWithPopup }, { app }] = await Promise.all([
         import('firebase/auth'),
         import('@/lib/firebase/client'),
       ]);
-
       const auth = getAuth(app);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-
-      setStatus('Waiting for Google...');
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken(true);
-
       setStatus('Creating secure admin session...');
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-
-      const payload = await res.json().catch(() => ({}));
-
-      if (!res.ok || payload?.success === false) {
-        await auth.signOut().catch(() => undefined);
-        throw new Error(payload?.error || `Admin session failed with status ${res.status}`);
-      }
-
-      setStatus('Session ready. Opening admin console...');
+      await createAdminSession(idToken);
       window.location.assign('/admin');
     } catch (nextError) {
-      setError(readableError(nextError));
-      setStatus('Login blocked');
+      setError(detailedError(nextError));
+      setStatus('Google popup blocked');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleGoogleRedirect() {
+    setError('');
+    setStatus('Redirecting to Google...');
+    setBusy(true);
+
+    try {
+      if (missingConfig.length) throw new Error(`Missing Firebase browser config: ${missingConfig.join(', ')}`);
+      const [{ getAuth, GoogleAuthProvider, signInWithRedirect }, { app }] = await Promise.all([
+        import('firebase/auth'),
+        import('@/lib/firebase/client'),
+      ]);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
+    } catch (nextError) {
+      setError(detailedError(nextError));
+      setStatus('Google redirect blocked');
+      setBusy(false);
+    }
+  }
+
+  async function handleEmailPassword() {
+    setError('');
+    setStatus('Signing in with email/password...');
+    setBusy(true);
+
+    try {
+      if (missingConfig.length) throw new Error(`Missing Firebase browser config: ${missingConfig.join(', ')}`);
+      const [{ getAuth, signInWithEmailAndPassword }, { app }] = await Promise.all([
+        import('firebase/auth'),
+        import('@/lib/firebase/client'),
+      ]);
+      const auth = getAuth(app);
+      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const idToken = await result.user.getIdToken(true);
+      setStatus('Creating secure admin session...');
+      await createAdminSession(idToken);
+      window.location.assign('/admin');
+    } catch (nextError) {
+      setError(detailedError(nextError));
+      setStatus('Email login blocked');
     } finally {
       setBusy(false);
     }
@@ -90,7 +169,7 @@ export default function LoginPage() {
             </p>
             <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">Sign in to URAI Admin.</h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
-              This page is designed to never white-screen. If Firebase Auth, authorized domains, or admin role setup fails, the exact issue appears here.
+              This route supports Google popup, Google redirect, and email/password sign-in so provider or popup issues do not block admin access.
             </p>
 
             <div className="mt-8 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm">
@@ -111,14 +190,25 @@ export default function LoginPage() {
               </div>
             ) : null}
 
-            <button
-              type="button"
-              onClick={handleLogin}
-              disabled={busy || missingConfig.length > 0}
-              className="mt-6 w-full rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
-            >
-              {busy ? 'Signing in...' : 'Sign in with Google'}
-            </button>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={handleGooglePopup} disabled={busy || missingConfig.length > 0} className="rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60">
+                Google popup
+              </button>
+              <button type="button" onClick={handleGoogleRedirect} disabled={busy || missingConfig.length > 0} className="rounded-2xl border border-cyan-300/40 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-cyan-300/10 disabled:cursor-not-allowed disabled:opacity-60">
+                Google redirect
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-sm font-semibold">Email/password fallback</p>
+              <div className="mt-3 grid gap-3">
+                <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" placeholder="admin email" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none ring-cyan-300/30 focus:ring-4" />
+                <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" placeholder="password" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none ring-cyan-300/30 focus:ring-4" />
+                <button type="button" onClick={handleEmailPassword} disabled={busy || !email || !password || missingConfig.length > 0} className="rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
+                  Sign in with email
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="relative min-h-[22rem] overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950 p-6">
