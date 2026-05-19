@@ -30,6 +30,7 @@ const expectedApiPaths = [
   'api/health/route.ts',
   'api/auth/login/route.ts',
   'api/auth/logout/route.ts',
+  'api/auth/session/route.ts',
   'api/auth/admin-session/route.ts',
   'api/admin/users/route.ts',
   'api/admin/collection/route.ts',
@@ -85,6 +86,14 @@ if (existsSync(loginClientPath)) {
     'window.location.assign',
   ]) {
     if (!loginClient.includes(expected)) failures.push(`login client missing expected behavior: ${expected}`);
+  }
+}
+
+const sessionRoutePath = join(appRoot, 'api/auth/session/route.ts');
+if (existsSync(sessionRoutePath)) {
+  const sessionRoute = readFileSync(sessionRoutePath, 'utf8');
+  for (const expected of ['__session', 'setCustomUserClaims', 'admin: true', 'ADMIN_ROLES', 'DELETE']) {
+    if (!sessionRoute.includes(expected)) failures.push(`session endpoint missing expected behavior: ${expected}`);
   }
 }
 
