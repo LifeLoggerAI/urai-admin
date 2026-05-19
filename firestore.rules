@@ -6,17 +6,26 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwnerOrAdmin() {
+    function hasActiveAdminRecord() {
       return isSignedIn()
-        && request.auth.token.admin == true
-        && request.auth.token.role in ['owner', 'admin']
+        && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid))
         && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true;
     }
 
+    function isOwnerOrAdmin() {
+      return hasActiveAdminRecord()
+        && request.auth.token.admin == true
+        && request.auth.token.role in ['owner', 'admin'];
+    }
+
     function isViewerOrAbove() {
-      return isSignedIn()
-        && request.auth.token.role in ['owner', 'admin', 'viewer']
-        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.isActive == true;
+      return hasActiveAdminRecord()
+        && request.auth.token.role in ['owner', 'admin', 'viewer'];
+    }
+
+    function isImmutableCreate() {
+      return request.resource.data.createdAt == request.time
+        && !('updatedAt' in request.resource.data);
     }
 
     match /{document=**} {
@@ -33,8 +42,73 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /adminAuditLogs/{logId} {
+      allow read: if isOwnerOrAdmin();
+      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow update, delete: if false;
+    }
+
     match /auditLogs/{logId} {
       allow read: if isOwnerOrAdmin();
+      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow update, delete: if false;
+    }
+
+    match /adminSystemHealth/{healthId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /adminReleaseEvidence/{evidenceId} {
+      allow read: if isViewerOrAbove();
+      allow create: if isOwnerOrAdmin();
+      allow update: if isOwnerOrAdmin() && resource.data.locked != true;
+      allow delete: if false;
+    }
+
+    match /adminNotifications/{notificationId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /adminSettings/{settingId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /adminReviewQueue/{reviewId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /adminIntegrations/{integrationId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /adminOperationalEvents/{eventId} {
+      allow read: if isOwnerOrAdmin();
+      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow update, delete: if false;
+    }
+
+    match /partnerAccounts/{partnerId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /systemRegistry/{systemId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /releaseSignoffs/{signoffId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /governanceEvidence/{evidenceId} {
+      allow read: if isViewerOrAbove();
       allow write: if false;
     }
 
