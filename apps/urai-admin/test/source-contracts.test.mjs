@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 async function read(pathname) {
@@ -38,6 +38,12 @@ assert.match(requireAdminSession, /isActive\s*!==\s*true/, 'inactive admin users
 assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom claim role must match adminUsers role');
 assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
 assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
+
+const loginRoute = await read('src/app/api/auth/login/route.ts');
+assert.match(loginRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'login must recognize owner, admin, and viewer roles');
+assert.match(loginRoute, /admin:\s*true/, 'all active admin roles, including viewer, must receive admin claim for read-only rules access');
+assert.match(loginRoute, /role:\s*adminUser\.role/, 'login custom claims must preserve exact adminUsers role');
+assert.match(loginRoute, /auth\.setCustomUserClaims/, 'login must refresh Firebase custom claims before session creation');
 
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
