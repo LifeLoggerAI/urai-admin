@@ -1,23 +1,39 @@
-
 'use client';
 
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+
+import { getClientAuth } from '@/lib/firebase/client';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser && pathname !== '/login') {
-        router.push('/login');
-      }
-    });
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
 
-    return () => unsubscribe();
+    getClientAuth()
+      .then((auth) => {
+        if (cancelled) return;
+        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (!currentUser && pathname !== '/login') {
+            router.push('/login');
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Unable to initialize Firebase Auth:', error);
+        if (!cancelled && pathname !== '/login') {
+          router.push('/login');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [pathname, router]);
 
   return <>{children}</>;
