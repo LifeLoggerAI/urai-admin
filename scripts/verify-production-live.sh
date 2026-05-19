@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-HOSTING_URL="${URAI_ADMIN_BASE_URL:-https://www.uraiadmin.com}"
+HOSTING_URL="${URAI_ADMIN_BASE_URL:-https://urai-admin.web.app}"
 FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL:-https://us-central1-urai-4dc1d.cloudfunctions.net}"
 
 HOSTING_URL="${HOSTING_URL%/}"
@@ -49,6 +49,14 @@ echo "--- HTTPS homepage ---"
 curl -sSfL --fail-with-body "${HOSTING_URL}/" | grep -q "URAI Admin" || fail "Homepage did not include URAI Admin"
 echo "OK: Homepage loads and contains URAI Admin"
 
+echo "--- Health endpoint ---"
+curl -sSfL --fail-with-body "${HOSTING_URL}/api/health" | grep -q '"service":"urai-admin"' || fail "Health endpoint did not return urai-admin service"
+echo "OK: Health endpoint returns urai-admin"
+
+echo "--- Firebase Hosting runtime config ---"
+curl -sSfL --fail-with-body "${HOSTING_URL}/__/firebase/init.json" | grep -q '"projectId"' || fail "Firebase Hosting runtime config missing projectId"
+echo "OK: Firebase Hosting runtime config is available"
+
 echo "--- Login page ---"
 curl -sSfL --fail-with-body "${HOSTING_URL}/login" | grep -qi "sign" || fail "Login page did not render expected sign-in content"
 echo "OK: Login page loads"
@@ -56,8 +64,8 @@ echo "OK: Login page loads"
 echo "--- Protected admin page ---"
 expect_status_any "${HOSTING_URL}/admin" 200 302 307 308
 
-echo "--- Protected admin API blocks anonymous access ---"
-expect_status "${HOSTING_URL}/api/admin/users" 401
+echo "--- Protected admin collection API blocks anonymous access ---"
+expect_status "${HOSTING_URL}/api/admin/collection?collection=adminUsers" 401
 
 echo "--- Functions health endpoint ---"
 curl -sSfL --fail-with-body "${FUNCTIONS_BASE_URL}/api_health" | grep -q '"status":"ok"' || fail "Functions health did not return ok"
