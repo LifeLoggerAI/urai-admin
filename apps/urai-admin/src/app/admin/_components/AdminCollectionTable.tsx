@@ -11,6 +11,7 @@ export type CollectionKey =
   | 'deadLetters'
   | 'roles'
   | 'systemConfig'
+  | 'privacyRequests'
   | 'auditLogs';
 
 export type AdminColumn = { key: string; label: string };
