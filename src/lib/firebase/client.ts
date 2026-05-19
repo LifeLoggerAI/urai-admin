@@ -1,1 +1,9 @@
-export { getFirebaseApp, getFirebaseAuth, getFirebaseDb } from "../../firebase";
+export {
+  getFirebaseApp,
+  getFirebaseAuth,
+  getFirebaseDb,
+  getFirebaseAppAsync,
+  getFirebaseAuthAsync,
+  getFirebaseDbAsync,
+  getFirebaseConfigSource,
+} from '../../firebase';
