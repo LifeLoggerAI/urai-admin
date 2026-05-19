@@ -29,12 +29,24 @@ const expectedRoutePaths = [
 
 const expectedApiPaths = [
   'api/health/route.ts',
+  'api/audit/route.ts',
   'api/auth/login/route.ts',
   'api/auth/logout/route.ts',
   'api/auth/session/route.ts',
   'api/auth/admin-session/route.ts',
+  'api/auth/verify/route.ts',
+  'api/admin/route.ts',
   'api/admin/users/route.ts',
+  'api/admin/users/[uid]/role/route.ts',
   'api/admin/collection/route.ts',
+  'api/admin/audit/route.ts',
+  'api/admin/analytics/route.ts',
+  'api/admin/set-flag/route.ts',
+  'api/admin/set-user-active/route.ts',
+  'api/admin/update-user-role/route.ts',
+  'api/qa/diff/route.ts',
+  'api/qa/logs/route.ts',
+  'api/qa/snapshots/route.ts',
 ];
 
 for (const route of [...expectedRoutePaths, ...expectedApiPaths]) {
@@ -112,6 +124,14 @@ if (existsSync(collectionRoutePath)) {
   const collectionRoute = readFileSync(collectionRoutePath, 'utf8');
   for (const expected of ['COLLECTIONS', 'privacyRequests', 'SENSITIVE_KEY_PATTERN', 'REDACTED', 'requireAdminSession']) {
     if (!collectionRoute.includes(expected)) failures.push(`collection API missing expected behavior: ${expected}`);
+  }
+}
+
+const adminCollectionTablePath = join(appRoot, 'admin/_components/AdminCollectionTable.tsx');
+if (existsSync(adminCollectionTablePath)) {
+  const adminCollectionTable = readFileSync(adminCollectionTablePath, 'utf8');
+  for (const expected of ['export type CollectionKey', "| 'privacyRequests'", "fetch(query, { cache: 'no-store' })"]) {
+    if (!adminCollectionTable.includes(expected)) failures.push(`admin collection table missing expected behavior: ${expected}`);
   }
 }
 
