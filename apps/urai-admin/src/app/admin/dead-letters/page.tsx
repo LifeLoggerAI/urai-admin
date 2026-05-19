@@ -1,24 +1,21 @@
-import { AdminCollectionTable } from '../_components/AdminCollectionTable';
+import { SpatialCollectionPage } from '../_components/SpatialCollectionPage';
 
 export default function DeadLettersPage() {
   return (
-    <main className="space-y-6 p-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dead Letters</h1>
-        <p className="text-sm text-muted-foreground">Live dead-letter records from the runtime admin API.</p>
-      </div>
-
-      <AdminCollectionTable
-        collection="deadLetters"
-        emptyLabel="No dead letters found."
-        columns={[
-          { key: 'id', label: 'Letter ID' },
-          { key: 'source', label: 'Source' },
-          { key: 'reason', label: 'Reason' },
-          { key: 'attempts', label: 'Attempts' },
-          { key: 'createdAt', label: 'Created' }
-        ]}
-      />
-    </main>
+    <SpatialCollectionPage
+      eyebrow="Failure recovery"
+      title="Dead letters"
+      description="Surface failed queue events that need operational follow-up, retry planning, or source-system cleanup."
+      signalValue="Recovery queue"
+      collection="deadLetters"
+      emptyLabel="No dead letters found."
+      columns={[
+        { key: 'id', label: 'Letter' },
+        { key: 'source', label: 'Source' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'attempts', label: 'Attempts' },
+        { key: 'createdAt', label: 'Created' },
+      ]}
+    />
   );
 }
