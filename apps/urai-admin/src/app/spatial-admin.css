@@ -1,0 +1,111 @@
+@layer components {
+  .spatial-admin-os {
+    position: relative;
+    min-height: 100vh;
+    isolation: isolate;
+    overflow: hidden;
+    background: radial-gradient(circle at 18% 12%, rgba(125, 92, 255, 0.26), transparent 24rem), radial-gradient(circle at 82% 8%, rgba(34, 211, 238, 0.18), transparent 28rem), linear-gradient(135deg, #020617 0%, #08111f 44%, #120a25 100%);
+  }
+
+  .spatial-admin-os::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(rgba(147, 197, 253, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(147, 197, 253, 0.045) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 50% 42%, black, transparent 74%);
+    transform: perspective(900px) rotateX(58deg) translateY(11rem) scale(1.3);
+    transform-origin: bottom;
+  }
+
+  .spatial-admin-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    width: 18rem;
+    min-height: 100vh;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.86), rgba(15, 23, 42, 0.66));
+    box-shadow: 18px 0 80px rgba(2, 6, 23, 0.38);
+    padding: 1.1rem;
+    backdrop-filter: blur(28px);
+  }
+
+  .spatial-admin-brand {
+    border-radius: 1.35rem;
+    border: 1px solid rgba(103, 232, 249, 0.22);
+    background: rgba(15, 23, 42, 0.72);
+    padding: 1rem;
+  }
+
+  .spatial-admin-brand span {
+    display: block;
+    font-size: 0.67rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgb(165, 243, 252);
+  }
+
+  .spatial-admin-brand strong {
+    margin-top: 0.35rem;
+    display: block;
+    font-size: 1.4rem;
+    color: white;
+  }
+
+  .spatial-admin-nav {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .spatial-admin-nav a {
+    display: block;
+    border-radius: 1rem;
+    border: 1px solid transparent;
+    padding: 0.78rem 0.88rem;
+    color: rgb(203, 213, 225);
+    font-size: 0.88rem;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+  }
+
+  .spatial-admin-nav a:hover {
+    transform: translateX(4px);
+    border-color: rgba(103, 232, 249, 0.24);
+    background: rgba(15, 23, 42, 0.72);
+    color: white;
+  }
+
+  .spatial-admin-nav a[data-active='true'] {
+    border-color: rgba(103, 232, 249, 0.42);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.14));
+    color: white;
+  }
+
+  .spatial-admin-content {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    flex: 1;
+    overflow: auto;
+  }
+
+  .spatial-session-loader {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    color: rgb(203, 213, 225);
+  }
+
+  .spatial-session-loader > div {
+    border-radius: 1.5rem;
+    border: 1px solid rgba(103, 232, 249, 0.22);
+    background: rgba(2, 6, 23, 0.72);
+    padding: 1.5rem 1.8rem;
+    backdrop-filter: blur(24px);
+  }
+}
