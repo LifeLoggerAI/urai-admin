@@ -73,6 +73,7 @@ fi
 
 require_grep '"source": "apps/urai-admin"' "firebase.json" "firebase.json hosting source points to apps/urai-admin"
 require_grep '"runtime": "nodejs20"' "firebase.json" "firebase.json functions runtime is nodejs20"
+require_grep '"default": "urai-4dc1d"' ".firebaserc" ".firebaserc default project is urai-4dc1d"
 require_grep '"admin": "urai-4dc1d"' ".firebaserc" ".firebaserc has admin project alias for urai-4dc1d"
 require_grep 'allow read, write: if false;' "storage.rules" "storage rules remain deny-all by default"
 require_grep 'allow read, write: if false;' "firestore.rules" "firestore rules contain default deny"
@@ -81,8 +82,9 @@ require_grep 'verifySessionCookie\(sessionCookie, true\)' "apps/urai-admin/src/l
 require_grep 'Previous known-good' "docs/DEPLOYMENT_RUNBOOK.md" "deployment runbook includes rollback evidence requirements"
 require_grep 'Final status:' "docs/EVIDENCE_LOG.md" "evidence log includes final status field"
 
-if grep -q '"default": "urai-8025b"' .firebaserc; then
-  echo "WARNING: .firebaserc still contains default project urai-8025b. Deploy scripts must use explicit -P urai-4dc1d. Do not rely on firebase use/default." >&2
+if grep -q 'urai-8025b' .firebaserc package.json firebase.json scripts/*.sh docs/*.md; then
+  echo "ERROR: Found legacy Firebase project urai-8025b in deployment-critical files. Production admin deploy must target urai-4dc1d only." >&2
+  missing=1
 fi
 
 if [[ "${missing}" != "0" ]]; then
