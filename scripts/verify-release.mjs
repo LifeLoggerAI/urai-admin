@@ -23,7 +23,12 @@ const requiredFiles = [
   'scripts/test-firestore-rules-contract.mjs',
   'scripts/test-admin-route-contracts.mjs',
   'scripts/test-system-registry-contract.mjs',
-  'scripts/seed-system-registry.mjs'
+  'scripts/seed-system-registry.mjs',
+  'scripts/smoke-test.sh',
+  'scripts/verify-production-live.sh',
+  'apps/urai-admin/src/app/api/health/route.ts',
+  'apps/urai-admin/src/app/api/admin/collection/route.ts',
+  'apps/urai-admin/src/lib/firebase/client.ts',
 ];
 
 const requiredScripts = [
@@ -43,7 +48,7 @@ const requiredScripts = [
   'bootstrap:owner',
   'deploy',
   'verify:production',
-  'rollback:production'
+  'rollback:production',
 ];
 
 const requiredEnvKeys = [
@@ -57,7 +62,7 @@ const requiredEnvKeys = [
   'URAI_ADMIN_OWNER_EMAIL',
   'URAI_ADMIN_FIREBASE_PROJECT',
   'URAI_ADMIN_HOSTING_SITE',
-  'URAI_ADMIN_PRODUCTION_URL'
+  'URAI_ADMIN_PRODUCTION_URL',
 ];
 
 const requiredRuleCollections = [
@@ -73,25 +78,49 @@ const requiredRuleCollections = [
   'partnerAccounts',
   'systemRegistry',
   'releaseSignoffs',
-  'governanceEvidence'
+  'governanceEvidence',
 ];
 
-const requiredRoutes = [
+const requiredAppRoutes = [
+  'apps/urai-admin/src/app/page.tsx',
+  'apps/urai-admin/src/app/login/page.tsx',
+  'apps/urai-admin/src/app/features/page.tsx',
+  'apps/urai-admin/src/app/security/page.tsx',
+  'apps/urai-admin/src/app/pricing/page.tsx',
+  'apps/urai-admin/src/app/contact/page.tsx',
+  'apps/urai-admin/src/app/admin/page.tsx',
+  'apps/urai-admin/src/app/admin/users/page.tsx',
+  'apps/urai-admin/src/app/admin/projects/page.tsx',
+  'apps/urai-admin/src/app/admin/jobs/page.tsx',
+  'apps/urai-admin/src/app/admin/job-runs/page.tsx',
+  'apps/urai-admin/src/app/admin/dead-letters/page.tsx',
+  'apps/urai-admin/src/app/admin/feature-flags/page.tsx',
+  'apps/urai-admin/src/app/admin/policies/page.tsx',
+  'apps/urai-admin/src/app/admin/system/page.tsx',
+  'apps/urai-admin/src/app/admin/settings/page.tsx',
+  'apps/urai-admin/src/app/admin/audit/page.tsx',
+];
+
+const requiredPublicUrls = [
   '/',
   '/login',
-  '/privacy',
-  '/terms',
-  '/status',
+  '/features',
+  '/security',
+  '/pricing',
+  '/contact',
   '/admin',
   '/admin/users',
+  '/admin/projects',
   '/admin/jobs',
+  '/admin/job-runs',
+  '/admin/dead-letters',
+  '/admin/feature-flags',
+  '/admin/policies',
   '/admin/system',
-  '/admin/releases',
-  '/admin/governance',
-  '/admin/communications',
-  '/admin/analytics',
+  '/admin/settings',
   '/admin/audit',
-  '/admin/privacy-requests'
+  '/api/health',
+  '/api/admin/collection?collection=adminUsers',
 ];
 
 const failures = [];
@@ -106,11 +135,15 @@ function requireFile(path) {
 }
 
 for (const file of requiredFiles) requireFile(file);
+for (const file of requiredAppRoutes) requireFile(file);
 
 if (existsSync('package.json')) {
   const pkg = JSON.parse(read('package.json'));
   for (const script of requiredScripts) {
     if (!pkg.scripts?.[script]) failures.push(`missing package script: ${script}`);
+  }
+  if (pkg.scripts?.deploy && !pkg.scripts.deploy.includes('-P urai-4dc1d')) {
+    failures.push('deploy script must explicitly target urai-4dc1d');
   }
 }
 
@@ -131,6 +164,34 @@ if (existsSync('firestore.rules')) {
   if (!rules.includes('allow update, delete: if false')) warnings.push('firestore.rules should explicitly block audit/event mutation');
 }
 
+if (existsSync('apps/urai-admin/src/lib/firebase/client.ts')) {
+  const firebaseClient = read('apps/urai-admin/src/lib/firebase/client.ts');
+  for (const expected of ['__/firebase/init.json', 'getClientAuth', 'getFirebaseConfigStatus', 'PASTE_', 'YOUR_', '_HERE']) {
+    if (!firebaseClient.includes(expected)) failures.push(`runtime Firebase client missing expected guard/fallback: ${expected}`);
+  }
+}
+
+if (existsSync('apps/urai-admin/src/app/api/health/route.ts')) {
+  const health = read('apps/urai-admin/src/app/api/health/route.ts');
+  for (const expected of ['urai-admin', 'Cache-Control', 'no-store', '/__/firebase/init.json']) {
+    if (!health.includes(expected)) failures.push(`health endpoint missing expected production signal: ${expected}`);
+  }
+}
+
+if (existsSync('scripts/smoke-test.sh')) {
+  const smoke = read('scripts/smoke-test.sh');
+  for (const expected of ['/api/health', '/__/firebase/init.json', '/api/admin/collection?collection=adminUsers', 'https://urai-admin.web.app']) {
+    if (!smoke.includes(expected)) failures.push(`smoke-test missing expected live check: ${expected}`);
+  }
+}
+
+if (existsSync('scripts/verify-production-live.sh')) {
+  const verifier = read('scripts/verify-production-live.sh');
+  for (const expected of ['/api/health', '/__/firebase/init.json', '/api/admin/collection?collection=adminUsers', 'https://urai-admin.web.app']) {
+    if (!verifier.includes(expected)) failures.push(`production verifier missing expected live check: ${expected}`);
+  }
+}
+
 if (existsSync('scripts/seed-system-registry.mjs')) {
   const seed = read('scripts/seed-system-registry.mjs');
   for (const system of ['URAI Admin', 'URAI Analytics', 'URAI Communications', 'URAI Privacy', 'URAI Foundation', 'URAI Spatial', 'URAI Studio', 'URAI Asset Factory', 'URAI B2B Portal']) {
@@ -139,12 +200,6 @@ if (existsSync('scripts/seed-system-registry.mjs')) {
   for (const field of ['systemRegistry', 'adminOperationalEvents', 'dataBoundary', 'privacyClassification', 'operationalRisk']) {
     if (!seed.includes(field)) failures.push(`seed-system-registry missing field/collection: ${field}`);
   }
-}
-
-if (existsSync('apps/urai-admin/app/admin/system/page.jsx')) {
-  const systemPage = read('apps/urai-admin/app/admin/system/page.jsx');
-  if (!systemPage.includes('systemRegistry')) failures.push('/admin/system must read or mention systemRegistry');
-  if (!systemPage.includes('fallbackSystems')) failures.push('/admin/system must preserve safe fallback systems');
 }
 
 if (existsSync('docs/SYSTEM_OF_SYSTEMS.md')) {
@@ -167,7 +222,7 @@ if (existsSync('FINAL_LOCK.md')) {
 
 if (existsSync('README.md')) {
   const readme = read('README.md');
-  for (const route of requiredRoutes) {
+  for (const route of requiredPublicUrls) {
     if (!readme.includes(route)) warnings.push(`README route map may not mention ${route}`);
   }
   if (!readme.includes('Privacy boundary')) warnings.push('README should include privacy boundary section');
@@ -178,7 +233,7 @@ const secretPatterns = [
   /-----BEGIN PRIVATE KEY-----/,
   /firebase-adminsdk/,
   /ghp_[0-9A-Za-z_]{30,}/,
-  /xox[baprs]-[0-9A-Za-z-]+/
+  /xox[baprs]-[0-9A-Za-z-]+/,
 ];
 for (const path of ['README.md', 'FINAL_LOCK.md', '.env.production.example', 'docs/DEPLOYMENT.md', 'docs/SECURITY.md']) {
   if (!existsSync(path)) continue;
@@ -192,7 +247,7 @@ if (process.env.URAI_ADMIN_VERIFIER_RUN_COMMANDS === '1') {
   for (const command of ['pnpm check:types', 'pnpm lint', 'pnpm test:unit', 'pnpm test:rules', 'pnpm test:registry', 'pnpm build']) {
     try {
       execSync(command, { stdio: 'inherit' });
-    } catch (error) {
+    } catch {
       failures.push(`command failed: ${command}`);
     }
   }
