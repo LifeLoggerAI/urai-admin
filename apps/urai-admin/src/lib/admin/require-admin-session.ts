@@ -9,6 +9,8 @@ export type AdminSession = {
   role: AdminRole;
 };
 
+const noStoreHeaders = { 'Cache-Control': 'no-store' } as const;
+
 export class AdminAuthError extends Error {
   status: number;
 
@@ -52,9 +54,9 @@ export async function requireAdminSession(
 
 export function adminAuthErrorResponse(error: unknown) {
   if (error instanceof AdminAuthError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({ error: error.message }, { status: error.status, headers: noStoreHeaders });
   }
 
   console.error('Admin authorization error:', error);
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: noStoreHeaders });
 }
