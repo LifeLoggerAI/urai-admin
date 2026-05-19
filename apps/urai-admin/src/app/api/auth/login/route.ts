@@ -9,6 +9,13 @@ const loginSchema = z.object({
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
 const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+const ADMIN_ROLES = ['owner', 'admin', 'viewer'] as const;
+
+type AdminRole = (typeof ADMIN_ROLES)[number];
+
+function isAdminRole(role: unknown): role is AdminRole {
+  return typeof role === 'string' && ADMIN_ROLES.includes(role as AdminRole);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,14 +29,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Admin access is not active for this account' }, { status: 403 });
     }
 
-    if (!['owner', 'admin', 'viewer'].includes(adminUser.role)) {
+    if (!isAdminRole(adminUser.role)) {
       return NextResponse.json({ success: false, error: 'Admin role is not valid for this account' }, { status: 403 });
     }
 
-    const isPrivilegedAdmin = adminUser.role === 'owner' || adminUser.role === 'admin';
-
     await auth.setCustomUserClaims(decodedToken.uid, {
-      admin: isPrivilegedAdmin,
+      admin: true,
       role: adminUser.role,
     });
 
