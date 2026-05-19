@@ -6,6 +6,7 @@ const requiredFiles = [
   'README.md',
   'package.json',
   'firebase.json',
+  'apphosting.yaml',
   '.firebaserc',
   'firestore.rules',
   'firestore.indexes.json',
@@ -28,27 +29,13 @@ const requiredFiles = [
   'scripts/verify-production-live.sh',
   'apps/urai-admin/src/app/api/health/route.ts',
   'apps/urai-admin/src/app/api/admin/collection/route.ts',
-  'apps/urai-admin/src/lib/firebase/client.ts',
+  'apps/urai-admin/src/lib/firebase/client.ts'
 ];
 
 const requiredScripts = [
-  'check:types',
-  'lint',
-  'test:unit',
-  'test:rules',
-  'test:e2e',
-  'test:registry',
-  'test:smoke',
-  'build',
-  'verify:release',
-  'preflight',
-  'release:lock',
-  'seed:system-registry',
-  'preflight:production',
-  'bootstrap:owner',
-  'deploy',
-  'verify:production',
-  'rollback:production',
+  'check:types', 'lint', 'test:unit', 'test:rules', 'test:e2e', 'test:registry', 'test:smoke',
+  'build', 'verify:release', 'preflight', 'release:lock', 'seed:system-registry',
+  'preflight:production', 'bootstrap:owner', 'deploy', 'verify:production', 'rollback:production'
 ];
 
 const requiredEnvKeys = [
@@ -62,23 +49,13 @@ const requiredEnvKeys = [
   'URAI_ADMIN_OWNER_EMAIL',
   'URAI_ADMIN_FIREBASE_PROJECT',
   'URAI_ADMIN_HOSTING_SITE',
-  'URAI_ADMIN_PRODUCTION_URL',
+  'URAI_ADMIN_PRODUCTION_URL'
 ];
 
 const requiredRuleCollections = [
-  'adminUsers',
-  'adminAuditLogs',
-  'adminSystemHealth',
-  'adminReleaseEvidence',
-  'adminNotifications',
-  'adminSettings',
-  'adminReviewQueue',
-  'adminIntegrations',
-  'adminOperationalEvents',
-  'partnerAccounts',
-  'systemRegistry',
-  'releaseSignoffs',
-  'governanceEvidence',
+  'adminUsers', 'adminAuditLogs', 'adminSystemHealth', 'adminReleaseEvidence', 'adminNotifications',
+  'adminSettings', 'adminReviewQueue', 'adminIntegrations', 'adminOperationalEvents', 'partnerAccounts',
+  'systemRegistry', 'releaseSignoffs', 'governanceEvidence'
 ];
 
 const requiredAppRoutes = [
@@ -98,29 +75,14 @@ const requiredAppRoutes = [
   'apps/urai-admin/src/app/admin/policies/page.tsx',
   'apps/urai-admin/src/app/admin/system/page.tsx',
   'apps/urai-admin/src/app/admin/settings/page.tsx',
-  'apps/urai-admin/src/app/admin/audit/page.tsx',
+  'apps/urai-admin/src/app/admin/audit/page.tsx'
 ];
 
 const requiredPublicUrls = [
-  '/',
-  '/login',
-  '/features',
-  '/security',
-  '/pricing',
-  '/contact',
-  '/admin',
-  '/admin/users',
-  '/admin/projects',
-  '/admin/jobs',
-  '/admin/job-runs',
-  '/admin/dead-letters',
-  '/admin/feature-flags',
-  '/admin/policies',
-  '/admin/system',
-  '/admin/settings',
-  '/admin/audit',
-  '/api/health',
-  '/api/admin/collection?collection=adminUsers',
+  '/', '/login', '/features', '/security', '/pricing', '/contact', '/admin', '/admin/users',
+  '/admin/projects', '/admin/jobs', '/admin/job-runs', '/admin/dead-letters', '/admin/feature-flags',
+  '/admin/policies', '/admin/system', '/admin/settings', '/admin/audit', '/api/health',
+  '/api/admin/collection?collection=adminUsers'
 ];
 
 const failures = [];
@@ -151,6 +113,13 @@ if (existsSync('.env.production.example')) {
   const env = read('.env.production.example');
   for (const key of requiredEnvKeys) {
     if (!env.includes(`${key}=`)) failures.push(`missing env example key: ${key}`);
+  }
+}
+
+if (existsSync('apphosting.yaml')) {
+  const apphosting = read('apphosting.yaml');
+  for (const expected of ['pnpm --dir apps/urai-admin start', 'NODE_ENV', 'production', 'https://urai-admin.web.app', 'us-central1-urai-4dc1d.cloudfunctions.net']) {
+    if (!apphosting.includes(expected)) failures.push(`apphosting.yaml missing expected production config: ${expected}`);
   }
 }
 
@@ -228,13 +197,7 @@ if (existsSync('README.md')) {
   if (!readme.includes('Privacy boundary')) warnings.push('README should include privacy boundary section');
 }
 
-const secretPatterns = [
-  /AIza[0-9A-Za-z_-]{35}/,
-  /-----BEGIN PRIVATE KEY-----/,
-  /firebase-adminsdk/,
-  /ghp_[0-9A-Za-z_]{30,}/,
-  /xox[baprs]-[0-9A-Za-z-]+/,
-];
+const secretPatterns = [/AIza[0-9A-Za-z_-]{35}/, /-----BEGIN PRIVATE KEY-----/, /firebase-adminsdk/, /ghp_[0-9A-Za-z_]{30,}/, /xox[baprs]-[0-9A-Za-z-]+/];
 for (const path of ['README.md', 'FINAL_LOCK.md', '.env.production.example', 'docs/DEPLOYMENT.md', 'docs/SECURITY.md']) {
   if (!existsSync(path)) continue;
   const text = read(path);
