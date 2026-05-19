@@ -24,29 +24,25 @@ export default function Sidebar() {
   const { signOut } = useAuth();
 
   return (
-    <aside className="flex w-64 flex-col justify-between bg-gray-800 p-4 text-white">
+    <aside className="spatial-admin-sidebar text-white">
       <div>
-        <h2 className="mb-8 text-2xl font-bold">URAI Admin</h2>
-        <nav aria-label="Admin navigation">
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || Boolean(pathname?.startsWith(`${item.href}/`));
+        <div className="spatial-admin-brand">
+          <span>URAI Labs</span>
+          <strong>Admin OS</strong>
+        </div>
+        <nav className="spatial-admin-nav" aria-label="Admin navigation">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || Boolean(pathname?.startsWith(`${item.href}/`));
 
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`block rounded-md p-2 text-sm ${isActive ? 'bg-gray-700' : 'hover:bg-gray-700/70'}`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+            return (
+              <Link key={item.href} href={item.href} data-active={isActive ? 'true' : 'false'}>
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
-      <Button onClick={signOut}>Logout</Button>
+      <Button onClick={signOut} className="mt-6 w-full">Logout</Button>
     </aside>
   );
 }
