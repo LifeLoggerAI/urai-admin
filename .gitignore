@@ -30,6 +30,12 @@ functions/src/scripts/
 functions/src/setAdminClaim.ts
 functions/src/setAdminClaim.js
 
+# generated TypeScript / Next metadata
+*.tsbuildinfo
+**/*.tsbuildinfo
+apps/urai-admin/next-env.d.ts
+apps/urai-analytics/next-env.d.ts
+
 # generated TypeScript artifacts
 apps/urai-admin/src/**/*.js
 apps/urai-admin/src/**/*.jsx
