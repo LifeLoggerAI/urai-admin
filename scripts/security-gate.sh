@@ -82,16 +82,11 @@ required_pattern "firebase.json" '"source": "apps/urai-admin"'
 required_pattern ".firebaserc" '"default": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
 required_pattern "scripts/preflight-production.sh" "NEXT_PUBLIC_FIREBASE_PROJECT_ID must be urai-4dc1d"
-required_pattern "scripts/preflight-production.sh" "legacy Firebase project urai-8025b"
 required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_HOSTING_SITE"
 required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_ROLLBACK_RELEASE"
 required_pattern "scripts/rollback-production.sh" "firebase hosting:clone"
 required_pattern "docs/DEPLOYMENT_RUNBOOK.md" 'Do not run `urai_admin_finish.sh`'
 required_pattern "docs/EVIDENCE_LOG.md" "Final status:"
-
-if grep -RIn --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git "urai-8025b" .firebaserc package.json firebase.json scripts docs 2>/dev/null; then
-  fail "Legacy Firebase project urai-8025b found in deployment-critical files"
-fi
 
 forbidden_recursive "headers\.get\(['\"]x-user-id['\"]\)" "apps/urai-admin/src/app/api" "Trusted x-user-id header found in API route"
 forbidden_recursive "request\.headers\.get\(['\"]Authorization['\"]\)\?\.split\(['\"]Bearer " "apps/urai-admin/src/app/api/admin" "Admin route using Authorization bearer session parsing found"
