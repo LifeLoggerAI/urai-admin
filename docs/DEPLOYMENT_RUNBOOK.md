@@ -1,30 +1,22 @@
 # URAI Admin Deployment Runbook
 
-Status: production deployment is blocked until the source-of-truth checks in this runbook are GREEN with evidence.
+Status: production deployment is allowed only when the source-of-truth checks in this runbook are GREEN with evidence.
 
 ## Canonical project
 
 - Repo: `LifeLoggerAI/urai-admin`
 - Default branch: `main`
 - App source: `apps/urai-admin`
-- Firebase production project currently referenced by release docs and root deploy script: `urai-4dc1d`
+- Firebase production project: `urai-4dc1d`
 - Public domain: `https://uraiadmin.com`
+- Preview/default hosting URL: `https://urai-admin.web.app`
 - Functions base URL: `https://us-central1-urai-4dc1d.cloudfunctions.net`
 
-## Current source-of-truth warning
+## Current source of truth
 
-`.firebaserc` still contains both:
+`urai-4dc1d` is the only production Firebase project for URAI Admin deployment-critical scripts and runbooks.
 
-```json
-{
-  "default": "urai-8025b",
-  "admin": "urai-4dc1d"
-}
-```
-
-The root `deploy` script explicitly deploys with `-P urai-4dc1d`. Treat `urai-4dc1d` as the intended admin production project only after Firebase Console, DNS, hosting site, and secrets are verified by an authorized operator.
-
-Do not run production deployment from a shell where `firebase use` points at an unexpected project.
+Do not run production deployment from a shell where `firebase use` points at an unexpected project. The production deploy script also passes the Firebase project flag explicitly.
 
 ## Required preflight evidence
 
@@ -77,14 +69,16 @@ Production deploy is allowed only when all of these are GREEN:
 - CI passing or explicit approved override documented;
 - local release gates passing;
 - Firestore and Storage rules tested;
-- unauthenticated `/api/admin/users` returns `401`;
-- rollback path documented;
+- unauthenticated admin API access returns `401`;
+- previous known-good Git commit SHA recorded;
+- previous known-good Firebase Hosting release recorded;
+- rollback command/path documented;
 - founder/Jacob approval recorded.
 
 Deploy command after approval:
 
 ```bash
-pnpm deploy
+pnpm run deploy:production
 ```
 
 ## Post-deploy smoke checks
@@ -99,14 +93,16 @@ Verify:
 - `https://uraiadmin.com/admin`
 - `https://uraiadmin.com/admin/users`
 - `https://uraiadmin.com/admin/feature-flags`
-- `https://uraiadmin.com/api/admin/users` returns `401` when unauthenticated
+- unauthenticated admin API access returns `401`
+
+If the canonical custom domain is not cut over yet, run the same checks against `https://urai-admin.web.app` and record custom-domain cutover as pending.
 
 ## Rollback
 
 Rollback must be prepared before production deploy. At minimum, record:
 
-- previous known-good Git commit SHA;
-- previous known-good Firebase Hosting release;
+- Previous known-good Git commit SHA;
+- Previous known-good Firebase Hosting release;
 - command or console steps to roll back hosting;
 - command or PR to revert code/rules/functions changes;
 - owner responsible for rollback execution.
