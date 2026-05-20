@@ -7,6 +7,7 @@ Related recovery runbook: `docs/ROLLBACK_AND_INCIDENTS.md`.
 ## Production target
 
 - Public site: `https://www.uraiadmin.com`
+- Verified Firebase Hosting URL: `https://urai-admin.web.app`
 - Firebase project: `urai-4dc1d`
 - Hosting source: `apps/urai-admin`
 - Functions source: `functions`
@@ -123,8 +124,27 @@ Preferred path:
 5. Confirm validation passes.
 6. Confirm Firebase deploy succeeds.
 7. Confirm production live verification succeeds.
+8. Download the `urai-admin-launch-evidence` workflow artifact.
 
-Manual fallback:
+Local evidence-producing fallback:
+
+```bash
+bash scripts/launch-lock.sh
+```
+
+By default this verifies `https://urai-admin.web.app`. To verify the custom domain after DNS/SSL is live:
+
+```bash
+URAI_ADMIN_BASE_URL=https://www.uraiadmin.com bash scripts/launch-lock.sh
+```
+
+The launch runner writes evidence to:
+
+```text
+tmp/urai-admin-launch-evidence.md
+```
+
+Manual fallback without evidence bundling:
 
 ```bash
 pnpm preflight:production
@@ -164,7 +184,7 @@ URAI Admin is launch-ready only when all of these are true:
 - Production preflight is green.
 - Security gate is green.
 - Deploy workflow is green.
-- `https://www.uraiadmin.com` loads over HTTPS.
+- `https://www.uraiadmin.com` loads over HTTPS, or `https://urai-admin.web.app` is explicitly accepted as the first verified launch URL while custom-domain DNS/SSL is pending.
 - Admin login works with a real Firebase account.
 - Non-admin users cannot access `/admin` or `/api/admin/*`.
 - Active owner/admin users can access the dashboard.
@@ -173,8 +193,9 @@ URAI Admin is launch-ready only when all of these are true:
 - No production secrets are committed to the repository.
 - Firebase Hosting, Functions, Firestore rules, and Storage rules are deployed from the repo.
 - Rollback path is documented and understood.
+- Launch evidence exists as either the GitHub Actions artifact or `tmp/urai-admin-launch-evidence.md` from `scripts/launch-lock.sh`.
 
-## Do not claim launch complete if
+## Do not claim custom-domain launch complete if
 
 - DNS is pending.
 - SSL is pending.
