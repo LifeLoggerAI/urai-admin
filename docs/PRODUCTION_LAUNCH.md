@@ -55,10 +55,11 @@ Preferred scripted path:
 ```bash
 export NEXT_PUBLIC_FIREBASE_PROJECT_ID=urai-4dc1d
 export FIREBASE_SERVICE_ACCOUNT_KEY='<service account json>'
-export URAI_ADMIN_OWNER_UID='<firebase auth uid>'
 export URAI_ADMIN_OWNER_EMAIL='owner@example.com'
 pnpm bootstrap:owner
 ```
+
+If the Firebase Auth user already exists, `pnpm bootstrap:owner` resolves the owner UID from `URAI_ADMIN_OWNER_EMAIL`. You may also set `URAI_ADMIN_OWNER_UID` explicitly when needed.
 
 The script sets Firebase custom claims, writes `adminUsers/{uid}`, and adds an audit log entry.
 
@@ -108,6 +109,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm verify:production
+pnpm test:smoke
 ```
 
 ## Deployment
@@ -127,20 +129,23 @@ Manual fallback:
 ```bash
 pnpm preflight:production
 pnpm security:gate
-pnpm deploy
+pnpm run deploy:production
 URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm verify:production
+URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm test:smoke
 ```
 
 ## Production verification expectations
 
 The verifier must confirm:
 
-- Public homepage returns successfully and includes `URAI Admin`.
+- Public homepage returns successfully and includes `URAI`.
+- `/api/health` returns `{"status":"ok"}`.
+- Firebase Hosting runtime config is available at `/__/firebase/init.json`.
 - `/login` loads.
-- `/admin` is protected and redirects or blocks unauthenticated access.
-- `/api/admin/users` returns `401` without a valid session.
+- `/admin` is protected and redirects, blocks, or renders the protected shell for unauthenticated access.
+- `/api/admin/collection?collection=adminUsers` returns `401` without a valid session.
 - Functions health endpoint returns `{"status":"ok"}`.
-- Functions auth endpoint blocks unauthenticated access.
+- Legacy Functions auth diagnostics do not block source-owned production verification.
 
 ## Rollback readiness
 
@@ -160,7 +165,7 @@ URAI Admin is launch-ready only when all of these are true:
 - Security gate is green.
 - Deploy workflow is green.
 - `https://www.uraiadmin.com` loads over HTTPS.
-- Admin login works with a real Firebase Google account.
+- Admin login works with a real Firebase account.
 - Non-admin users cannot access `/admin` or `/api/admin/*`.
 - Active owner/admin users can access the dashboard.
 - Logout clears the session and returns the user to `/login`.
