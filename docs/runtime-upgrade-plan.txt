@@ -1,0 +1,18 @@
+Runtime upgrade plan
+
+Current configuration:
+- firebase.json runtime: nodejs20
+- functions package node engine: 20
+- functions package firebase-functions: ^5.0.1
+
+Target:
+- Move to the current Firebase supported Node runtime before 2026-09-15.
+- Update the functions node engine at the same time.
+- Upgrade firebase-functions in a controlled migration branch.
+- Run release checks, smoke checks, and live checks.
+- Preserve shared URAI resources owned by other repositories.
+
+Guard:
+- scripts/check-runtime-risk.mjs validates this file and the runtime settings.
+- It passes before 2026-09-15 while the migration remains planned.
+- It fails on or after 2026-09-15 if the old runtime or known old functions SDK line is still present.
