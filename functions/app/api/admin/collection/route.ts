@@ -5,6 +5,8 @@ import { firestore } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' } as const;
+
 const COLLECTIONS = {
   adminUsers: { collection: 'adminUsers', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
   projectRegistry: { collection: 'projectRegistry', roles: ['owner', 'admin', 'viewer'] },
@@ -14,8 +16,13 @@ const COLLECTIONS = {
   deadLetters: { collection: 'deadLetters', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
   roles: { collection: 'roles', roles: ['owner', 'admin', 'viewer'] },
   systemConfig: { collection: 'systemConfig', orderBy: 'updatedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
+  privacyRequests: { collection: 'privacyRequests', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
   auditLogs: { collection: 'auditLogs', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
 } as const;
+
+const REDACTED = '[REDACTED]';
+const SENSITIVE_KEY_PATTERN = /(api[-_]?key|auth[-_]?token|bearer|client[-_]?secret|credential|id[-_]?token|private[-_]?key|refresh[-_]?token|secret|service[-_]?account|session|stripe|token|webhook[-_]?secret|password)/i;
+const SAFE_SENSITIVE_KEYS = new Set(['status', 'statusText', 'role', 'isActive']);
 
 type CollectionKey = keyof typeof COLLECTIONS;
 type AdminRole = 'owner' | 'admin' | 'viewer';
@@ -66,13 +73,42 @@ function normalizeValue(value: unknown): unknown {
   return value;
 }
 
+function isSensitiveKey(key: string) {
+  return !SAFE_SENSITIVE_KEYS.has(key) && SENSITIVE_KEY_PATTERN.test(key);
+}
+
+function redactSensitiveFields(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value ?? null;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(redactSensitiveFields);
+  }
+
+  if (typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nested]) => [
+        key,
+        isSensitiveKey(key) ? REDACTED : redactSensitiveFields(nested),
+      ]),
+    );
+  }
+
+  return value;
+}
+
+function sanitizeRecord(data: Record<string, unknown>) {
+  return redactSensitiveFields(normalizeValue(data)) as Record<string, unknown>;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const collectionKey = searchParams.get('collection');
 
     if (!isCollectionKey(collectionKey)) {
-      return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid collection' }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     const config = COLLECTIONS[collectionKey];
@@ -90,16 +126,16 @@ export async function GET(req: NextRequest) {
     const snapshot = await query.get();
     const records = (snapshot.docs as FirestoreDocument[]).map((doc: FirestoreDocument) => ({
       id: doc.id,
-      ...normalizeValue(doc.data()) as Record<string, unknown>,
+      ...sanitizeRecord(doc.data()),
     }));
 
-    return NextResponse.json({ collection: collectionKey, records });
+    return NextResponse.json({ collection: collectionKey, records }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     if (error instanceof Error && 'status' in error) {
       return adminAuthErrorResponse(error);
     }
 
     console.error('Failed to read admin collection:', error);
-    return NextResponse.json({ error: 'Failed to read admin collection' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to read admin collection' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }
