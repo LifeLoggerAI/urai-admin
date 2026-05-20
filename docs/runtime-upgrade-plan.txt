@@ -7,6 +7,7 @@ Current configuration:
 
 Target:
 - Move to the current Firebase supported Node runtime before 2026-09-15.
+- Firebase decommission date for the current Node 20 runtime: 2026-10-31.
 - Update the functions node engine at the same time.
 - Upgrade firebase-functions in a controlled migration branch.
 - Run release checks, smoke checks, and live checks.
@@ -16,3 +17,4 @@ Guard:
 - scripts/check-runtime-risk.mjs validates this file and the runtime settings.
 - It passes before 2026-09-15 while the migration remains planned.
 - It fails on or after 2026-09-15 if the old runtime or known old functions SDK line is still present.
+- It tracks the final Firebase decommission date 2026-10-31 so the migration cannot be forgotten.
