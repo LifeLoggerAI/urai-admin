@@ -6,6 +6,15 @@
     "adminDeploysMustNotDeleteSharedIndexes": true,
     "destructiveChangesRequireReleaseManagerApproval": true
   },
+  "runtimePolicy": {
+    "currentFunctionsRuntime": "nodejs20",
+    "currentFunctionsNodeEngine": "20",
+    "knownFirebaseFunctionsVersion": "^5.0.1",
+    "firebaseRuntimeDecommissionDate": "2026-10-31",
+    "internalMigrationGateDate": "2026-09-15",
+    "migrationPlan": "docs/runtime-upgrade-plan.txt",
+    "guardScript": "scripts/check-runtime-risk.mjs"
+  },
   "owners": {
     "LifeLoggerAI/urai-admin": {
       "type": "admin-surface",
