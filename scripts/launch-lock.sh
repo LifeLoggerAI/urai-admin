@@ -24,6 +24,17 @@ git_status_block() {
   echo '```'
 }
 
+assert_clean_deployable_tree() {
+  local label="$1"
+  local dirty
+  dirty="$(git status --short -- . ':!tmp' ':!.next' ':!apps/urai-admin/.next' ':!apps/urai-analytics/.next' ':!functions/lib' ':!functions/apps' 2>/dev/null || true)"
+  if [[ -n "${dirty}" ]]; then
+    echo "${dirty}" >&2
+    echo "Deployable source tree is dirty at ${label}. Commit, revert, or intentionally clean these files before launch lock." >&2
+    return 1
+  fi
+}
+
 run_step() {
   local label="$1"
   shift
@@ -72,8 +83,10 @@ run_and_record() {
   fi
 }
 
+run_and_record "clean deployable tree before launch lock" assert_clean_deployable_tree "start"
 run_and_record "pnpm preflight:production" pnpm preflight:production
 run_and_record "pnpm release:lock" pnpm release:lock
+run_and_record "clean deployable tree before deploy" assert_clean_deployable_tree "pre-deploy"
 run_and_record "pnpm run deploy:production" pnpm run deploy:production
 run_and_record "pnpm verify:production" env URAI_ADMIN_BASE_URL="${BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${FUNCTIONS_BASE_URL}" pnpm verify:production
 run_and_record "pnpm test:smoke" env URAI_ADMIN_BASE_URL="${BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${FUNCTIONS_BASE_URL}" pnpm test:smoke
