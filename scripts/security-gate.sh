@@ -47,6 +47,7 @@ require_file "storage.rules"
 require_file "docs/DEPLOYMENT_RUNBOOK.md"
 require_file "docs/EVIDENCE_LOG.md"
 require_file "scripts/preflight-production.sh"
+require_file "scripts/deploy-production.sh"
 require_file "scripts/smoke-test.sh"
 require_file "scripts/verify-production-live.sh"
 require_file "scripts/rollback-production.sh"
@@ -77,7 +78,7 @@ required_pattern "package.json" "\"release:local\""
 required_pattern "package.json" "\"preflight:production\""
 required_pattern "package.json" "\"verify:production\""
 required_pattern "package.json" "\"rollback:production\""
-required_pattern "package.json" "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d"
+required_pattern "scripts/deploy-production.sh" "firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d"
 required_pattern "firebase.json" '"source": "apps/urai-admin"'
 required_pattern ".firebaserc" '"default": "urai-4dc1d"'
 required_pattern ".firebaserc" '"admin": "urai-4dc1d"'
