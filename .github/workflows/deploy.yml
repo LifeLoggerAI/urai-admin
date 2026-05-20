@@ -2,6 +2,15 @@ name: Deploy URAI Admin
 
 on:
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to verify after deploy"
+        required: false
+        default: "https://www.uraiadmin.com"
+      functions_base_url:
+        description: "Functions base URL to verify after deploy"
+        required: false
+        default: "https://us-central1-urai-4dc1d.cloudfunctions.net"
   push:
     branches:
       - main
@@ -26,6 +35,8 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
       FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://www.uraiadmin.com' }}
+      URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,10 +69,37 @@ jobs:
           pnpm build
 
       - name: Deploy Firebase project
-        run: pnpm deploy
+        run: pnpm run deploy:production
 
       - name: Verify production live deployment
-        env:
-          URAI_ADMIN_BASE_URL: https://www.uraiadmin.com
-          URAI_ADMIN_FUNCTIONS_BASE_URL: https://us-central1-urai-4dc1d.cloudfunctions.net
         run: pnpm verify:production
+
+      - name: Run production smoke tests
+        run: pnpm test:smoke
+
+      - name: Write launch evidence summary
+        if: always()
+        run: |
+          mkdir -p tmp
+          cat > tmp/urai-admin-launch-evidence.md <<EOF
+          # URAI Admin launch evidence
+
+          Workflow: ${GITHUB_WORKFLOW}
+          Run ID: ${GITHUB_RUN_ID}
+          Run number: ${GITHUB_RUN_NUMBER}
+          Commit SHA: ${GITHUB_SHA}
+          Firebase project: urai-4dc1d
+          Base URL: ${URAI_ADMIN_BASE_URL}
+          Functions base URL: ${URAI_ADMIN_FUNCTIONS_BASE_URL}
+          Trigger: ${GITHUB_EVENT_NAME}
+          Actor: ${GITHUB_ACTOR}
+          EOF
+
+      - name: Upload launch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: urai-admin-launch-evidence
+          path: tmp/urai-admin-launch-evidence.md
+          if-no-files-found: error
+          retention-days: 30
