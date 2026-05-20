@@ -60,6 +60,7 @@ function gitSha() {
 console.log('--- URAI Admin release verification ---');
 
 const packageJson = requireJson('package.json');
+const functionsPackageJson = requireJson('functions/package.json');
 const firebaseJson = requireJson('firebase.json');
 const firebaserc = requireJson('.firebaserc');
 const ownershipManifest = requireJson('config/system-ownership.manifest.json');
@@ -72,6 +73,8 @@ const smokeTest = requireFile('scripts/smoke-test.sh');
 const verifyProduction = requireFile('scripts/verify-production-live.sh');
 const preflightProduction = requireFile('scripts/preflight-production.sh');
 const ownershipGuard = requireFile('scripts/check-system-ownership.mjs');
+const runtimeGuard = requireFile('scripts/check-runtime-risk.mjs');
+const runtimePlan = requireFile('docs/runtime-upgrade-plan.txt');
 const reconciliationDoc = requireFile('docs/SYSTEM_OF_SYSTEMS_RECONCILIATION.md');
 
 requireFile('scripts/clean-functions-legacy.sh');
@@ -93,8 +96,10 @@ requireScript(packageJson, 'build', 'package-next-for-functions.sh');
 requireScript(packageJson, 'preflight', 'pnpm run build');
 requireScript(packageJson, 'release:lock', 'pnpm run verify:release');
 requireScript(packageJson, 'release:lock', 'pnpm run check:ownership');
+requireScript(packageJson, 'release:lock', 'pnpm run check:runtime');
 requireScript(packageJson, 'verify:release', 'scripts/verify-release.mjs');
 requireScript(packageJson, 'check:ownership', 'scripts/check-system-ownership.mjs');
+requireScript(packageJson, 'check:runtime', 'scripts/check-runtime-risk.mjs');
 requireScript(packageJson, 'deploy', 'firebase deploy');
 requireScript(packageJson, 'deploy:production', 'scripts/deploy-production.sh');
 requireScript(packageJson, 'preflight:production', 'preflight-production.sh');
@@ -103,7 +108,15 @@ requireScript(packageJson, 'verify:production', 'verify-production-live.sh');
 requireScript(packageJson, 'smoke-test', 'smoke-test.sh');
 
 if (firebaseJson?.functions?.[0]?.runtime !== 'nodejs20') {
-  fail('firebase.json functions runtime must be nodejs20');
+  fail('firebase.json functions runtime must be nodejs20 until the controlled runtime migration is complete');
+}
+
+if (functionsPackageJson?.engines?.node !== '20') {
+  fail('functions/package.json node engine must match the configured nodejs20 runtime until migration is complete');
+}
+
+if (functionsPackageJson?.dependencies?.['firebase-functions'] !== '^5.0.1') {
+  warn('firebase-functions differs from the known current line; ensure the runtime migration checklist was completed.');
 }
 
 const hosting = firebaseJson?.hosting;
@@ -138,18 +151,40 @@ for (const sharedFn of ['buildBloom', 'createXrSession', 'assetFactoryHealth', '
   }
 }
 
+const runtimePolicy = ownershipManifest?.runtimePolicy;
+if (runtimePolicy?.currentFunctionsRuntime !== 'nodejs20') {
+  fail('runtime policy must track current nodejs20 Functions runtime');
+}
+if (runtimePolicy?.currentFunctionsNodeEngine !== '20') {
+  fail('runtime policy must track current Functions Node engine 20');
+}
+if (runtimePolicy?.knownFirebaseFunctionsVersion !== '^5.0.1') {
+  fail('runtime policy must track the known firebase-functions version line');
+}
+if (runtimePolicy?.firebaseRuntimeDecommissionDate !== '2026-10-31') {
+  fail('runtime policy must track the Firebase runtime decommission date');
+}
+if (runtimePolicy?.internalMigrationGateDate !== '2026-09-15') {
+  fail('runtime policy must track the internal migration gate date');
+}
+
 requireIncludes(firestoreRules, 'allow read, write: if false', 'firestore.rules must keep default deny');
 requireIncludes(storageRules, 'allow read, write: if false', 'storage.rules must keep default deny');
 requireIncludes(packageNext, 'apps/urai-admin', 'package-next-for-functions.sh must package apps/urai-admin');
 requireIncludes(packageNext, '.next', 'package-next-for-functions.sh must package Next build output');
 requireIncludes(launchProduction, 'pnpm preflight:production', 'launch-production.sh must run production preflight');
 requireIncludes(launchProduction, 'pnpm run deploy', 'launch-production.sh must deploy through the package deploy script');
+requireIncludes(deployProduction, 'pnpm run release:lock', 'deploy-production.sh must run release:lock before launch');
 requireIncludes(deployProduction, 'pnpm launch:production', 'deploy-production.sh must delegate to launch:production');
 requireIncludes(smokeTest, 'https://urai-admin.web.app', 'smoke-test must target production Hosting URL');
 requireIncludes(verifyProduction, 'https://urai-admin.web.app', 'verify-production-live must target production Hosting URL');
 requireIncludes(preflightProduction, 'urai-4dc1d', 'preflight-production must enforce urai-4dc1d');
 requireIncludes(ownershipGuard, 'knownSharedLiveFunctionsNotOwnedByAdmin', 'ownership guard must check shared live functions');
 requireIncludes(ownershipGuard, 'must not delete functions', 'ownership guard must prohibit function deletes');
+requireIncludes(runtimeGuard, 'migrationGateDate', 'runtime guard must enforce the migration gate date');
+requireIncludes(runtimeGuard, 'firebase-functions', 'runtime guard must track firebase-functions migration risk');
+requireIncludes(runtimePlan, 'nodejs20', 'runtime plan must document the current runtime');
+requireIncludes(runtimePlan, 'firebase-functions', 'runtime plan must document the Functions SDK migration');
 requireIncludes(reconciliationDoc, 'Ownership map', 'system reconciliation doc must include ownership map');
 requireIncludes(reconciliationDoc, 'must not delete', 'system reconciliation doc must document destructive deploy policy');
 
