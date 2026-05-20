@@ -72,7 +72,7 @@ echo "--- HTTPS homepage ---"
 expect_body_contains "${HOSTING_URL}/" "URAI" "Homepage loads and contains URAI"
 
 echo "--- Health endpoint ---"
-expect_body_contains "${HOSTING_URL}/api/health" '"service":"urai-admin"' "Health endpoint returns urai-admin"
+expect_body_contains "${HOSTING_URL}/api/health" '"status":"ok"' "Health endpoint returns ok"
 
 echo "--- Firebase Hosting runtime config ---"
 expect_body_contains "${HOSTING_URL}/__/firebase/init.json" '"projectId"' "Firebase Hosting runtime config is available"
