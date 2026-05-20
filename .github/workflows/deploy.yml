@@ -52,48 +52,25 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Production preflight
-        run: bash scripts/preflight-production.sh
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
-      - name: Security gate
-        run: pnpm security:gate
+      - name: Run launch lock
+        run: bash scripts/launch-lock.sh
 
-      - name: Validate before deploy
-        run: |
-          pnpm lint
-          pnpm typecheck
-          pnpm test
-          pnpm build
-
-      - name: Deploy Firebase project
-        run: pnpm run deploy:production
-
-      - name: Verify production live deployment
-        run: pnpm verify:production
-
-      - name: Run production smoke tests
-        run: pnpm test:smoke
-
-      - name: Write launch evidence summary
+      - name: Append workflow metadata to launch evidence
         if: always()
         run: |
           mkdir -p tmp
-          cat > tmp/urai-admin-launch-evidence.md <<EOF
-          # URAI Admin launch evidence
-
-          Workflow: ${GITHUB_WORKFLOW}
-          Run ID: ${GITHUB_RUN_ID}
-          Run number: ${GITHUB_RUN_NUMBER}
-          Commit SHA: ${GITHUB_SHA}
-          Firebase project: urai-4dc1d
-          Base URL: ${URAI_ADMIN_BASE_URL}
-          Functions base URL: ${URAI_ADMIN_FUNCTIONS_BASE_URL}
-          Trigger: ${GITHUB_EVENT_NAME}
-          Actor: ${GITHUB_ACTOR}
-          EOF
+          {
+            echo
+            echo "## GitHub Actions metadata"
+            echo "Workflow: ${GITHUB_WORKFLOW}"
+            echo "Run ID: ${GITHUB_RUN_ID}"
+            echo "Run number: ${GITHUB_RUN_NUMBER}"
+            echo "Trigger: ${GITHUB_EVENT_NAME}"
+            echo "Actor: ${GITHUB_ACTOR}"
+          } >> tmp/urai-admin-launch-evidence.md
 
       - name: Upload launch evidence
         if: always()
