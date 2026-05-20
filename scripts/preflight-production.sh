@@ -82,8 +82,17 @@ require_grep 'verifySessionCookie\(sessionCookie, true\)' "apps/urai-admin/src/l
 require_grep 'Previous known-good' "docs/DEPLOYMENT_RUNBOOK.md" "deployment runbook includes rollback evidence requirements"
 require_grep 'Final status:' "docs/EVIDENCE_LOG.md" "evidence log includes final status field"
 
-if grep -q 'urai-8025b' .firebaserc package.json firebase.json scripts/*.sh docs/*.md; then
-  echo "ERROR: Found legacy Firebase project urai-8025b in deployment-critical files. Production admin deploy must target urai-4dc1d only." >&2
+legacy_scan_targets=(
+  ".firebaserc"
+  "package.json"
+  "firebase.json"
+  "docs/DEPLOYMENT_RUNBOOK.md"
+  "docs/EVIDENCE_LOG.md"
+  "docs/URAI_ADMIN_STANDALONE_READINESS.md"
+)
+
+if grep -q 'urai-8025b' "${legacy_scan_targets[@]}"; then
+  echo "ERROR: Found legacy Firebase project urai-8025b in deployment-critical source-of-truth files. Production admin deploy must target urai-4dc1d only." >&2
   missing=1
 fi
 
