@@ -6,7 +6,7 @@ on:
       base_url:
         description: "Base URL to verify after deploy"
         required: false
-        default: "https://www.uraiadmin.com"
+        default: "https://urai-admin.web.app"
       functions_base_url:
         description: "Functions base URL to verify after deploy"
         required: false
@@ -35,7 +35,7 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
       FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://www.uraiadmin.com' }}
+      URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
     steps:
       - name: Checkout
