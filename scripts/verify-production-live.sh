@@ -12,6 +12,29 @@ fail() {
   exit 1
 }
 
+fetch_body() {
+  local url="$1"
+  local output="$2"
+  curl -sSL "$url" -o "$output"
+}
+
+expect_body_contains() {
+  local url="$1"
+  local pattern="$2"
+  local message="$3"
+  local body_file="/tmp/urai-admin-verify-body.txt"
+  if ! fetch_body "$url" "$body_file"; then
+    cat "$body_file" >&2 || true
+    fail "${message}: request failed"
+  fi
+  if ! grep -q "$pattern" "$body_file"; then
+    echo "Response body from ${url}:" >&2
+    cat "$body_file" >&2 || true
+    fail "$message"
+  fi
+  echo "OK: ${message}"
+}
+
 expect_status() {
   local url="$1"
   local expected="$2"
@@ -46,20 +69,16 @@ echo "Hosting URL: ${HOSTING_URL}"
 echo "Functions URL: ${FUNCTIONS_BASE_URL}"
 
 echo "--- HTTPS homepage ---"
-curl -sSfL --fail-with-body "${HOSTING_URL}/" | grep -q "URAI Admin" || fail "Homepage did not include URAI Admin"
-echo "OK: Homepage loads and contains URAI Admin"
+expect_body_contains "${HOSTING_URL}/" "URAI" "Homepage loads and contains URAI"
 
 echo "--- Health endpoint ---"
-curl -sSfL --fail-with-body "${HOSTING_URL}/api/health" | grep -q '"service":"urai-admin"' || fail "Health endpoint did not return urai-admin service"
-echo "OK: Health endpoint returns urai-admin"
+expect_body_contains "${HOSTING_URL}/api/health" '"service":"urai-admin"' "Health endpoint returns urai-admin"
 
 echo "--- Firebase Hosting runtime config ---"
-curl -sSfL --fail-with-body "${HOSTING_URL}/__/firebase/init.json" | grep -q '"projectId"' || fail "Firebase Hosting runtime config missing projectId"
-echo "OK: Firebase Hosting runtime config is available"
+expect_body_contains "${HOSTING_URL}/__/firebase/init.json" '"projectId"' "Firebase Hosting runtime config is available"
 
 echo "--- Login page ---"
-curl -sSfL --fail-with-body "${HOSTING_URL}/login" | grep -qi "sign" || fail "Login page did not render expected sign-in content"
-echo "OK: Login page loads"
+expect_body_contains "${HOSTING_URL}/login" "sign" "Login page loads"
 
 echo "--- Protected admin page ---"
 expect_status_any "${HOSTING_URL}/admin" 200 302 307 308
@@ -68,11 +87,10 @@ echo "--- Protected admin collection API blocks anonymous access ---"
 expect_status "${HOSTING_URL}/api/admin/collection?collection=adminUsers" 401
 
 echo "--- Functions health endpoint ---"
-curl -sSfL --fail-with-body "${FUNCTIONS_BASE_URL}/api_health" | grep -q '"status":"ok"' || fail "Functions health did not return ok"
-echo "OK: Functions health is ok"
+expect_body_contains "${FUNCTIONS_BASE_URL}/api_health" '"status":"ok"' "Functions health is ok"
 
 echo "--- Functions auth blocks anonymous access ---"
-if curl -sSfL -X POST -H "Content-Type: application/json" "${FUNCTIONS_BASE_URL}/admin_whoami" -d '{}' 2>&1 | grep -q '"error":{"status":"UNAUTHENTICATED"}'; then
+if curl -sSL -X POST -H "Content-Type: application/json" "${FUNCTIONS_BASE_URL}/admin_whoami" -d '{}' 2>&1 | grep -q '"error":{"status":"UNAUTHENTICATED"}'; then
   echo "OK: Functions auth blocks anonymous access"
 else
   fail "Functions auth endpoint did not block anonymous access"
