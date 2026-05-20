@@ -3,12 +3,23 @@
 import process from 'node:process';
 import admin from 'firebase-admin';
 
-const uid = process.env.URAI_ADMIN_OWNER_UID;
+const placeholderValues = new Set([
+  '<Firebase Auth UID>',
+  'PASTE_REAL_UID_HERE',
+  'THE_REAL_FIREBASE_AUTH_UID',
+]);
+
+let uid = process.env.URAI_ADMIN_OWNER_UID;
 const email = process.env.URAI_ADMIN_OWNER_EMAIL;
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'urai-4dc1d';
 
-if (!uid || !email) {
-  console.error('Missing required env vars: URAI_ADMIN_OWNER_UID and URAI_ADMIN_OWNER_EMAIL');
+if (!email) {
+  console.error('Missing required env var: URAI_ADMIN_OWNER_EMAIL');
+  process.exit(1);
+}
+
+if (uid && placeholderValues.has(uid)) {
+  console.error('URAI_ADMIN_OWNER_UID is still a placeholder. Set the real Firebase Auth UID or omit it to resolve by email.');
   process.exit(1);
 }
 
@@ -31,6 +42,20 @@ if (!admin.apps.length) {
 const firestore = admin.firestore();
 const auth = admin.auth();
 const now = admin.firestore.FieldValue.serverTimestamp();
+
+if (!uid) {
+  try {
+    const ownerUser = await auth.getUserByEmail(email);
+    uid = ownerUser.uid;
+    console.log(`Resolved URAI Admin owner UID for ${email}`);
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') {
+      console.error(`No Firebase Auth user exists for ${email}. Sign in to URAI Admin once with this email, then rerun bootstrap:owner.`);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
 
 await auth.setCustomUserClaims(uid, {
   admin: true,
