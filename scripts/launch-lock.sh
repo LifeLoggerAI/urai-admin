@@ -24,10 +24,18 @@ git_status_block() {
   echo '```'
 }
 
+tracked_source_status() {
+  git status --short 2>/dev/null \
+    | grep -Ev '^[ MARC?D]{2} (tmp/|\.next/|apps/urai-admin/\.next/|apps/urai-analytics/\.next/|functions/lib/|functions/apps/)' \
+    | grep -Ev '^[ MARC?D]{2} (apps/urai-admin/next-env\.d\.ts|apps/urai-analytics/next-env\.d\.ts)$' \
+    | grep -Ev '^[ MARC?D]{2} .*\.tsbuildinfo$' \
+    || true
+}
+
 assert_clean_deployable_tree() {
   local label="$1"
   local dirty
-  dirty="$(git status --short -- . ':!tmp' ':!.next' ':!apps/urai-admin/.next' ':!apps/urai-analytics/.next' ':!functions/lib' ':!functions/apps' 2>/dev/null || true)"
+  dirty="$(tracked_source_status)"
   if [[ -n "${dirty}" ]]; then
     echo "${dirty}" >&2
     echo "Deployable source tree is dirty at ${label}. Commit, revert, or intentionally clean these files before launch lock." >&2
