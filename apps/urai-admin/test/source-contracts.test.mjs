@@ -35,7 +35,7 @@ async function walk(dir) {
 }
 
 function isServerFirebaseAdminSource(source) {
-  return /firebase-admin\/(app|firestore|auth)/.test(source) || /from 'firebase-admin'/.test(source);
+  return /firebase-admin\/(app|firestore|auth)/.test(source) || /from ["']firebase-admin["']/.test(source);
 }
 
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
