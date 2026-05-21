@@ -19,8 +19,10 @@ assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]apps['"],\s*['"]ura
 assert.match(source, /dir:\s*packagedNextAppDir/, 'nextServer must run from the packaged app directory');
 
 assert.match(rootPkg.scripts?.build ?? '', /package-next-for-functions\.sh/, 'root build must package Next before building Functions');
-assert.match(packager, /apps\/urai-admin\/\.next/, 'packager must require the app Next build output');
-assert.match(packager, /functions\/apps\/urai-admin/, 'packager must stage the app under functions/apps/urai-admin');
+assert.match(packager, /APP_DIR=.*apps\/urai-admin/, 'packager must define the app source directory');
+assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/apps\/urai-admin/, 'packager must define the Functions staging directory');
+assert.match(packager, /\$\{APP_DIR\}\/\.next/, 'packager must require the app Next build output');
+assert.match(packager, /\$\{FUNCTIONS_APP_DIR\}\/\.next/, 'packager must stage the Next build output under Functions');
 assert.match(packager, /rm -rf "\$\{FUNCTIONS_APP_DIR\}"/, 'packager must clean the staged app before copying');
 
 for (const dependency of ['next', 'react', 'react-dom', 'firebase-admin', 'firebase-functions']) {
