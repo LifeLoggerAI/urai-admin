@@ -34,6 +34,10 @@ async function walk(dir) {
   return out;
 }
 
+function isServerFirebaseAdminSource(source) {
+  return /firebase-admin\/(app|firestore|auth)/.test(source) || /from 'firebase-admin'/.test(source);
+}
+
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
 assert.match(requireAdminSession, /adminUsers/, 'admin sessions must check the adminUsers collection');
@@ -97,7 +101,9 @@ for (const fsPath of activeSources) {
   const source = await readFile(fsPath, 'utf8');
   if (rel.endsWith('src/lib/firebase/client.ts')) continue;
   assert.doesNotMatch(source, /PASTE_AUTH_DOMAIN_HERE|YOUR_API_KEY|YOUR_AUTH_DOMAIN/, `${rel} must not contain placeholder Firebase config`);
-  assert.doesNotMatch(source, /initializeApp\s*\(/, `${rel} must not initialize a separate Firebase app`);
+  if (!isServerFirebaseAdminSource(source)) {
+    assert.doesNotMatch(source, /initializeApp\s*\(/, `${rel} must not initialize a separate Firebase client app`);
+  }
 }
 
 console.log('app admin source contract checks passed');
