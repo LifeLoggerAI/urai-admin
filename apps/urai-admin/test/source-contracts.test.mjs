@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+
+const appRoot = fileURLToPath(new URL('../', import.meta.url));
 
 async function read(pathname) {
   return readFile(new URL(`../${pathname}`, import.meta.url), 'utf8');
@@ -11,7 +14,7 @@ async function readRoot(pathname) {
 }
 
 async function walk(dir) {
-  const root = new URL(`../${dir}`, import.meta.url);
+  const root = fileURLToPath(new URL(`../${dir}`, import.meta.url));
   const out = [];
 
   async function visit(fsPath) {
@@ -87,7 +90,7 @@ assert.match(firebaseClient, /PASTE_/, 'browser Firebase client must reject plac
 
 const activeSources = await walk('src');
 for (const fsPath of activeSources) {
-  const rel = path.relative(new URL('../', import.meta.url).pathname, fsPath);
+  const rel = path.relative(appRoot, fsPath);
   const source = await readFile(fsPath, 'utf8');
   if (rel.endsWith('src/lib/firebase/client.ts')) continue;
   assert.doesNotMatch(source, /PASTE_AUTH_DOMAIN_HERE|YOUR_API_KEY|YOUR_AUTH_DOMAIN/, `${rel} must not contain placeholder Firebase config`);
