@@ -83,21 +83,19 @@ assert.doesNotMatch(storageRules, /allow\s+(read|write|create|update|delete)(,\s
 const securityGate = await readRoot('scripts/security-gate.sh');
 assert.match(securityGate, /urai_admin_finish\.sh/, 'security gate must block unsafe legacy finish script patterns');
 
-const firebaseClientShim = await read('src/lib/firebase/client.ts');
-assert.match(firebaseClientShim, /getFirebaseAppAsync/, 'browser Firebase shim must re-export async app initialization');
-assert.match(firebaseClientShim, /getFirebaseAuthAsync/, 'browser Firebase shim must re-export async auth initialization');
-assert.match(firebaseClientShim, /getFirebaseDbAsync/, 'browser Firebase shim must re-export async Firestore initialization');
-
-const firebaseClient = await read('src/firebase.ts');
+const firebaseClient = await read('src/lib/firebase/client.ts');
 assert.match(firebaseClient, /__\/firebase\/init\.json/, 'browser Firebase client must fall back to Firebase Hosting runtime config');
-assert.match(firebaseClient, /getFirebaseAuthAsync\(\)/, 'browser Firebase client must expose async auth initialization');
+assert.match(firebaseClient, /getFirebaseApp\(\)/, 'browser Firebase client must expose async app initialization');
+assert.match(firebaseClient, /getClientAuth\(\)/, 'browser Firebase client must expose async auth initialization');
+assert.match(firebaseClient, /getClientFirestore\(\)/, 'browser Firebase client must expose async Firestore initialization');
+assert.match(firebaseClient, /getFirebaseConfigStatus\(\)/, 'browser Firebase client must expose config readiness status');
 assert.match(firebaseClient, /PASTE_/, 'browser Firebase client must reject placeholder Firebase config values');
 
 const activeSources = await walk('src');
 for (const fsPath of activeSources) {
   const rel = path.relative(appRoot, fsPath);
   const source = await readFile(fsPath, 'utf8');
-  if (rel.endsWith('src/firebase.ts')) continue;
+  if (rel.endsWith('src/lib/firebase/client.ts')) continue;
   assert.doesNotMatch(source, /PASTE_AUTH_DOMAIN_HERE|YOUR_API_KEY|YOUR_AUTH_DOMAIN/, `${rel} must not contain placeholder Firebase config`);
   assert.doesNotMatch(source, /initializeApp\s*\(/, `${rel} must not initialize a separate Firebase app`);
 }
