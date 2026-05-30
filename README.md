@@ -4,6 +4,12 @@ URAI Admin is the standalone operations console for URAI products and AI-native 
 
 It powers `uraiadmin.com` as a public product site and `/admin/*` as a protected operational command center for users, feature flags, jobs, job runs, dead letters, system config, roles, projects, system-of-systems release readiness, governance evidence, analytics status, communications status, and audit logs.
 
+## Launch security note
+
+This repository is currently public. Before any public Genesis launch or production operations campaign, confirm whether the repository should remain public. If it stays public, keep it limited to product-site code, documentation, examples, and non-sensitive configuration only.
+
+Do not commit real secrets, service-account files, raw user data, private operational exports, incident evidence, internal audit logs, production screenshots with identifiers, or unreviewed security details. Protected console routes must remain auth-gated in the deployed app, not merely hidden from navigation.
+
 ## Product surfaces
 
 ### Public site
@@ -218,10 +224,3 @@ Verify in Firebase Console:
 - `docs/ADMIN_OPERATIONS.md`
 - `docs/SYSTEM_OF_SYSTEMS.md`
 - `docs/TESTING.md`
-- `docs/RUNBOOK.md`
-- `docs/EVIDENCE_LOG.md`
-- `docs/PRODUCTION_LAUNCH.md`
-- `docs/RELEASE_CHECKLIST.md`
-- `docs/ROLLBACK_AND_INCIDENTS.md`
-- `docs/URAI_ADMIN_STANDALONE_READINESS.md`
-- `docs/TROUBLESHOOTING_LOCAL_BUILDS.md`
