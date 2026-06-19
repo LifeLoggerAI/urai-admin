@@ -91,8 +91,9 @@ legacy_scan_targets=(
   "docs/URAI_ADMIN_STANDALONE_READINESS.md"
 )
 
-if grep -q 'urai-8025b' "${legacy_scan_targets[@]}"; then
-  echo "ERROR: Found legacy Firebase project urai-8025b in deployment-critical source-of-truth files. Production admin deploy must target urai-4dc1d only." >&2
+legacy_project_id="urai-""8025b"
+if grep -q "${legacy_project_id}" "${legacy_scan_targets[@]}"; then
+  echo "ERROR: Found legacy Firebase project ${legacy_project_id} in deployment-critical source-of-truth files. Production admin deploy must target urai-4dc1d only." >&2
   missing=1
 fi
 
