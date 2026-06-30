@@ -1,19 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { AnalyticsEventSchemaV1 } from '@/lib/analytics/schema';
 
 // Initialize Firebase Admin SDK
-if (!getApps().length) {
-  if (!process.env.FIREBASE_ADMIN_SDK_JSON) {
-    throw new Error('The FIREBASE_ADMIN_SDK_JSON environment variable is not set.');
-  }
-  initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
-  });
-}
+// Firebase Admin is intentionally not initialized at module load.
+  // Next.js evaluates route modules during production build/page-data collection.
+  // Runtime Firebase Admin clients must be loaded lazily inside handlers.
 
-const db = getFirestore();
 
 // Block known sensitive keys
 const BLOCKED_KEYS = ['email', 'password', 'token', 'secret', 'address', 'phone', 'ssn'];
@@ -34,6 +26,24 @@ const redact = (obj: any): any => {
 
 export async function POST(request: Request) {
   try {
+    if (process.env.URAI_ADMIN_BUILD_STUB_FIREBASE === '1') {
+      return NextResponse.json({ success: true, buildStub: true }, { status: 202 });
+    }
+
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const { initializeApp, getApps, cert } = await import('firebase-admin/app');
+
+    if (!getApps().length) {
+      if (!process.env.FIREBASE_ADMIN_SDK_JSON) {
+        throw new Error('The FIREBASE_ADMIN_SDK_JSON environment variable is not set.');
+      }
+
+      initializeApp({
+        credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
+      });
+    }
+
+    const db = getFirestore();
     const body = await request.json();
     
     // 1. Schema Validation
