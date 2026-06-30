@@ -14,13 +14,19 @@ const COLLECTIONS = {
   deadLetters: { collection: 'deadLetters', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
   roles: { collection: 'roles', roles: ['owner', 'admin', 'viewer'] },
   systemConfig: { collection: 'systemConfig', orderBy: 'updatedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
-  privacyRequests: { collection: 'privacyRequests', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
+  privacyRequests: {
+    collection: 'privacyRequests',
+    orderBy: 'createdAt',
+    direction: 'desc',
+    roles: ['owner', 'admin'],
+    allowedFields: ['status', 'requestType', 'createdAt', 'updatedAt', 'assignedTo', 'slaStatus', 'source'],
+  },
   auditLogs: { collection: 'auditLogs', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
 } as const;
 
 const REDACTED = '[REDACTED]';
-const SENSITIVE_KEY_PATTERN = /(api[-_]?key|auth[-_]?token|bearer|client[-_]?secret|credential|id[-_]?token|private[-_]?key|refresh[-_]?token|secret|service[-_]?account|session|stripe|token|webhook[-_]?secret|password)/i;
-const SAFE_SENSITIVE_KEYS = new Set(['status', 'statusText', 'role', 'isActive']);
+const SENSITIVE_KEY_PATTERN = /(api[-_]?key|auth[-_]?token|bearer|client[-_]?secret|credential|email|id[-_]?token|ip|phone|private[-_]?key|raw|refresh[-_]?token|secret|service[-_]?account|session|stripe|token|transcript|user[-_]?agent|webhook[-_]?secret|password)/i;
+const SAFE_SENSITIVE_KEYS = new Set(['status', 'statusText', 'role', 'isActive', 'requestType', 'slaStatus']);
 
 type CollectionKey = keyof typeof COLLECTIONS;
 type AdminRole = 'owner' | 'admin' | 'viewer';
@@ -96,8 +102,16 @@ function redactSensitiveFields(value: unknown): unknown {
   return value;
 }
 
-function sanitizeRecord(data: Record<string, unknown>) {
-  return redactSensitiveFields(normalizeValue(data)) as Record<string, unknown>;
+function pickAllowedFields(data: Record<string, unknown>, allowedFields?: readonly string[]) {
+  if (!allowedFields) {
+    return data;
+  }
+
+  return Object.fromEntries(allowedFields.map((key) => [key, key in data ? data[key] : null]));
+}
+
+function sanitizeRecord(data: Record<string, unknown>, allowedFields?: readonly string[]) {
+  return redactSensitiveFields(normalizeValue(pickAllowedFields(data, allowedFields))) as Record<string, unknown>;
 }
 
 export async function GET(req: NextRequest) {
@@ -124,7 +138,7 @@ export async function GET(req: NextRequest) {
     const snapshot = await query.get();
     const records = (snapshot.docs as FirestoreDocument[]).map((doc: FirestoreDocument) => ({
       id: doc.id,
-      ...sanitizeRecord(doc.data()),
+      ...sanitizeRecord(doc.data(), 'allowedFields' in config ? config.allowedFields : undefined),
     }));
 
     return NextResponse.json({ collection: collectionKey, records }, { headers: { 'Cache-Control': 'no-store' } });
