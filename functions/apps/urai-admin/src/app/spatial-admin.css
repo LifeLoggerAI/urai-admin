@@ -1,0 +1,372 @@
+.spatial-admin-os {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+  overflow: hidden;
+  background: radial-gradient(circle at 18% 12%, rgba(125, 92, 255, 0.26), transparent 24rem), radial-gradient(circle at 82% 8%, rgba(34, 211, 238, 0.18), transparent 28rem), linear-gradient(135deg, #020617 0%, #08111f 44%, #120a25 100%);
+}
+
+.spatial-admin-os::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(147, 197, 253, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(147, 197, 253, 0.045) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at 50% 42%, black, transparent 74%);
+  transform: perspective(900px) rotateX(58deg) translateY(11rem) scale(1.3);
+  transform-origin: bottom;
+}
+
+.spatial-admin-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  width: 18rem;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.86), rgba(15, 23, 42, 0.66));
+  box-shadow: 18px 0 80px rgba(2, 6, 23, 0.38);
+  padding: 1.1rem;
+  backdrop-filter: blur(28px);
+}
+
+.spatial-admin-brand {
+  border-radius: 1.35rem;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  background: rgba(15, 23, 42, 0.72);
+  padding: 1rem;
+}
+
+.spatial-admin-brand span {
+  display: block;
+  font-size: 0.67rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(165, 243, 252);
+}
+
+.spatial-admin-brand strong {
+  margin-top: 0.35rem;
+  display: block;
+  font-size: 1.4rem;
+  color: white;
+}
+
+.spatial-admin-nav {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.spatial-admin-nav a {
+  display: block;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  padding: 0.78rem 0.88rem;
+  color: rgb(203, 213, 225);
+  font-size: 0.88rem;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.spatial-admin-nav a:hover {
+  transform: translateX(4px);
+  border-color: rgba(103, 232, 249, 0.24);
+  background: rgba(15, 23, 42, 0.72);
+  color: white;
+}
+
+.spatial-admin-nav a[data-active='true'] {
+  border-color: rgba(103, 232, 249, 0.42);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(124, 58, 237, 0.14));
+  color: white;
+}
+
+.spatial-admin-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.spatial-session-loader {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: rgb(203, 213, 225);
+}
+
+.spatial-session-loader > div {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  background: rgba(2, 6, 23, 0.72);
+  padding: 1.5rem 1.8rem;
+  backdrop-filter: blur(24px);
+}
+
+.spatial-admin-frame {
+  padding: 2rem;
+}
+
+.spatial-hero {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+  overflow: hidden;
+  border-radius: 2rem;
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+}
+
+.spatial-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 58rem;
+}
+
+.spatial-eyebrow {
+  margin-bottom: 0.75rem;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.34);
+  background: rgba(8, 145, 178, 0.14);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgb(207, 250, 254);
+}
+
+.spatial-hero h1 {
+  max-width: 54rem;
+  font-size: clamp(2.2rem, 5vw, 4.9rem);
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+  color: white;
+  text-wrap: balance;
+}
+
+.spatial-hero-copy > p:last-child {
+  margin-top: 1rem;
+  max-width: 45rem;
+  color: rgb(203, 213, 225);
+  line-height: 1.8;
+}
+
+.spatial-signal-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.spatial-signal-card,
+.spatial-status-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.64));
+  padding: 1rem;
+}
+
+.spatial-signal-card span,
+.spatial-status-card span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(148, 163, 184);
+}
+
+.spatial-signal-card strong,
+.spatial-status-card strong {
+  margin-top: 0.3rem;
+  display: block;
+  color: white;
+  font-size: 1.05rem;
+}
+
+.spatial-section {
+  margin-top: 2rem;
+}
+
+.spatial-section-heading {
+  margin-bottom: 1rem;
+}
+
+.spatial-section-heading h2 {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.spatial-section-heading p,
+.spatial-status-card p {
+  margin-top: 0.35rem;
+  color: rgb(148, 163, 184);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.spatial-module-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.spatial-module-card {
+  position: relative;
+  min-height: 11rem;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(circle at 20% 0%, rgba(103, 232, 249, 0.16), transparent 11rem), linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.86));
+  padding: 1.15rem;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.spatial-module-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(103, 232, 249, 0.45);
+  box-shadow: 0 26px 90px rgba(8, 145, 178, 0.24);
+}
+
+.spatial-module-card h3 {
+  color: white;
+  font-weight: 700;
+}
+
+.spatial-module-card p {
+  margin-top: 0.65rem;
+  color: rgb(148, 163, 184);
+  line-height: 1.7;
+  font-size: 0.9rem;
+}
+
+.spatial-alert-card {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  background: linear-gradient(135deg, rgba(113, 63, 18, 0.18), rgba(2, 6, 23, 0.68));
+  padding: 1rem 1.15rem;
+  color: rgb(226, 232, 240);
+}
+
+.spatial-table-shell,
+.spatial-table-state {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.76), rgba(2, 6, 23, 0.88));
+  box-shadow: 0 24px 90px rgba(2, 6, 23, 0.32);
+}
+
+.spatial-table-state {
+  padding: 1.4rem;
+  color: rgb(203, 213, 225);
+}
+
+.spatial-table-error {
+  border-color: rgba(248, 113, 113, 0.36);
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.24), rgba(2, 6, 23, 0.86));
+}
+
+.spatial-table-state span,
+.spatial-table-meta span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(148, 163, 184);
+}
+
+.spatial-table-state strong,
+.spatial-table-meta strong {
+  margin-top: 0.25rem;
+  display: block;
+  color: white;
+  font-size: 1.05rem;
+}
+
+.spatial-table-state p {
+  margin-top: 0.5rem;
+  color: rgb(148, 163, 184);
+}
+
+.spatial-table-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.1rem;
+}
+
+.spatial-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.spatial-table thead {
+  background: rgba(15, 23, 42, 0.72);
+  color: rgb(207, 250, 254);
+  text-align: left;
+}
+
+.spatial-table th,
+.spatial-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spatial-table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.spatial-table td {
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(226, 232, 240);
+}
+
+.spatial-table tr:hover td {
+  background: rgba(103, 232, 249, 0.055);
+}
+
+.spatial-table-empty {
+  color: rgb(148, 163, 184) !important;
+  white-space: normal !important;
+}
+
+@media (max-width: 920px) {
+  .spatial-admin-os {
+    flex-direction: column;
+  }
+
+  .spatial-admin-sidebar {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+  }
+
+  .spatial-admin-nav {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .spatial-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spatial-admin-frame {
+    padding: 1rem;
+  }
+}

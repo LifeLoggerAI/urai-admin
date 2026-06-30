@@ -206,3 +206,7 @@ Required evidence:
 Status: BLOCKED
 Logs: `https://urai-admin.web.app` did not resolve from the execution runtime on 2026-06-30.
 Blockers: Confirm Firebase hosting site, deploy with configured secrets, and rerun live smoke tests.
+
+## Final production verification
+
+Final status: pending final green verification receipt.
