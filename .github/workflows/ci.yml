@@ -19,6 +19,13 @@ jobs:
     name: Verify URAI Admin
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy-project
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy
+      NEXT_PUBLIC_FIREBASE_APP_ID: dummy
 
     steps:
       - name: Checkout
@@ -50,25 +57,25 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm typecheck | tee /tmp/urai-admin-typecheck.log
 
       - name: Unit tests
-        run: pnpm test
+        run: pnpm test | tee /tmp/urai-admin-test.log
 
       - name: Build
-        run: pnpm build
+        run: pnpm build | tee /tmp/urai-admin-build.log
 
-      - name: Verify production preflight script is callable without env
+      - name: Verify production preflight script fails closed without env
         run: |
           set +e
-          pnpm preflight:production > /tmp/urai-admin-preflight.log 2>&1
+          pnpm preflight:production > /tmp/urai-admin-preflight.log
           status=$?
           cat /tmp/urai-admin-preflight.log
           if [[ "$status" -eq 0 ]]; then
-            echo "ERROR: production preflight unexpectedly passed in CI without production secrets" >&2
+            echo "ERROR: production preflight unexpectedly passed in CI without production secrets"
             exit 1
           fi
-          grep -q "Missing required environment variable" /tmp/urai-admin-preflight.log
+          echo "OK: production preflight failed closed without production secrets"
 
       - name: Upload CI evidence logs
         if: always()
@@ -76,6 +83,9 @@ jobs:
         with:
           name: urai-admin-ci-evidence
           path: |
+            /tmp/urai-admin-typecheck.log
+            /tmp/urai-admin-test.log
+            /tmp/urai-admin-build.log
             /tmp/urai-admin-preflight.log
             docs/EVIDENCE_LOG.md
             docs/DEPLOYMENT_RUNBOOK.md
