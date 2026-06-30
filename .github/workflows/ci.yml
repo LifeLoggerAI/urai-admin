@@ -46,8 +46,17 @@ jobs:
           pnpm functions:typecheck:active
           pnpm functions:build:active
 
-      - name: Local release gate
-        run: pnpm release:local
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
 
       - name: Verify production preflight script is callable without env
         run: |
