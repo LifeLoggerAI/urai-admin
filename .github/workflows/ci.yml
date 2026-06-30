@@ -50,22 +50,22 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm typecheck | tee /tmp/urai-admin-typecheck.log
 
       - name: Unit tests
-        run: pnpm test
+        run: pnpm test | tee /tmp/urai-admin-test.log
 
       - name: Build
-        run: pnpm build
+        run: pnpm build | tee /tmp/urai-admin-build.log
 
       - name: Verify production preflight script is callable without env
         run: |
           set +e
-          pnpm preflight:production > /tmp/urai-admin-preflight.log 2>&1
+          pnpm preflight:production > /tmp/urai-admin-preflight.log
           status=$?
           cat /tmp/urai-admin-preflight.log
           if [[ "$status" -eq 0 ]]; then
-            echo "ERROR: production preflight unexpectedly passed in CI without production secrets" >&2
+            echo "ERROR: production preflight unexpectedly passed in CI without production secrets"
             exit 1
           fi
           grep -q "Missing required environment variable" /tmp/urai-admin-preflight.log
@@ -76,6 +76,9 @@ jobs:
         with:
           name: urai-admin-ci-evidence
           path: |
+            /tmp/urai-admin-typecheck.log
+            /tmp/urai-admin-test.log
+            /tmp/urai-admin-build.log
             /tmp/urai-admin-preflight.log
             docs/EVIDENCE_LOG.md
             docs/DEPLOYMENT_RUNBOOK.md
