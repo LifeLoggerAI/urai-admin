@@ -1,13 +1,32 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
+const hasPackageJson = existsSync('package.json');
+const usesPnpm = existsSync('pnpm-lock.yaml');
+const usesNpm = existsSync('package-lock.json');
+
+function commandFor(script) {
+  if (usesPnpm) {
+    return ['pnpm', [script]];
+  }
+
+  if (usesNpm) {
+    return ['npm', ['run', script, '--if-present']];
+  }
+
+  return ['npm', ['run', script, '--if-present']];
+}
+
 const commands = [];
 
-if (existsSync('package.json')) {
-  commands.push(['npm', ['run', 'typecheck', '--if-present']]);
-  commands.push(['npm', ['test', '--if-present']]);
-  commands.push(['npm', ['run', 'build', '--if-present']]);
-  commands.push(['npm', ['run', 'urai:qa', '--if-present']]);
+if (hasPackageJson) {
+  commands.push(commandFor('typecheck'));
+  commands.push(commandFor('test'));
+  commands.push(commandFor('build'));
+
+  if (!usesPnpm) {
+    commands.push(commandFor('urai:qa'));
+  }
 }
 
 let failed = false;
