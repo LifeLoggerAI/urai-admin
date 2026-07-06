@@ -45,18 +45,22 @@ assert.match(requireAdminSession, /isActive\s*!==\s*true/, 'inactive admin users
 assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom claim role must match adminUsers role');
 assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
 assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
+assert.match(requireAdminSession, /requireSameOrigin/, 'admin mutations must reject untrusted origins');
+assert.match(requireAdminSession, /decodedToken\.auth_time/, 'session creation must require recent authentication');
+assert.match(requireAdminSession, /refreshRequired:\s*true/, 'stale claims must require a refreshed ID token');
+assert.match(requireAdminSession, /tokenClaimsMatch/, 'a stale token must not mint an admin cookie');
+assert.match(requireAdminSession, /sameSite:\s*'strict'/, 'admin cookies must use strict same-site policy');
 
 const loginRoute = await read('src/app/api/auth/login/route.ts');
-assert.match(loginRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'login must recognize owner, admin, and viewer roles');
-assert.match(loginRoute, /admin:\s*true/, 'all active admin roles, including viewer, must receive admin claim for read-only rules access');
-assert.match(loginRoute, /role:\s*adminUser\.role/, 'login custom claims must preserve exact adminUsers role');
-assert.match(loginRoute, /auth\.setCustomUserClaims/, 'login must refresh Firebase custom claims before session creation');
+assert.match(loginRoute, /exchangeAdminIdToken/, 'login must use the canonical two-pass exchange');
+assert.match(loginRoute, /auth\.verifyIdToken/, 'login must fail closed without token verification support');
+assert.match(loginRoute, /auth\.createSessionCookie/, 'login must fail closed without cookie exchange support');
 
 const sessionRoute = await read('src/app/api/auth/session/route.ts');
-assert.match(sessionRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'session refresh must recognize owner, admin, and viewer roles');
-assert.match(sessionRoute, /admin:\s*true/, 'session refresh must keep all active admin roles behind the admin claim');
-assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refresh must set the hardened __session cookie');
+assert.match(sessionRoute, /exchangeAdminIdToken/, 'session refresh must use the canonical exchange');
+assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refresh must support session clearing');
 assert.match(sessionRoute, /export\s+async\s+function\s+DELETE/, 'session endpoint must support session clearing');
+assert.match(sessionRoute, /requireSameOrigin/, 'session clearing must reject untrusted origins');
 
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
@@ -66,10 +70,12 @@ assert.match(collectionRoute, /REDACTED/, 'generic collection reads must redact 
 assert.doesNotMatch(collectionRoute, /collection\(collectionKey\)/, 'collection route must not query arbitrary client-provided collection names');
 
 const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
-assert.match(roleRoute, /requireAdminSession\(req,\s*\['owner'\]\)/, 'role mutation must require owner role');
+assert.match(roleRoute, /requireAdminMutationSession\(req,\s*\['owner'\]\)/, 'role mutation must require owner role and trusted origin');
 assert.match(roleRoute, /Cannot change your own role/, 'role mutation must prevent self-demotion');
 assert.match(roleRoute, /z\.enum\(\['owner',\s*'admin',\s*'viewer'\]\)/, 'role mutation must use schema validation for allowed roles');
-assert.match(roleRoute, /auth\.setCustomUserClaims\(uid,\s*\{\s*admin:\s*true,\s*role\s*\}/s, 'role mutation must keep viewer behind admin claim while preserving exact role');
+assert.match(roleRoute, /userRecord\.customClaims/, 'role mutation must preserve unrelated custom claims');
+assert.match(roleRoute, /auth\.revokeRefreshTokens\(uid\)/, 'role mutation must revoke existing sessions');
+assert.match(roleRoute, /auth\.setCustomUserClaims\(uid,\s*previousClaims\)/, 'role mutation must compensate after a Firestore failure');
 assert.match(roleRoute, /previousRole/, 'role mutation audit metadata must include previous role');
 assert.match(roleRoute, /writeAuditLog/, 'role mutation must write an audit log');
 
