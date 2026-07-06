@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, firestore } from '@/lib/firebase/admin';
+import { z } from 'zod';
+
+import { auth, firestore, writeAuditLog } from '@/lib/firebase/admin';
 
 export type AdminRole = 'owner' | 'admin' | 'viewer';
 
@@ -11,6 +13,11 @@ export type AdminSession = {
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' } as const;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const ADMIN_ROLES = ['owner', 'admin', 'viewer'] as const;
+const sessionSchema = z.object({ idToken: z.string().min(1) });
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
+const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+const MAX_AUTH_AGE_SECONDS = 60 * 5;
 
 export class AdminAuthError extends Error {
   status: number;
@@ -20,6 +27,10 @@ export class AdminAuthError extends Error {
     this.name = 'AdminAuthError';
     this.status = status;
   }
+}
+
+function isAdminRole(role: unknown): role is AdminRole {
+  return typeof role === 'string' && ADMIN_ROLES.includes(role as AdminRole);
 }
 
 function normalizeOrigin(value: string | null | undefined): string | null {
@@ -69,6 +80,116 @@ export function requireSameOrigin(req: NextRequest) {
   if (!allowedAdminOrigins(req).has(origin)) {
     throw new AdminAuthError('Admin request origin is not allowed', 403);
   }
+}
+
+function hasRecentAuthentication(authTime: unknown) {
+  return typeof authTime === 'number' && Math.floor(Date.now() / 1000) - authTime <= MAX_AUTH_AGE_SECONDS;
+}
+
+export async function exchangeAdminIdToken(req: NextRequest, auditAction: string) {
+  requireSameOrigin(req);
+  const { idToken } = sessionSchema.parse(await req.json());
+  const decodedToken = await auth.verifyIdToken(idToken, true);
+
+  if (!hasRecentAuthentication(decodedToken.auth_time)) {
+    return NextResponse.json(
+      { success: false, reauthRequired: true, error: 'Recent sign-in required' },
+      { status: 401, headers: noStoreHeaders },
+    );
+  }
+
+  const adminUserRef = firestore.collection('adminUsers').doc(decodedToken.uid);
+  const adminUserDoc = await adminUserRef.get();
+  const adminUser = adminUserDoc.data();
+
+  if (!adminUserDoc.exists || adminUser?.isActive !== true || !isAdminRole(adminUser.role)) {
+    return NextResponse.json(
+      { success: false, error: 'Admin access is not active for this account' },
+      { status: 403, headers: noStoreHeaders },
+    );
+  }
+
+  const role = adminUser.role;
+  const userRecord = await auth.getUser(decodedToken.uid);
+  const existingClaims = userRecord.customClaims ?? {};
+  const storedClaimsMatch = existingClaims.admin === true && existingClaims.role === role;
+  const tokenClaimsMatch = decodedToken.admin === true && decodedToken.role === role;
+
+  if (!storedClaimsMatch) {
+    await auth.setCustomUserClaims(decodedToken.uid, { ...existingClaims, admin: true, role });
+  }
+
+  if (!tokenClaimsMatch) {
+    await writeAuditLog({
+      actorUid: decodedToken.uid,
+      actorEmail: decodedToken.email ?? adminUser.email ?? 'unknown-admin@urai.local',
+      action: 'auth.claims.refreshRequired',
+      target: { type: 'adminUser', id: decodedToken.uid },
+      metadata: { canonicalRole: role },
+    });
+
+    return NextResponse.json(
+      { success: false, refreshRequired: true, uid: decodedToken.uid, role },
+      { status: 409, headers: noStoreHeaders },
+    );
+  }
+
+  const now = new Date();
+  await adminUserRef.set({
+    email: decodedToken.email ?? adminUser.email ?? null,
+    lastLoginAt: now,
+    lastSessionAt: now,
+    updatedAt: now,
+  }, { merge: true });
+
+  const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
+  const response = NextResponse.json(
+    { success: true, role, uid: decodedToken.uid },
+    { status: 200, headers: noStoreHeaders },
+  );
+
+  response.cookies.set('__session', sessionCookie, {
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+  });
+
+  await writeAuditLog({
+    actorUid: decodedToken.uid,
+    actorEmail: decodedToken.email ?? adminUser.email ?? 'unknown-admin@urai.local',
+    action: auditAction,
+    target: { type: 'adminUser', id: decodedToken.uid },
+    metadata: {
+      provider: decodedToken.firebase?.sign_in_provider ?? null,
+      authTime: decodedToken.auth_time,
+    },
+  });
+
+  return response;
+}
+
+export function adminSessionExchangeError(error: unknown) {
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid admin session payload', issues: error.issues },
+      { status: 400, headers: noStoreHeaders },
+    );
+  }
+
+  if (error instanceof AdminAuthError) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.status, headers: noStoreHeaders },
+    );
+  }
+
+  console.error('Admin session exchange failed:', error);
+  return NextResponse.json(
+    { success: false, error: 'Admin session exchange failed' },
+    { status: 401, headers: noStoreHeaders },
+  );
 }
 
 export async function requireAdminSession(
