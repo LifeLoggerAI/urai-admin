@@ -37,6 +37,27 @@ forbidden_recursive() {
   fi
 }
 
+require_manual_only_workflow() {
+  local path="$1"
+  local events
+
+  events="$(awk '
+    /^on:[[:space:]]*$/ { in_on = 1; next }
+    in_on && /^[^[:space:]]/ { exit }
+    in_on && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line = $0
+      sub(/^  /, "", line)
+      sub(/:[[:space:]]*$/, "", line)
+      print line
+    }
+  ' "$path")"
+
+  if [[ "$events" != "workflow_dispatch" ]]; then
+    printf 'Observed deployment workflow events:\n%s\n' "${events:-<none>}" >&2
+    fail "$path must declare workflow_dispatch as its only top-level event"
+  fi
+}
+
 echo "--- URAI Admin security gate ---"
 
 require_file "package.json"
@@ -82,6 +103,7 @@ required_pattern "package.json" "\"rollback:production\""
 required_pattern ".github/workflows/deploy.yml" "workflow_dispatch:"
 forbidden_pattern ".github/workflows/deploy.yml" "^[[:space:]]+push:"
 forbidden_pattern ".github/workflows/deploy.yml" "^[[:space:]]*on:[[:space:]]*(push|\[[^]]*push)"
+require_manual_only_workflow ".github/workflows/deploy.yml"
 required_pattern ".github/workflows/deploy.yml" "github\.event_name == 'workflow_dispatch'"
 required_pattern ".github/workflows/deploy.yml" "github\.ref == 'refs/heads/main'"
 required_pattern ".github/workflows/deploy.yml" "GITHUB_REF.*refs/heads/main"
