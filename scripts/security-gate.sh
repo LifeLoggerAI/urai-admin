@@ -81,6 +81,10 @@ required_pattern "package.json" "\"verify:production\""
 required_pattern "package.json" "\"rollback:production\""
 required_pattern ".github/workflows/deploy.yml" "workflow_dispatch:"
 forbidden_pattern ".github/workflows/deploy.yml" "^[[:space:]]+push:"
+forbidden_pattern ".github/workflows/deploy.yml" "^[[:space:]]*on:[[:space:]]*(push|\[[^]]*push)"
+required_pattern ".github/workflows/deploy.yml" "github\.event_name == 'workflow_dispatch'"
+required_pattern ".github/workflows/deploy.yml" "github\.ref == 'refs/heads/main'"
+required_pattern ".github/workflows/deploy.yml" "GITHUB_REF.*refs/heads/main"
 required_pattern ".github/workflows/deploy.yml" "confirmation:"
 required_pattern ".github/workflows/deploy.yml" "target_sha:"
 required_pattern ".github/workflows/deploy.yml" "persist-credentials: false"
@@ -94,6 +98,7 @@ required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_HOSTING_SITE"
 required_pattern "scripts/rollback-production.sh" "URAI_ADMIN_ROLLBACK_RELEASE"
 required_pattern "scripts/rollback-production.sh" "firebase hosting:clone"
 required_pattern "docs/DEPLOYMENT_RUNBOOK.md" 'Do not run `urai_admin_finish.sh`'
+required_pattern "docs/DEPLOYMENT_RUNBOOK.md" 'Selected branches and tags'
 required_pattern "docs/EVIDENCE_LOG.md" "Final status:"
 
 forbidden_recursive "headers\.get\(['\"]x-user-id['\"]\)" "apps/urai-admin/src/app/api" "Trusted x-user-id header found in API route"
@@ -105,13 +110,14 @@ if [[ -d "apps/urai-admin/src/app/api/qa" ]]; then
 fi
 
 # Public client code must never reference secret-like env vars. Server-only Admin SDK
-# config may reference FIREBASE_PRIVATE_KEY or service-account env vars intentionally.
+# config may reference private credential env vars intentionally.
 if grep -R "NEXT_PUBLIC_.*SECRET\|NEXT_PUBLIC_.*PRIVATE_KEY\|SECRET_KEY" apps/urai-admin/src functions/src 2>/dev/null; then
   fail "Potential public secret-like variable or hardcoded secret marker found"
 fi
 
-if grep -RInE "-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----|AIza[0-9A-Za-z_-]{20,}" apps/urai-admin/src functions/src 2>/dev/null; then
-  fail "Potential hardcoded private key or Firebase API key literal found"
+secret_pattern='-----BEGIN (RSA |EC |OPENSSH |)PRIVATE[[:space:]]+KEY-----|AI''za[0-9A-Za-z_-]{20,}'
+if grep -RInE "$secret_pattern" apps/urai-admin/src functions/src 2>/dev/null; then
+  fail "Potential hardcoded private credential or Firebase key literal found"
 fi
 
 echo "--- Security gate passed ---"
