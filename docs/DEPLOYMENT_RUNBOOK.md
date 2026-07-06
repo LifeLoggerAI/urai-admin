@@ -73,9 +73,13 @@ Production deploy is allowed only when all of these are GREEN:
 - previous known-good Git commit SHA recorded;
 - previous known-good Firebase Hosting release recorded;
 - rollback command/path documented;
-- founder/Jacob approval recorded.
+- designated owner approval recorded.
 
-Deploy command after approval:
+The canonical GitHub Actions deployment path is manual only. Open `Deploy URAI Admin`, choose **Run workflow**, enter the exact approved 40-character commit SHA, and type the confirmation phrase `DEPLOY URAI ADMIN`. The workflow must reject a SHA that is not reachable from `origin/main`. Keep the GitHub `production` environment protected with required reviewers and production secrets.
+
+Do not add a `push` trigger to `.github/workflows/deploy.yml`. A merge to `main` is not itself production-deployment approval.
+
+Manual shell fallback is allowed only after the same approval and SHA/rollback evidence are recorded:
 
 ```bash
 pnpm run deploy:production
