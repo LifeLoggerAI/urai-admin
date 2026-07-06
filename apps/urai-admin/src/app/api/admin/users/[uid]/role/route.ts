@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { adminAuthErrorResponse, requireAdminMutationSession } from '@/lib/admin/require-admin-session';
 import { auth, firestore, writeAuditLog } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: { uid: string 
   const { uid } = params;
 
   try {
-    const session = await requireAdminSession(req, ['owner']);
+    const session = await requireAdminMutationSession(req, ['owner']);
     const { role } = roleSchema.parse(await req.json());
 
     if (session.uid === uid) {
@@ -29,23 +29,38 @@ export async function PUT(req: NextRequest, { params }: { params: { uid: string 
       return NextResponse.json({ error: 'Admin user not found' }, { status: 404 });
     }
 
-    await userRef.set({
-      role,
-      updatedAt: new Date(),
-      updatedBy: session.uid,
-    }, { merge: true });
+    const userRecord = await auth.getUser(uid);
+    const previousClaims = userRecord.customClaims ?? {};
+    const nextClaims = { ...previousClaims, admin: true, role };
 
-    await auth.setCustomUserClaims(uid, { admin: true, role });
+    await auth.setCustomUserClaims(uid, nextClaims);
+    await auth.revokeRefreshTokens(uid);
+
+    try {
+      await userRef.set({
+        role,
+        updatedAt: new Date(),
+        updatedBy: session.uid,
+      }, { merge: true });
+    } catch (error) {
+      await auth.setCustomUserClaims(uid, previousClaims);
+      await auth.revokeRefreshTokens(uid);
+      throw error;
+    }
 
     await writeAuditLog({
       actorUid: session.uid,
       actorEmail: session.email ?? 'unknown-admin@urai.local',
       action: 'adminUsers.role.update',
       target: { type: 'adminUser', id: uid },
-      metadata: { previousRole: before?.role ?? null, newRole: role },
+      metadata: {
+        previousRole: before?.role ?? null,
+        newRole: role,
+        sessionsRevoked: true,
+      },
     });
 
-    return NextResponse.json({ success: true, uid, role }, {
+    return NextResponse.json({ success: true, uid, role, sessionsRevoked: true }, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (error) {
