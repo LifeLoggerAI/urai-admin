@@ -33,6 +33,7 @@ Before staging or production deploy, capture evidence for:
 9. Storage rules tests.
 10. Smoke test target URLs.
 11. Rollback command/path.
+12. GitHub `production` environment reviewer and deployment-branch policy.
 
 ## Required local release gates
 
@@ -73,11 +74,15 @@ Production deploy is allowed only when all of these are GREEN:
 - previous known-good Git commit SHA recorded;
 - previous known-good Firebase Hosting release recorded;
 - rollback command/path documented;
-- designated owner approval recorded.
+- designated owner approval recorded;
+- GitHub `production` environment uses required reviewers;
+- GitHub `production` environment deployment branches and tags are set to **Selected branches and tags**, with only `main` allowed.
 
-The canonical GitHub Actions deployment path is manual only. Open `Deploy URAI Admin`, choose **Run workflow**, enter the exact approved 40-character commit SHA, and type the confirmation phrase `DEPLOY URAI ADMIN`. The workflow must reject a SHA that is not reachable from `origin/main`. Keep the GitHub `production` environment protected with required reviewers and production secrets.
+The canonical GitHub Actions deployment path is manual only. Open `Deploy URAI Admin` from `main`, choose **Run workflow**, enter the exact approved 40-character commit SHA, and type the confirmation phrase `DEPLOY URAI ADMIN`. The job and validation step reject dispatches whose workflow ref is not `refs/heads/main`, and the approved SHA must be reachable from `origin/main`.
 
-Do not add a `push` trigger to `.github/workflows/deploy.yml`. A merge to `main` is not itself production-deployment approval.
+The workflow-level checks are defense in depth. They do not replace the external GitHub environment policy. Before adding production secrets, open **Repository settings → Environments → production → Deployment branches and tags**, choose **Selected branches and tags**, and allow only `main`. Record a screenshot or settings receipt in the release evidence bundle.
+
+Do not add a `push` trigger or inline `on: push` form to `.github/workflows/deploy.yml`. A merge to `main` is not itself production-deployment approval.
 
 Manual shell fallback is allowed only after the same approval and SHA/rollback evidence are recorded:
 
