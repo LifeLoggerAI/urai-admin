@@ -14,36 +14,48 @@
 </head>
 <body>
   <header>
-    <div class="title">URAI Control Plane — Live System</div>
-    <div class="status">Loading registry...</div>
+    <div class="title">URAI Control Plane — LIVE OS</div>
+    <div class="status" id="status">Loading...</div>
   </header>
 
+  <div id="summary" class="card"></div>
   <div id="grid" class="grid"></div>
 
   <script>
     async function load() {
-      const res = await fetch('/control-plane/registry');
+      const res = await fetch('/control-plane/status');
       const data = await res.json();
 
-      document.querySelector('.status').innerText = 
-        'Services: ' + data.services.length;
+      document.getElementById('status').innerText =
+        'Updated: ' + new Date(data.timestamp).toLocaleTimeString();
+
+      const h = data.health.summary;
+
+      document.getElementById('summary').innerHTML = `
+        <b>System Summary</b><br/>
+        Services: ${data.serviceCount}<br/>
+        Healthy: ${h.healthy}<br/>
+        Degraded: ${h.degraded}<br/>
+        Offline: ${h.offline}<br/>
+      `;
 
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
 
-      data.services.forEach(s => {
+      data.health.services.forEach(s => {
         const el = document.createElement('div');
         el.className = 'card';
         el.innerHTML = `
-          <div><b>${s.name}</b></div>
-          <div>Type: ${s.type}</div>
-          <div>Status: ${s.status}</div>
+          <b>${s.name}</b><br/>
+          Type: ${s.type}<br/>
+          Status: ${s.status}
         `;
         grid.appendChild(el);
       });
     }
 
     load();
+    setInterval(load, 5000);
   </script>
 </body>
 </html>
