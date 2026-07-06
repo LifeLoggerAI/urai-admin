@@ -1,0 +1,41 @@
+{
+  "ecosystem": "URAI",
+  "version": "0.1-mvp",
+  "services": [
+    {
+      "name": "urai-spatial",
+      "type": "experience",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-studio",
+      "type": "creation",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-content",
+      "type": "pipeline",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-jobs",
+      "type": "automation",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-analytics",
+      "type": "intelligence",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-communications",
+      "type": "messaging",
+      "status": "unknown"
+    },
+    {
+      "name": "urai-asset-factory",
+      "type": "generation",
+      "status": "unknown"
+    }
+  ]
+}
