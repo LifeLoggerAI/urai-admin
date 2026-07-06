@@ -32,6 +32,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy approved SHA to Firebase Hosting and Functions
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -59,6 +60,16 @@ jobs:
           APPROVED_SHA: ${{ inputs.target_sha }}
         run: |
           set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]]; then
+            echo "Production deployment must be started with workflow_dispatch." >&2
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Production deployment workflow must be dispatched from main." >&2
+            exit 1
+          fi
 
           if [[ "${DEPLOY_CONFIRMATION}" != "DEPLOY URAI ADMIN" ]]; then
             echo "Production deployment confirmation did not match the required phrase." >&2
@@ -114,6 +125,7 @@ jobs:
             echo "Run ID: ${GITHUB_RUN_ID}"
             echo "Run number: ${GITHUB_RUN_NUMBER}"
             echo "Trigger: ${GITHUB_EVENT_NAME}"
+            echo "Dispatch ref: ${GITHUB_REF}"
             echo "Actor: ${GITHUB_ACTOR}"
             echo "Approved SHA: ${APPROVED_SHA}"
           } >> tmp/urai-admin-launch-evidence.md
