@@ -7,18 +7,23 @@ import admin from 'firebase-admin';
 import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
 
 const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
+const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
 const SEED_CONFIRMATION = 'SEED_SYSTEM_REGISTRY';
 const PRODUCTION_APPROVAL = 'APPROVE_URAI_ADMIN_PRODUCTION';
 const STAGING_APPROVAL = 'APPROVE_URAI_ADMIN_STAGING';
+const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
 const explicitProjectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
 const projectId = explicitProjectId || PRODUCTION_PROJECT_ID;
 const stagingProjectId = process.env.URAI_ADMIN_STAGING_FIREBASE_PROJECT || '';
 const allowNonProduction = process.env.URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED === '1';
+const emulatorMode = process.env.URAI_ADMIN_FIRESTORE_EMULATOR === '1';
+const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '';
 const actor = process.env.URAI_ADMIN_SEED_ACTOR || process.env.URAI_ADMIN_OWNER_EMAIL || 'system-registry-seed';
 const expectedSha = process.env.URAI_ADMIN_SEED_SHA || '';
 const guardPassed = process.env.URAI_ADMIN_SEED_GUARD_PASSED === 'run-system-registry-seed.mjs';
 const shaPattern = /^[0-9a-f]{40}$/;
 const projectPattern = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
+const loopbackEmulatorPattern = /^(?:127\.0\.0\.1|localhost|\[::1\]):[1-9][0-9]{0,4}$/;
 const allowedStatuses = new Set(['not_connected', 'blocked', 'staging_ready', 'production_ready', 'degraded']);
 const requiredFields = [
   'id', 'name', 'repo', 'runtime', 'owner', 'status', 'productionUrl', 'stagingUrl',
@@ -52,7 +57,18 @@ try {
 if (actualSha !== expectedSha) fail(`Checked-out SHA ${actualSha} does not match URAI_ADMIN_SEED_SHA ${expectedSha}.`);
 if (worktree) fail('Registry seed requires a clean worktree.');
 
-if (projectId === PRODUCTION_PROJECT_ID) {
+if (emulatorMode) {
+  if (projectId !== EMULATOR_PROJECT_ID) fail(`Emulator seed target must exactly equal ${EMULATOR_PROJECT_ID}.`);
+  if (!loopbackEmulatorPattern.test(emulatorHost)) {
+    fail('Emulator seed requires FIRESTORE_EMULATOR_HOST to be an explicit loopback host and port.');
+  }
+  if (process.env.URAI_ADMIN_EMULATOR_APPROVAL !== EMULATOR_APPROVAL) {
+    fail(`Emulator seed requires URAI_ADMIN_EMULATOR_APPROVAL=${EMULATOR_APPROVAL}.`);
+  }
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    fail('Emulator seed forbids cloud service-account credentials.');
+  }
+} else if (projectId === PRODUCTION_PROJECT_ID) {
   if (process.env.URAI_ADMIN_PRODUCTION_APPROVAL !== PRODUCTION_APPROVAL) {
     fail(`Production seed requires URAI_ADMIN_PRODUCTION_APPROVAL=${PRODUCTION_APPROVAL}.`);
   }
@@ -152,10 +168,12 @@ batch.set(firestore.collection('adminOperationalEvents').doc(), {
     sourceSha: expectedSha,
     script: 'scripts/seed-system-registry.mjs',
     allowNonProduction,
+    emulatorMode,
     preflightExistingCount: existingRegistry.size,
   },
   createdAt: now,
 });
 
 await batch.commit();
-console.log(`Seeded ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${projectId} at ${expectedSha}. Digest: ${registryDigest}`);
+const targetKind = emulatorMode ? 'isolated emulator' : projectId;
+console.log(`Seeded ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${targetKind} at ${expectedSha}. Digest: ${registryDigest}`);
