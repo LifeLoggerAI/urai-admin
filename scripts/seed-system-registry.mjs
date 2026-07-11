@@ -2,9 +2,12 @@
 
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import process from 'node:process';
 import admin from 'firebase-admin';
 import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
+import { validateRegistryCloudAuthority } from './system-registry-cloud-policy.mjs';
 
 const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
 const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
@@ -12,6 +15,7 @@ const SEED_CONFIRMATION = 'SEED_SYSTEM_REGISTRY';
 const PRODUCTION_APPROVAL = 'APPROVE_URAI_ADMIN_PRODUCTION';
 const STAGING_APPROVAL = 'APPROVE_URAI_ADMIN_STAGING';
 const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
+const CLOUD_RECEIPT_SCHEMA = 'urai-admin-system-registry-cloud-receipt-1';
 const explicitProjectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
 const projectId = explicitProjectId || PRODUCTION_PROJECT_ID;
 const stagingProjectId = process.env.URAI_ADMIN_STAGING_FIREBASE_PROJECT || '';
@@ -35,6 +39,18 @@ const requiredFields = [
 function fail(message) {
   console.error(`[system-registry-seed] ${message}`);
   process.exit(1);
+}
+
+function stable(value) {
+  if (Array.isArray(value)) return value.map(stable);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+  }
+  return value;
+}
+
+function sameValue(left, right) {
+  return JSON.stringify(stable(left)) === JSON.stringify(stable(right));
 }
 
 if (!guardPassed) fail('Direct seed execution is disabled. Use pnpm seed:system-registry through the guarded wrapper.');
@@ -99,24 +115,22 @@ if (!SYSTEM_REGISTRY_RECORDS.some((record) => record.repo === 'LifeLoggerAI/urai
   fail('Canonical urai-spatial authority is missing from registry data.');
 }
 
-let serviceAccount;
-if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+let cloudAuthority = null;
+if (!emulatorMode) {
   try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-  } catch {
-    fail('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON.');
-  }
-  if (!serviceAccount || typeof serviceAccount !== 'object' || typeof serviceAccount.project_id !== 'string') {
-    fail('FIREBASE_SERVICE_ACCOUNT_KEY must contain a project_id.');
-  }
-  if (serviceAccount.project_id !== projectId) {
-    fail(`Service-account project ${serviceAccount.project_id} does not match target ${projectId}.`);
+    cloudAuthority = validateRegistryCloudAuthority({ env: process.env, projectId });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(reason);
   }
 }
 
+const inlineCredential = cloudAuthority?.credentialSource === 'inline-service-account-json'
+  ? cloudAuthority.credential
+  : null;
 if (!admin.apps.length) {
-  admin.initializeApp(serviceAccount
-    ? { credential: admin.credential.cert(serviceAccount), projectId }
+  admin.initializeApp(inlineCredential
+    ? { credential: admin.credential.cert(inlineCredential), projectId }
     : { projectId });
 }
 
@@ -156,7 +170,8 @@ for (const system of SYSTEM_REGISTRY_RECORDS) {
   }, { merge: false });
 }
 
-batch.set(firestore.collection('adminOperationalEvents').doc(), {
+const eventRef = firestore.collection('adminOperationalEvents').doc();
+batch.set(eventRef, {
   actor,
   action: 'systemRegistry.seed',
   target: { type: 'collection', id: 'systemRegistry' },
@@ -175,5 +190,71 @@ batch.set(firestore.collection('adminOperationalEvents').doc(), {
 });
 
 await batch.commit();
+
+let verifiedRegistry;
+let verifiedEvent;
+try {
+  [verifiedRegistry, verifiedEvent] = await Promise.all([
+    firestore.collection('systemRegistry').get(),
+    eventRef.get(),
+  ]);
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  fail(`Registry mutation committed but post-commit read-back failed: ${reason}`);
+}
+
+if (verifiedRegistry.size !== SYSTEM_REGISTRY_RECORDS.length) {
+  fail(`Post-commit registry count ${verifiedRegistry.size} does not equal ${SYSTEM_REGISTRY_RECORDS.length}.`);
+}
+const verifiedById = new Map(verifiedRegistry.docs.map((doc) => [doc.id, doc.data()]));
+for (const expected of SYSTEM_REGISTRY_RECORDS) {
+  const observed = verifiedById.get(expected.id);
+  if (!observed) fail(`Post-commit registry is missing ${expected.id}.`);
+  for (const field of requiredFields) {
+    if (!sameValue(observed[field], expected[field])) {
+      fail(`Post-commit registry field mismatch for ${expected.id}.${field}.`);
+    }
+  }
+  if (observed.registryEvidenceDate !== REGISTRY_EVIDENCE_DATE) fail(`Post-commit evidence date mismatch for ${expected.id}.`);
+  if (observed.registryDigest !== registryDigest) fail(`Post-commit digest mismatch for ${expected.id}.`);
+  if (observed.sourceSha !== expectedSha) fail(`Post-commit source SHA mismatch for ${expected.id}.`);
+  if (observed.seededBy !== 'scripts/seed-system-registry.mjs') fail(`Post-commit seededBy mismatch for ${expected.id}.`);
+}
+
+if (!verifiedEvent.exists) fail('Post-commit operational event is missing.');
+const event = verifiedEvent.data();
+if (event?.action !== 'systemRegistry.seed') fail('Post-commit operational event action mismatch.');
+if (event?.metadata?.projectId !== projectId) fail('Post-commit operational event project mismatch.');
+if (event?.metadata?.registryDigest !== registryDigest) fail('Post-commit operational event digest mismatch.');
+if (event?.metadata?.sourceSha !== expectedSha) fail('Post-commit operational event source SHA mismatch.');
+if (event?.metadata?.count !== SYSTEM_REGISTRY_RECORDS.length) fail('Post-commit operational event count mismatch.');
+
+if (cloudAuthority) {
+  const receipt = {
+    schemaVersion: CLOUD_RECEIPT_SCHEMA,
+    generatedAt: new Date().toISOString(),
+    repository: process.env.GITHUB_REPOSITORY || 'LifeLoggerAI/urai-admin',
+    exactSha: expectedSha,
+    projectId,
+    environment: projectId === PRODUCTION_PROJECT_ID ? 'production' : 'staging',
+    registryDigest,
+    expectedRegistryCount: SYSTEM_REGISTRY_RECORDS.length,
+    observedRegistryCount: verifiedRegistry.size,
+    operationalEventId: eventRef.id,
+    credentialSource: cloudAuthority.credentialSource,
+    credentialProjectId: cloudAuthority.credentialProjectId,
+    credentialProjectVerified: true,
+    postCommitReadbackVerified: true,
+    unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
+    productionMutationPerformed: projectId === PRODUCTION_PROJECT_ID,
+    stagingMutationPerformed: projectId !== PRODUCTION_PROJECT_ID,
+    emulatorMode: false,
+    secretValuesIncluded: false,
+  };
+  mkdirSync(dirname(cloudAuthority.receiptPath), { recursive: true });
+  writeFileSync(cloudAuthority.receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+}
+
 const targetKind = emulatorMode ? 'isolated emulator' : projectId;
-console.log(`Seeded ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${targetKind} at ${expectedSha}. Digest: ${registryDigest}`);
+const receiptMessage = cloudAuthority ? ` Receipt: ${cloudAuthority.receiptPath}.` : '';
+console.log(`Seeded and read-back verified ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${targetKind} at ${expectedSha}. Digest: ${registryDigest}.${receiptMessage}`);
