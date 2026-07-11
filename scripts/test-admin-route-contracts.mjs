@@ -57,6 +57,7 @@ requireTokens(adminSessionPath, [
   'requireSameOrigin',
   'URAI_ADMIN_ALLOWED_ORIGINS',
   'URAI_ADMIN_PRODUCTION_URL',
+  "process.env.NODE_ENV === 'production'",
   'Production admin origins must use HTTPS',
   'Admin origin allowlist is not configured',
   'isLoopbackOrigin',
@@ -84,6 +85,13 @@ requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'requireAdminSession',
 ]);
 requireTokens(join(appRoot, 'api/health/route.ts'), ['urai-admin', 'Cache-Control', 'no-store']);
+requireTokens('.github/workflows/deploy.yml', [
+  'URAI_ADMIN_PRODUCTION_URL',
+  'URAI_ADMIN_ALLOWED_ORIGINS',
+  'Protected admin origin allowlist is empty.',
+  'base_url origin',
+  'not in the protected admin origin allowlist',
+]);
 
 if (failures.length) {
   console.error('Admin route contract failed:');
