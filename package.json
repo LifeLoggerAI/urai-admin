@@ -15,7 +15,7 @@
     "test:unit": "pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
     "test:rules": "node scripts/test-firestore-rules-contract.mjs",
     "test:e2e": "node scripts/test-admin-route-contracts.mjs",
-    "test:registry": "node scripts/test-system-registry-contract.mjs",
+    "test:registry": "node scripts/test-system-registry-contract.mjs && node scripts/test-system-registry-seed-guard.mjs",
     "test:smoke": "bash scripts/smoke-test.sh",
     "build": "pnpm clean:legacy && pnpm security:gate && pnpm --dir apps/urai-admin build && pnpm analytics:build && bash scripts/package-next-for-functions.sh && pnpm --dir functions build",
     "verify:release": "node scripts/verify-release.mjs",
@@ -62,5 +62,5 @@
     "recharts": "^3.6.0",
     "zod": "^4.3.6"
   },
-  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c9146c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }
