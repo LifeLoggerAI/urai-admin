@@ -44,15 +44,30 @@ function requireTokens(pathname, tokens) {
   }
 }
 
-requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', [
+function forbidTokens(pathname, tokens) {
+  const source = readFileSync(pathname, 'utf8');
+  for (const token of tokens) {
+    if (source.includes(token)) failures.push(`${pathname} contains forbidden contract token: ${token}`);
+  }
+}
+
+const adminSessionPath = 'apps/urai-admin/src/lib/admin/require-admin-session.ts';
+requireTokens(adminSessionPath, [
   'verifySessionCookie(sessionCookie, true)',
   'requireSameOrigin',
+  'URAI_ADMIN_ALLOWED_ORIGINS',
+  'URAI_ADMIN_PRODUCTION_URL',
+  'Production admin origins must use HTTPS',
+  'Admin origin allowlist is not configured',
+  'isLoopbackOrigin',
   'decodedToken.auth_time',
+  'MAX_CLOCK_SKEW_SECONDS',
   'refreshRequired: true',
   'tokenClaimsMatch',
   'createSessionCookie(idToken',
   'requireAdminMutationSession',
 ]);
+forbidTokens(adminSessionPath, ['x-forwarded-host', 'x-forwarded-proto']);
 requireTokens(join(appRoot, 'api/auth/login/route.ts'), ['exchangeAdminIdToken', 'auth.login']);
 requireTokens(join(appRoot, 'api/auth/session/route.ts'), ['exchangeAdminIdToken', 'requireSameOrigin', 'DELETE']);
 requireTokens(join(appRoot, 'api/admin/users/[uid]/role/route.ts'), [
