@@ -10,7 +10,7 @@ Run from a clean local checkout of `LifeLoggerAI/urai-admin` after merging this 
 git checkout main
 git pull origin main
 corepack prepare pnpm@9.15.0 --activate
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
 Record the command output in `docs/EVIDENCE_LOG.md`.
@@ -80,6 +80,13 @@ Evidence to record:
 
 Running `pnpm seed:system-registry` without `URAI_ADMIN_SEED_APPLY=1` is a validation-only dry run and performs no Firestore write.
 
+Every cloud apply must use exactly one explicit credential source:
+
+- `GOOGLE_APPLICATION_CREDENTIALS` pointing to a protected JSON credential whose service-account identity binds the target project; or
+- `FIREBASE_SERVICE_ACCOUNT_KEY` containing protected service-account JSON for the target project.
+
+Do not set both. The cloud receipt path must be a relative `.json` path under `docs/release-evidence/`. The receipt contains no credential value.
+
 For staging, first establish the exact approved URAI Admin staging Firebase project from authoritative provider/account evidence. Do not substitute a guessed project or reuse production. Store the approved value in the protected environment and make both target variables match:
 
 ```bash
@@ -91,6 +98,9 @@ export URAI_ADMIN_SEED_APPLY=1
 export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
 export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+unset FIREBASE_SERVICE_ACCOUNT_KEY
+export GOOGLE_APPLICATION_CREDENTIALS='<protected-staging-credential-json-path>'
+export URAI_ADMIN_SEED_RECEIPT_PATH='docs/release-evidence/admin-system-registry-staging-receipt.json'
 pnpm seed:system-registry
 ```
 
@@ -106,15 +116,21 @@ export URAI_ADMIN_SEED_APPLY=1
 export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
 export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+unset FIREBASE_SERVICE_ACCOUNT_KEY
+export GOOGLE_APPLICATION_CREDENTIALS='<protected-production-credential-json-path>'
+export URAI_ADMIN_SEED_RECEIPT_PATH='docs/release-evidence/admin-system-registry-production-receipt.json'
 pnpm seed:system-registry
 ```
 
-Evidence to record:
+Evidence to record from the versioned cloud receipt:
 
 - exact source SHA;
-- project ID;
-- count of seeded systems;
+- exact project ID and staging/production classification;
+- credential source class and verified credential project ID, never the credential value;
+- expected and observed registry count;
 - registry digest;
+- exact operational event ID;
+- post-commit read-back verification;
 - timestamp;
 - `/admin/system` screenshot or route smoke result.
 
