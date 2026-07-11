@@ -5,11 +5,14 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
+const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
 const SEED_CONFIRMATION = 'SEED_SYSTEM_REGISTRY';
 const PRODUCTION_APPROVAL = 'APPROVE_URAI_ADMIN_PRODUCTION';
 const STAGING_APPROVAL = 'APPROVE_URAI_ADMIN_STAGING';
+const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
 const shaPattern = /^[0-9a-f]{40}$/;
 const projectPattern = /^[a-z][a-z0-9-]{4,29}$/;
+const loopbackEmulatorPattern = /^(?:127\.0\.0\.1|localhost|\[::1\]):[1-9][0-9]{0,4}$/;
 
 export function runSystemRegistrySeed({
   env = process.env,
@@ -26,7 +29,10 @@ export function runSystemRegistrySeed({
   const stagingProjectId = env.URAI_ADMIN_STAGING_FIREBASE_PROJECT || '';
   const productionApproval = env.URAI_ADMIN_PRODUCTION_APPROVAL || '';
   const stagingApproval = env.URAI_ADMIN_STAGING_APPROVAL || '';
+  const emulatorApproval = env.URAI_ADMIN_EMULATOR_APPROVAL || '';
   const allowNonProduction = env.URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED === '1';
+  const emulatorMode = env.URAI_ADMIN_FIRESTORE_EMULATOR === '1';
+  const emulatorHost = env.FIRESTORE_EMULATOR_HOST || '';
 
   const fail = (message, code = 1) => ({ ok: false, code, message });
 
@@ -79,6 +85,10 @@ export function runSystemRegistrySeed({
   if (/status:\s*['"]production_ready['"]/.test(dataSource)) return fail('Static registry data must not predeclare production_ready.');
   if (!seedSource.includes('{ merge: false }')) return fail('Registry seed must replace canonical records rather than preserve stale fields.');
 
+  if (emulatorMode && (env.FIREBASE_SERVICE_ACCOUNT_KEY || env.GOOGLE_APPLICATION_CREDENTIALS)) {
+    return fail('Emulator seed forbids cloud service-account credentials.');
+  }
+
   if (env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     let serviceAccount;
     try {
@@ -91,7 +101,17 @@ export function runSystemRegistrySeed({
     }
   }
 
-  if (projectId === PRODUCTION_PROJECT_ID) {
+  if (emulatorMode) {
+    if (projectId !== EMULATOR_PROJECT_ID) {
+      return fail(`Emulator seed target must exactly equal ${EMULATOR_PROJECT_ID}.`);
+    }
+    if (!loopbackEmulatorPattern.test(emulatorHost)) {
+      return fail('Emulator seed requires FIRESTORE_EMULATOR_HOST to be an explicit loopback host and port.');
+    }
+    if (emulatorApproval !== EMULATOR_APPROVAL) {
+      return fail(`Emulator seed requires URAI_ADMIN_EMULATOR_APPROVAL=${EMULATOR_APPROVAL}.`);
+    }
+  } else if (projectId === PRODUCTION_PROJECT_ID) {
     if (productionApproval !== PRODUCTION_APPROVAL) {
       return fail(`Production seed requires URAI_ADMIN_PRODUCTION_APPROVAL=${PRODUCTION_APPROVAL}.`);
     }
@@ -119,7 +139,8 @@ export function runSystemRegistrySeed({
   if (result.error) return fail(`Failed to start registry seed: ${result.error.message}`);
   const status = result.status ?? 1;
   if (status !== 0) return fail(`Registry seed exited with status ${status}.`, status);
-  return { ok: true, code: 0, message: `Registry seed completed for explicitly selected project ${projectId}.` };
+  const targetKind = emulatorMode ? 'isolated emulator' : 'explicitly selected project';
+  return { ok: true, code: 0, message: `Registry seed completed for ${targetKind} ${projectId}.` };
 }
 
 function isMainModule() {
