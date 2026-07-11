@@ -12,6 +12,9 @@ const docs = readFileSync('docs/SYSTEM_OF_SYSTEMS.md', 'utf8');
 const page = readFileSync('apps/urai-admin/src/app/admin/system/page.tsx', 'utf8');
 const collectionTable = readFileSync('apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx', 'utf8');
 const collectionRoute = readFileSync('apps/urai-admin/src/app/api/admin/collection/route.ts', 'utf8');
+const adminCi = readFileSync('.github/workflows/ci.yml', 'utf8');
+const validateAdmin = readFileSync('.github/workflows/validate-admin.yml', 'utf8');
+const productionVerify = readFileSync('.github/workflows/urai-production-verify.yml', 'utf8');
 const failures = [];
 
 const requiredSystems = [
@@ -88,6 +91,22 @@ if (!page.includes('Not connected')) failures.push('admin system page must prese
 if (!collectionTable.includes("| 'systemRegistry'")) failures.push('admin collection table must allow the systemRegistry collection key');
 if (!collectionRoute.includes("systemRegistry: {")) failures.push('authenticated admin collection API must explicitly allowlist systemRegistry');
 if (!collectionRoute.includes("collection: 'systemRegistry'")) failures.push('authenticated admin collection API must read the systemRegistry collection');
+
+for (const [name, workflow] of [
+  ['URAI Admin CI', adminCi],
+  ['Validate URAI Admin', validateAdmin],
+  ['URAI Production Verify', productionVerify],
+]) {
+  if (!workflow.includes('TARGET_SHA:')) failures.push(`${name} must resolve an exact target SHA`);
+  if (!workflow.includes('ref: ${{ env.TARGET_SHA }}')) failures.push(`${name} must checkout the exact target SHA`);
+  if (!workflow.includes('persist-credentials: false')) failures.push(`${name} must not persist checkout credentials`);
+  if (!workflow.includes('test "$(git rev-parse HEAD)" = "$TARGET_SHA"')) failures.push(`${name} must prove the checked-out SHA`);
+  if (!workflow.includes('git status --porcelain --untracked-files=all')) failures.push(`${name} must prove a clean exact checkout`);
+  if (!workflow.includes('pnpm install --frozen-lockfile')) failures.push(`${name} must use the frozen lockfile`);
+}
+if (!adminCi.includes('pnpm receipt:system-registry:emulator')) failures.push('URAI Admin CI must generate the isolated emulator receipt');
+if (!adminCi.includes('admin-system-registry-emulator-receipt.json')) failures.push('URAI Admin CI must upload the emulator receipt JSON');
+if (!adminCi.includes('retention-days: 365')) failures.push('URAI Admin CI must retain emulator evidence for 365 days');
 
 if (failures.length) {
   console.error('System registry contract failed:');
