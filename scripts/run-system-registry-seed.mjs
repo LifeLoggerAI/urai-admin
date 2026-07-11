@@ -3,6 +3,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { validateRegistryCloudAuthority } from './system-registry-cloud-policy.mjs';
 
 const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
 const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
@@ -89,18 +90,6 @@ export function runSystemRegistrySeed({
     return fail('Emulator seed forbids cloud service-account credentials.');
   }
 
-  if (env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    let serviceAccount;
-    try {
-      serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    } catch {
-      return fail('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON.');
-    }
-    if (serviceAccount.project_id && serviceAccount.project_id !== projectId) {
-      return fail(`Service-account project ${serviceAccount.project_id} does not match target ${projectId}.`);
-    }
-  }
-
   if (emulatorMode) {
     if (projectId !== EMULATOR_PROJECT_ID) {
       return fail(`Emulator seed target must exactly equal ${EMULATOR_PROJECT_ID}.`);
@@ -128,6 +117,16 @@ export function runSystemRegistrySeed({
     }
   }
 
+  let cloudAuthority = null;
+  if (!emulatorMode) {
+    try {
+      cloudAuthority = validateRegistryCloudAuthority({ env, projectId, readFileSyncFn });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      return fail(reason);
+    }
+  }
+
   const result = spawnSyncFn(nodePath, ['scripts/seed-system-registry.mjs'], {
     stdio: 'inherit',
     env: {
@@ -139,8 +138,14 @@ export function runSystemRegistrySeed({
   if (result.error) return fail(`Failed to start registry seed: ${result.error.message}`);
   const status = result.status ?? 1;
   if (status !== 0) return fail(`Registry seed exited with status ${status}.`, status);
-  const targetKind = emulatorMode ? 'isolated emulator' : 'explicitly selected project';
-  return { ok: true, code: 0, message: `Registry seed completed for ${targetKind} ${projectId}.` };
+  if (emulatorMode) {
+    return { ok: true, code: 0, message: `Registry seed completed for isolated emulator ${projectId}.` };
+  }
+  return {
+    ok: true,
+    code: 0,
+    message: `Registry seed completed for project-bound cloud target ${projectId}; receipt ${cloudAuthority.receiptPath}.`,
+  };
 }
 
 function isMainModule() {
