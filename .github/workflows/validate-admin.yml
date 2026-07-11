@@ -9,12 +9,29 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout exact reviewed head
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove exact clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,7 +45,11 @@ jobs:
           pnpm --version
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
+
+      - name: Prove install preserved exact clean head
+        shell: bash
+        run: test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Typecheck admin app
         run: pnpm --filter urai-admin typecheck | tee /tmp/urai-admin-app-typecheck.log
@@ -47,8 +68,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: urai-admin-validate-evidence
+          name: urai-admin-validate-evidence-${{ env.TARGET_SHA }}
           path: |
             /tmp/urai-admin-app-typecheck.log
             /tmp/urai-admin-app-build.log
           if-no-files-found: warn
+          retention-days: 365
