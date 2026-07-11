@@ -64,4 +64,6 @@ If a system has no exact deployed SHA plus current live and monitoring evidence,
 
 ## Seed rule
 
-Use `pnpm seed:system-registry`. The wrapper validates the canonical registry contract, exact clean Git head, target project, service-account project binding, and explicit staging or production approval before any Firestore write. Direct execution of `scripts/seed-system-registry.mjs` is rejected.
+Use `pnpm seed:system-registry`. Dry-run mode validates the canonical contract and performs no Firestore write. Apply mode additionally requires an explicitly selected project, exact clean Git head, matching service-account project, and explicit staging or production approval. Direct execution of `scripts/seed-system-registry.mjs` is rejected.
+
+No authoritative URAI Admin staging Firebase project is currently recorded. Non-production seeding therefore remains blocked until an approved project is established in provider evidence and supplied through the protected `URAI_ADMIN_STAGING_FIREBASE_PROJECT` environment variable. The selected target must exactly match that approved staging project. Production remains fixed to `urai-4dc1d` and requires separate production approval.
