@@ -8,7 +8,9 @@ const wrapper = readFileSync('scripts/run-system-registry-seed.mjs', 'utf8');
 const guardTests = readFileSync('scripts/test-system-registry-seed-guard.mjs', 'utf8');
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 const docs = readFileSync('docs/SYSTEM_OF_SYSTEMS.md', 'utf8');
-const page = readFileSync('apps/urai-admin/app/admin/system/page.jsx', 'utf8');
+const page = readFileSync('apps/urai-admin/src/app/admin/system/page.tsx', 'utf8');
+const collectionTable = readFileSync('apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx', 'utf8');
+const collectionRoute = readFileSync('apps/urai-admin/src/app/api/admin/collection/route.ts', 'utf8');
 const failures = [];
 
 const requiredSystems = [
@@ -32,6 +34,7 @@ for (const record of SYSTEM_REGISTRY_RECORDS) {
   for (const field of requiredFields) {
     if (!(field in record)) failures.push(`${record.id} missing field: ${field}`);
   }
+  if (record.repo.includes('*')) failures.push(`${record.id} contains wildcard repository authority`);
   if (record.status === 'production_ready') failures.push(`${record.id} must not be predeclared production_ready`);
 }
 
@@ -50,7 +53,12 @@ if (!seed.includes('SYSTEM_REGISTRY_RECORDS')) failures.push('seed must import c
 if (!seed.includes('registryDigest')) failures.push('seed must emit immutable registry digest evidence');
 if (!seed.includes('sourceSha: expectedSha')) failures.push('seed must bind records to the exact source SHA');
 if (!seed.includes('{ merge: false }')) failures.push('seed must replace canonical records rather than preserve stale fields');
-if (!seed.includes('URAI_ADMIN_SEED_GUARD_PASSED')) failures.push('direct seed execution must require the guarded wrapper');
+if (!seed.includes('URAI_ADMIN_SEED_GUARD_PASSED')) failures.push('seed child must require guarded wrapper context');
+if (!seed.includes("execFileSync('git', ['rev-parse', 'HEAD']")) failures.push('seed child must independently verify the checked-out SHA');
+if (!seed.includes("execFileSync('git', ['status', '--porcelain']")) failures.push('seed child must independently require a clean worktree');
+if (!seed.includes('URAI_ADMIN_PRODUCTION_APPROVAL')) failures.push('seed child must independently require production approval');
+if (!seed.includes('URAI_ADMIN_STAGING_FIREBASE_PROJECT')) failures.push('seed child must independently bind non-production writes to approved staging');
+if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
 if (!wrapper.includes('export function runSystemRegistrySeed')) failures.push('wrapper must expose dependency-injected guard execution for behavioral tests');
 if (!wrapper.includes("git', ['status', '--porcelain']")) failures.push('wrapper must require a clean worktree');
 if (!wrapper.includes('APPROVE_URAI_ADMIN_PRODUCTION')) failures.push('wrapper must require explicit production approval');
@@ -61,8 +69,11 @@ if (!guardTests.includes('dry-run validates without spawning the seed child')) f
 if (!guardTests.includes('apply rejects legacy wildcard repository authority')) failures.push('guard tests must reject legacy wildcard authority');
 if (!guardTests.includes('controlled staging apply reaches only the guarded seed child')) failures.push('guard tests must prove controlled non-production apply boundary');
 if (!packageJson.scripts?.['test:registry']?.includes('test-system-registry-seed-guard.mjs')) failures.push('test:registry must execute behavioral seed guard tests');
-if (!page.includes('systemRegistry')) failures.push('admin system page must read or mention systemRegistry live source');
-if (!page.includes('Not connected') && !page.includes('not connected')) failures.push('admin system page must preserve safe not-connected display');
+if (!page.includes('collection="systemRegistry"')) failures.push('admin system page must read the live systemRegistry source');
+if (!page.includes('Not connected')) failures.push('admin system page must preserve safe Not connected display');
+if (!collectionTable.includes("| 'systemRegistry'")) failures.push('admin collection table must allow the systemRegistry collection key');
+if (!collectionRoute.includes("systemRegistry: {")) failures.push('authenticated admin collection API must explicitly allowlist systemRegistry');
+if (!collectionRoute.includes("collection: 'systemRegistry'")) failures.push('authenticated admin collection API must read the systemRegistry collection');
 
 if (failures.length) {
   console.error('System registry contract failed:');
