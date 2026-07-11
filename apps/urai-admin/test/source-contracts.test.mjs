@@ -46,7 +46,14 @@ assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom clai
 assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
 assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
 assert.match(requireAdminSession, /requireSameOrigin/, 'admin mutations must reject untrusted origins');
+assert.match(requireAdminSession, /URAI_ADMIN_ALLOWED_ORIGINS/, 'production origin authority must come from explicit configuration');
+assert.match(requireAdminSession, /Production admin origins must use HTTPS/, 'production origin configuration must require HTTPS');
+assert.match(requireAdminSession, /Admin origin allowlist is not configured/, 'production must fail closed without configured origins');
+assert.match(requireAdminSession, /isLoopbackOrigin/, 'non-production may allow only explicit loopback development origins');
+assert.doesNotMatch(requireAdminSession, /x-forwarded-host|x-forwarded-proto/i, 'forwarded request headers must not define trusted admin origins');
+assert.doesNotMatch(requireAdminSession, /new Set<string>\(\[req\.nextUrl\.origin\]\)/, 'request-derived origin must not seed the production allowlist');
 assert.match(requireAdminSession, /decodedToken\.auth_time/, 'session creation must require recent authentication');
+assert.match(requireAdminSession, /ageSeconds >= -MAX_CLOCK_SKEW_SECONDS/, 'future-dated authentication must be bounded by explicit clock skew');
 assert.match(requireAdminSession, /refreshRequired:\s*true/, 'stale claims must require a refreshed ID token');
 assert.match(requireAdminSession, /tokenClaimsMatch/, 'a stale token must not mint an admin cookie');
 assert.match(requireAdminSession, /sameSite:\s*'strict'/, 'admin cookies must use strict same-site policy');
