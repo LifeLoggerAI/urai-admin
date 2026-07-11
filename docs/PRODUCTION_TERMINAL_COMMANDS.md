@@ -78,42 +78,57 @@ Evidence to record:
 
 ## 5. Seed system-of-systems registry
 
-For staging:
+Running `pnpm seed:system-registry` without `URAI_ADMIN_SEED_APPLY=1` is a validation-only dry run and performs no Firestore write.
+
+For staging, first establish the exact approved URAI Admin staging Firebase project from authoritative provider/account evidence. Do not substitute a guessed project or reuse production. Store the approved value in the protected environment and make both target variables match:
 
 ```bash
+export URAI_ADMIN_FIREBASE_PROJECT='<approved-staging-project-id>'
+export URAI_ADMIN_STAGING_FIREBASE_PROJECT='<approved-staging-project-id>'
 export URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1
-export URAI_ADMIN_FIREBASE_PROJECT='<staging-project-id>'
+export URAI_ADMIN_STAGING_APPROVAL='APPROVE_URAI_ADMIN_STAGING'
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
 pnpm seed:system-registry
 ```
 
-For production:
+For production, only after staging evidence and explicit production authorization:
 
 ```bash
 unset URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED
+unset URAI_ADMIN_STAGING_FIREBASE_PROJECT
+unset URAI_ADMIN_STAGING_APPROVAL
 export URAI_ADMIN_FIREBASE_PROJECT='urai-4dc1d'
+export URAI_ADMIN_PRODUCTION_APPROVAL='APPROVE_URAI_ADMIN_PRODUCTION'
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
 pnpm seed:system-registry
 ```
 
 Evidence to record:
 
+- exact source SHA;
 - project ID;
 - count of seeded systems;
+- registry digest;
 - timestamp;
 - `/admin/system` screenshot or route smoke result.
 
 ## 6. Staging deploy
 
 ```bash
-firebase use <STAGING_FIREBASE_PROJECT_ID>
+firebase use <APPROVED_STAGING_FIREBASE_PROJECT_ID>
 firebase deploy --only firestore:rules,firestore:indexes,storage
 firebase hosting:channel:deploy urai-admin-staging --expires 14d
 export URAI_ADMIN_STAGING_URL='<firebase-preview-url>'
 pnpm test:smoke
 ```
 
-Record the preview URL and smoke output in `docs/EVIDENCE_LOG.md`.
+Record the approved staging project, preview URL, exact deployed SHA, and smoke output in `docs/EVIDENCE_LOG.md`.
 
 ## 7. Production deploy
 
