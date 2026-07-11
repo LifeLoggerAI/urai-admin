@@ -55,11 +55,13 @@ function isLoopbackOrigin(value: string) {
 
 function configuredAdminOrigins() {
   const origins = new Set<string>();
-  const candidates = [
-    process.env.URAI_ADMIN_BASE_URL,
+  const shared = [
     process.env.URAI_ADMIN_PRODUCTION_URL,
     ...(process.env.URAI_ADMIN_ALLOWED_ORIGINS ?? '').split(','),
   ];
+  const candidates = process.env.NODE_ENV === 'production'
+    ? shared
+    : [process.env.URAI_ADMIN_BASE_URL, ...shared];
 
   for (const candidate of candidates) {
     const raw = candidate?.trim();
