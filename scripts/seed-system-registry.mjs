@@ -1,317 +1,96 @@
 #!/usr/bin/env node
 
+import crypto from 'node:crypto';
 import process from 'node:process';
 import admin from 'firebase-admin';
+import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
 
 const projectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'urai-4dc1d';
 const allowNonProduction = process.env.URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED === '1';
 const actor = process.env.URAI_ADMIN_SEED_ACTOR || process.env.URAI_ADMIN_OWNER_EMAIL || 'system-registry-seed';
+const expectedSha = process.env.URAI_ADMIN_SEED_SHA || '';
+const guardPassed = process.env.URAI_ADMIN_SEED_GUARD_PASSED === 'run-system-registry-seed.mjs';
+const shaPattern = /^[0-9a-f]{40}$/;
+const allowedStatuses = new Set(['not_connected', 'blocked', 'staging_ready', 'production_ready', 'degraded']);
+const requiredFields = [
+  'id', 'name', 'repo', 'runtime', 'owner', 'status', 'productionUrl', 'stagingUrl',
+  'firebaseTarget', 'lastReleaseSha', 'rollbackSha', 'lastSmokeResult', 'healthEndpoint',
+  'monitoringUrl', 'requiredSecrets', 'knownBlockers', 'integrationContracts', 'dataBoundary',
+  'privacyClassification', 'operationalRisk', 'evidenceLinks',
+];
 
-if (projectId !== 'urai-4dc1d' && !allowNonProduction) {
-  console.error(`Refusing to seed non-production project ${projectId}. Set URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1 for staging.`);
+function fail(message) {
+  console.error(`[system-registry-seed] ${message}`);
   process.exit(1);
 }
 
-if (!admin.apps.length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-      projectId,
-    });
-  } else {
-    admin.initializeApp({ projectId });
+if (!guardPassed) fail('Direct seed execution is disabled. Use pnpm seed:system-registry through the guarded wrapper.');
+if (process.env.URAI_ADMIN_SEED_APPLY !== '1') fail('URAI_ADMIN_SEED_APPLY=1 is required.');
+if (process.env.URAI_ADMIN_SEED_CONFIRM !== 'SEED_SYSTEM_REGISTRY') fail('URAI_ADMIN_SEED_CONFIRM must equal SEED_SYSTEM_REGISTRY.');
+if (!shaPattern.test(expectedSha)) fail('URAI_ADMIN_SEED_SHA must be a full lowercase 40-character SHA.');
+if (projectId !== 'urai-4dc1d' && !allowNonProduction) fail(`Refusing to seed non-production project ${projectId} without URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1.`);
+
+const ids = new Set();
+for (const record of SYSTEM_REGISTRY_RECORDS) {
+  for (const field of requiredFields) {
+    if (!(field in record)) fail(`Registry record ${record.id || '<unknown>'} is missing ${field}.`);
   }
+  if (!record.id || ids.has(record.id)) fail(`Registry record id is missing or duplicated: ${record.id || '<empty>'}.`);
+  ids.add(record.id);
+  if (!allowedStatuses.has(record.status)) fail(`Registry record ${record.id} has unsupported status ${record.status}.`);
+  if (record.status === 'production_ready' && (!record.lastReleaseSha || !record.rollbackSha || record.lastSmokeResult !== 'pass' || !record.monitoringUrl)) {
+    fail(`Registry record ${record.id} cannot be production_ready without deployed SHA, rollback SHA, passing smoke and monitoring evidence.`);
+  }
+}
+
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  } catch {
+    fail('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON.');
+  }
+  if (serviceAccount.project_id && serviceAccount.project_id !== projectId) {
+    fail(`Service-account project ${serviceAccount.project_id} does not match target ${projectId}.`);
+  }
+}
+
+if (!admin.apps.length) {
+  admin.initializeApp(serviceAccount
+    ? { credential: admin.credential.cert(serviceAccount), projectId }
+    : { projectId });
 }
 
 const firestore = admin.firestore();
 const now = admin.firestore.FieldValue.serverTimestamp();
-
-const systems = [
-  {
-    id: 'urai-main-experience',
-    name: 'URAI Main Experience',
-    repo: 'LifeLoggerAI/urai-spatial',
-    runtime: 'urai-tier1 / main / spatial web experience',
-    owner: 'Adam Clamp',
-    status: 'degraded',
-    productionUrl: 'https://urai.app',
-    stagingUrl: '',
-    firebaseTarget: 'urai-4dc1d',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '/release-fingerprint.json',
-    requiredSecrets: ['Firebase public config', 'Protected production deploy credentials'],
-    knownBlockers: ['Exact deployed SHA, rollback, monitoring, privacy parity and authenticated backend proof missing'],
-    integrationContracts: ['Safe aggregate app status only'],
-    dataBoundary: 'Sample-data public experience; admin sees only approved summaries',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-admin',
-    name: 'URAI Admin',
-    repo: 'LifeLoggerAI/urai-admin',
-    runtime: 'Next.js 14, Firebase Hosting/Functions, Node 20',
-    owner: 'Adam Clamp',
-    status: 'blocked',
-    productionUrl: 'https://www.uraiadmin.com',
-    stagingUrl: '',
-    firebaseTarget: 'urai-4dc1d',
-    lastReleaseSha: process.env.GITHUB_SHA || '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '/status',
-    requiredSecrets: ['Firebase public config', 'FIREBASE_TOKEN', 'Owner seed UID/email'],
-    knownBlockers: ['Needs staging/prod evidence', 'Needs owner approval'],
-    integrationContracts: ['Operational metadata only'],
-    dataBoundary: 'Operational metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-analytics',
-    name: 'URAI Analytics',
-    repo: 'apps/urai-analytics, packages/analytics-core',
-    runtime: 'Workspace app/package',
-    owner: 'Adam Clamp',
-    status: 'blocked',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Analytics service config'],
-    knownBlockers: ['Needs integration evidence', 'Needs live health/status card'],
-    integrationContracts: ['Aggregates/status only; no raw telemetry in admin without review'],
-    dataBoundary: 'Aggregate analytics status only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-communications',
-    name: 'URAI Communications',
-    repo: 'LifeLoggerAI/urai-communications',
-    runtime: 'TBD by communications repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Provider API keys', 'Firebase config'],
-    knownBlockers: ['Needs health contract'],
-    integrationContracts: ['Notification status and delivery metadata only'],
-    dataBoundary: 'Notification status and delivery metadata only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-privacy',
-    name: 'URAI Privacy',
-    repo: 'LifeLoggerAI/urai-privacy',
-    runtime: 'TBD by privacy repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Policy publishing credentials'],
-    knownBlockers: ['Needs policy link evidence'],
-    integrationContracts: ['Policy, deletion, retention, DPA and subprocessor metadata'],
-    dataBoundary: 'Policy metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-foundation',
-    name: 'URAI Foundation',
-    repo: 'LifeLoggerAI/urai-foundation',
-    runtime: 'TBD by foundation repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Governance doc credentials'],
-    knownBlockers: ['Needs governance evidence'],
-    integrationContracts: ['Governance and ethical review evidence'],
-    dataBoundary: 'Governance metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-spatial',
-    name: 'URAI Spatial',
-    repo: 'LifeLoggerAI/urai-spatial',
-    runtime: 'urai-tier1 / main / Spatial WebXR',
-    owner: 'Adam Clamp',
-    status: 'degraded',
-    productionUrl: 'https://urai.app',
-    stagingUrl: '',
-    firebaseTarget: 'urai-4dc1d',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '/release-fingerprint.json',
-    requiredSecrets: ['Spatial public config', 'Protected production deploy credentials'],
-    knownBlockers: ['Exact release, rollback, browser/device/accessibility, privacy parity and monitoring proof incomplete'],
-    integrationContracts: ['Spatial metadata only unless approved'],
-    dataBoundary: 'Sample and approved spatial metadata only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-studio',
-    name: 'URAI Studio',
-    repo: 'LifeLoggerAI/urai-studio',
-    runtime: 'TBD by studio repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Studio deploy config'],
-    knownBlockers: ['Needs production URL'],
-    integrationContracts: ['Creative asset metadata'],
-    dataBoundary: 'Creative asset metadata',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-jobs',
-    name: 'URAI Jobs',
-    repo: 'LifeLoggerAI/urai-jobs',
-    runtime: 'TBD by jobs repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Jobs service config'],
-    knownBlockers: ['Needs registry seed'],
-    integrationContracts: ['Job metadata only'],
-    dataBoundary: 'Job metadata, no secrets in admin UI',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-investors',
-    name: 'URAI Investors',
-    repo: 'LifeLoggerAI/urai-investors',
-    runtime: 'TBD by investors repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Investor portal config'],
-    knownBlockers: ['Needs access boundary'],
-    integrationContracts: ['Investor-facing published materials only'],
-    dataBoundary: 'Investor-facing published materials only',
-    privacyClassification: 'confidential',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-marketing',
-    name: 'URAI Marketing',
-    repo: 'LifeLoggerAI/urai-marketing',
-    runtime: 'TBD by marketing repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Marketing deploy config'],
-    knownBlockers: ['Needs URL evidence'],
-    integrationContracts: ['Public campaign metadata'],
-    dataBoundary: 'Public campaign metadata',
-    privacyClassification: 'internal',
-    operationalRisk: 'low',
-  },
-  {
-    id: 'urai-asset-factory',
-    name: 'URAI Asset Factory',
-    repo: 'LifeLoggerAI/asset-factory',
-    runtime: 'Asset generation pipeline',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Storage/model provider config'],
-    knownBlockers: ['Needs data boundary review'],
-    integrationContracts: ['Asset metadata and approved generated assets only'],
-    dataBoundary: 'Asset metadata and approved generated assets only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-b2b-portal',
-    name: 'URAI B2B Portal',
-    repo: 'LifeLoggerAI/B2Bportal',
-    runtime: 'TBD by B2B portal repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['B2B portal config'],
-    knownBlockers: ['Needs partner access contract'],
-    integrationContracts: ['Partner/account metadata only'],
-    dataBoundary: 'Partner/account metadata only',
-    privacyClassification: 'confidential',
-    operationalRisk: 'high',
-  },
-];
+const registryDigest = crypto
+  .createHash('sha256')
+  .update(JSON.stringify({ evidenceDate: REGISTRY_EVIDENCE_DATE, records: SYSTEM_REGISTRY_RECORDS }))
+  .digest('hex');
 
 const batch = firestore.batch();
-for (const system of systems) {
-  const ref = firestore.collection('systemRegistry').doc(system.id);
-  batch.set(
-    ref,
-    {
-      ...system,
-      seededBy: 'scripts/seed-system-registry.mjs',
-      seededActor: actor,
-      updatedAt: now,
-    },
-    { merge: true },
-  );
+for (const system of SYSTEM_REGISTRY_RECORDS) {
+  batch.set(firestore.collection('systemRegistry').doc(system.id), {
+    ...system,
+    registryEvidenceDate: REGISTRY_EVIDENCE_DATE,
+    registryDigest,
+    sourceSha: expectedSha,
+    seededBy: 'scripts/seed-system-registry.mjs',
+    seededActor: actor,
+    updatedAt: now,
+  }, { merge: false });
 }
 
-const seedEventRef = firestore.collection('adminOperationalEvents').doc();
-batch.set(seedEventRef, {
+batch.set(firestore.collection('adminOperationalEvents').doc(), {
   actor,
   action: 'systemRegistry.seed',
   target: { type: 'collection', id: 'systemRegistry' },
   metadata: {
     projectId,
-    count: systems.length,
+    count: SYSTEM_REGISTRY_RECORDS.length,
+    evidenceDate: REGISTRY_EVIDENCE_DATE,
+    registryDigest,
+    sourceSha: expectedSha,
     script: 'scripts/seed-system-registry.mjs',
     allowNonProduction,
   },
@@ -319,4 +98,4 @@ batch.set(seedEventRef, {
 });
 
 await batch.commit();
-console.log(`Seeded ${systems.length} URAI system registry records into ${projectId}.`);
+console.log(`Seeded ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${projectId} at ${expectedSha}. Digest: ${registryDigest}`);
