@@ -3,17 +3,31 @@ name: Deploy URAI Admin
 on:
   workflow_dispatch:
     inputs:
+      confirmation:
+        description: "Type DEPLOY URAI ADMIN to authorize a production deployment"
+        required: true
+        type: string
+      target_sha:
+        description: "Exact 40-character commit SHA approved for production"
+        required: true
+        type: string
+      rollback_sha:
+        description: "Exact known-good main SHA approved for automatic rollback"
+        required: true
+        type: string
       base_url:
         description: "Base URL to verify after deploy"
         required: false
         default: "https://urai-admin.web.app"
+        type: string
       functions_base_url:
         description: "Functions base URL to verify after deploy"
         required: false
         default: "https://us-central1-urai-4dc1d.cloudfunctions.net"
-  push:
-    branches:
-      - main
+        type: string
+
+permissions:
+  contents: read
 
 concurrency:
   group: urai-admin-production
@@ -21,11 +35,11 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy to Firebase Hosting and Functions
+    name: Deploy approved SHA to Firebase Hosting and Functions
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     environment: production
-    permissions:
-      contents: read
     env:
       NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
@@ -37,14 +51,44 @@ jobs:
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
       URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
+      URAI_ADMIN_TARGET_SHA: ${{ inputs.target_sha }}
+      URAI_ADMIN_ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+      URAI_ADMIN_DEPLOY_MARKER: tmp/urai-admin-target-deployed.json
+      URAI_ADMIN_RECEIPT_PATH: tmp/urai-admin-deployment-receipt.json
+
     steps:
-      - name: Checkout
+      - name: Checkout approved commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate explicit deployment and rollback authorization
+        env:
+          DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]] || { echo "Production deployment must use workflow_dispatch." >&2; exit 1; }
+          [[ "${GITHUB_REF}" == "refs/heads/main" ]] || { echo "Production deployment must be dispatched from main." >&2; exit 1; }
+          [[ "${DEPLOY_CONFIRMATION}" == "DEPLOY URAI ADMIN" ]] || { echo "Deployment confirmation phrase mismatch." >&2; exit 1; }
+          [[ "${URAI_ADMIN_TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "target_sha must be a full lowercase commit SHA." >&2; exit 1; }
+          [[ "${URAI_ADMIN_ROLLBACK_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "rollback_sha must be a full lowercase commit SHA." >&2; exit 1; }
+          [[ "${URAI_ADMIN_TARGET_SHA}" != "${URAI_ADMIN_ROLLBACK_SHA}" ]] || { echo "rollback_sha must differ from target_sha." >&2; exit 1; }
+          [[ "$(git rev-parse HEAD)" == "${URAI_ADMIN_TARGET_SHA}" ]] || { echo "Checked-out SHA does not match target_sha." >&2; exit 1; }
+
+          git fetch origin main --no-tags --prune
+          git cat-file -e "${URAI_ADMIN_ROLLBACK_SHA}^{commit}"
+          git merge-base --is-ancestor "${URAI_ADMIN_TARGET_SHA}" origin/main || { echo "target_sha must belong to origin/main." >&2; exit 1; }
+          git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" "${URAI_ADMIN_TARGET_SHA}" || { echo "rollback_sha must be an ancestor of target_sha." >&2; exit 1; }
+          git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" origin/main || { echo "rollback_sha must belong to origin/main." >&2; exit 1; }
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
 
       - name: Setup pnpm
         run: |
@@ -52,31 +96,114 @@ jobs:
           corepack prepare pnpm@9.15.0 --activate
           pnpm --version
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Run launch lock
+      - name: Run launch lock and target deployment
+        id: launch
+        continue-on-error: true
         run: bash scripts/launch-lock.sh
 
-      - name: Append workflow metadata to launch evidence
+      - name: Restore approved rollback release after failed target verification
+        id: rollback
+        if: ${{ steps.launch.outcome == 'failure' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f "${URAI_ADMIN_DEPLOY_MARKER}" ]]; then
+            echo "attempted=false" >> "${GITHUB_OUTPUT}"
+            echo "result=not-required" >> "${GITHUB_OUTPUT}"
+            echo "Target deployment marker is absent; failure occurred before Firebase deployment."
+            exit 0
+          fi
+
+          echo "attempted=true" >> "${GITHUB_OUTPUT}"
+          rollback_dir="${RUNNER_TEMP}/urai-admin-rollback"
+          rm -rf "${rollback_dir}"
+          git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
+          cd "${rollback_dir}"
+          corepack pnpm install --frozen-lockfile
+          URAI_ADMIN_DEPLOY_MARKER="${RUNNER_TEMP}/urai-admin-rollback-deployed.json" pnpm run deploy:production
+          echo "result=success" >> "${GITHUB_OUTPUT}"
+
+      - name: Write deployment receipt
         if: always()
+        env:
+          TARGET_OUTCOME: ${{ steps.launch.outcome }}
+          ROLLBACK_OUTCOME: ${{ steps.rollback.outcome }}
+          ROLLBACK_ATTEMPTED: ${{ steps.rollback.outputs.attempted }}
+          ROLLBACK_RESULT: ${{ steps.rollback.outputs.result }}
+        shell: bash
         run: |
           mkdir -p tmp
-          {
-            echo
-            echo "## GitHub Actions metadata"
-            echo "Workflow: ${GITHUB_WORKFLOW}"
-            echo "Run ID: ${GITHUB_RUN_ID}"
-            echo "Run number: ${GITHUB_RUN_NUMBER}"
-            echo "Trigger: ${GITHUB_EVENT_NAME}"
-            echo "Actor: ${GITHUB_ACTOR}"
-          } >> tmp/urai-admin-launch-evidence.md
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const targetSucceeded = process.env.TARGET_OUTCOME === 'success';
+          const rollbackAttempted = process.env.ROLLBACK_ATTEMPTED === 'true';
+          const rollbackSucceeded = rollbackAttempted && process.env.ROLLBACK_OUTCOME === 'success' && process.env.ROLLBACK_RESULT === 'success';
+          const targetDeployed = fs.existsSync(process.env.URAI_ADMIN_DEPLOY_MARKER);
+          const outcome = targetSucceeded
+            ? 'verified-live'
+            : rollbackSucceeded
+              ? 'rolled-back-to-approved-sha'
+              : targetDeployed
+                ? 'target-deployed-rollback-unverified'
+                : 'failed-before-deploy';
+          const finalLiveSha = targetSucceeded
+            ? process.env.URAI_ADMIN_TARGET_SHA
+            : rollbackSucceeded
+              ? process.env.URAI_ADMIN_ROLLBACK_SHA
+              : null;
+          const receipt = {
+            schemaVersion: 'urai-admin-deployment-receipt-1',
+            receiptId: `URAI-ADMIN-DEPLOY-${process.env.GITHUB_RUN_ID}`,
+            recordedAt: new Date().toISOString(),
+            classification: targetSucceeded ? 'VERIFIED LIVE' : 'BLOCKED',
+            outcome,
+            repository: process.env.GITHUB_REPOSITORY,
+            workflowRunId: process.env.GITHUB_RUN_ID,
+            actor: process.env.GITHUB_ACTOR,
+            firebaseProject: 'urai-4dc1d',
+            targetSha: process.env.URAI_ADMIN_TARGET_SHA,
+            rollbackSha: process.env.URAI_ADMIN_ROLLBACK_SHA,
+            targetDeployed,
+            targetOutcome: process.env.TARGET_OUTCOME,
+            rollbackAttempted,
+            rollbackOutcome: process.env.ROLLBACK_OUTCOME || 'not-run',
+            rollbackResult: process.env.ROLLBACK_RESULT || 'not-run',
+            finalLiveSha,
+            publicUrl: process.env.URAI_ADMIN_BASE_URL,
+            functionsBaseUrl: process.env.URAI_ADMIN_FUNCTIONS_BASE_URL,
+          };
+          fs.writeFileSync(process.env.URAI_ADMIN_RECEIPT_PATH, `${JSON.stringify(receipt, null, 2)}\n`);
+          NODE
 
-      - name: Upload launch evidence
+          {
+            echo "# URAI Admin deployment evidence"
+            echo ""
+            echo "- Target SHA: ${URAI_ADMIN_TARGET_SHA}"
+            echo "- Rollback SHA: ${URAI_ADMIN_ROLLBACK_SHA}"
+            echo "- Target outcome: ${TARGET_OUTCOME}"
+            echo "- Rollback attempted: ${ROLLBACK_ATTEMPTED:-false}"
+            echo "- Rollback result: ${ROLLBACK_RESULT:-not-run}"
+            echo "- Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > tmp/urai-admin-launch-evidence.md
+
+      - name: Upload deployment evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: urai-admin-launch-evidence
-          path: tmp/urai-admin-launch-evidence.md
-          if-no-files-found: error
-          retention-days: 30
+          name: urai-admin-deployment-evidence-${{ inputs.target_sha }}
+          path: |
+            tmp/urai-admin-launch-evidence.md
+            tmp/urai-admin-deployment-receipt.json
+            tmp/urai-admin-target-deployed.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Fail release when target was not certified
+        if: ${{ steps.launch.outcome != 'success' }}
+        run: |
+          echo "Target Admin release did not certify. Inspect the deployment receipt and rollback result." >&2
+          exit 1
