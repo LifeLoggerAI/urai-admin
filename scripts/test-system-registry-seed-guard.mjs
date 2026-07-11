@@ -9,6 +9,17 @@ const PRODUCTION_PROJECT = 'urai-4dc1d';
 const STAGING_PROJECT = 'urai-admin-staging';
 const EMULATOR_PROJECT = 'urai-admin-emulator';
 
+function cloudAuthority(projectId) {
+  return {
+    FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
+      type: 'service_account',
+      project_id: projectId,
+      client_email: `registry-deployer@${projectId}.iam.gserviceaccount.com`,
+    }),
+    URAI_ADMIN_SEED_RECEIPT_PATH: `docs/release-evidence/test-${projectId}.json`,
+  };
+}
+
 function createHarness({
   contractStatus = 0,
   seedStatus = 0,
@@ -17,6 +28,7 @@ function createHarness({
   worktree = '',
   readError = null,
   dataSource = "repo: 'LifeLoggerAI/urai-spatial'; status: 'blocked';",
+  credentialFiles = {},
 } = {}) {
   const calls = { spawn: [], exec: [], read: [] };
 
@@ -26,6 +38,7 @@ function createHarness({
     const target = String(input);
     if (target.includes('seed-system-registry.mjs')) return "batch.set(ref, data, { merge: false });";
     if (target.includes('system-registry-data.mjs')) return dataSource;
+    if (target in credentialFiles) return credentialFiles[target];
     throw new Error(`Unexpected read: ${target}`);
   };
 
@@ -123,6 +136,7 @@ expectFailure(
     URAI_ADMIN_PRODUCTION_APPROVAL: 'APPROVE_URAI_ADMIN_PRODUCTION',
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(PRODUCTION_PROJECT),
   }, { dataSource: "repo: 'LifeLoggerAI/urai-spatial'; repo: 'LifeLoggerAI/UrAi*'; status: 'blocked';" }),
   /Legacy wildcard repository authority is forbidden/,
 );
@@ -224,6 +238,67 @@ expectFailure(
   /does not match approved staging project/,
 );
 
+expectFailure(
+  'cloud apply rejects missing explicit credential source',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_STAGING_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED: '1',
+    URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+    URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/staging.json',
+  }),
+  /explicit project-bound credential source/,
+);
+
+expectFailure(
+  'cloud apply rejects credential project mismatch',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_STAGING_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED: '1',
+    URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(PRODUCTION_PROJECT),
+  }),
+  /does not match target urai-admin-staging/,
+);
+
+expectFailure(
+  'cloud apply rejects missing confined receipt path',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_STAGING_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED: '1',
+    URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+    FIREBASE_SERVICE_ACCOUNT_KEY: cloudAuthority(STAGING_PROJECT).FIREBASE_SERVICE_ACCOUNT_KEY,
+  }),
+  /URAI_ADMIN_SEED_RECEIPT_PATH/,
+);
+
+expectFailure(
+  'cloud apply rejects ambiguous credential sources',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_STAGING_FIREBASE_PROJECT: STAGING_PROJECT,
+    URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED: '1',
+    URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(STAGING_PROJECT),
+    GOOGLE_APPLICATION_CREDENTIALS: '/tmp/credential.json',
+  }),
+  /exactly one credential source/,
+);
+
 {
   const { result, calls } = invoke({
     URAI_ADMIN_SEED_APPLY: '1',
@@ -233,12 +308,15 @@ expectFailure(
     URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(STAGING_PROJECT),
   });
   assert.equal(result.ok, true);
+  assert.match(result.message, /project-bound cloud target/);
+  assert.match(result.message, /docs\/release-evidence/);
   assert.equal(calls.spawn.length, 2);
   assert.equal(calls.spawn[1].args[0], 'scripts/seed-system-registry.mjs');
   assert.equal(calls.spawn[1].options.env.URAI_ADMIN_SEED_GUARD_PASSED, 'run-system-registry-seed.mjs');
-  console.log('OK: controlled staging apply reaches only the guarded seed child');
+  console.log('OK: controlled staging apply requires project-bound credential and receipt authority');
 }
 
 expectFailure(
@@ -249,6 +327,7 @@ expectFailure(
     URAI_ADMIN_PRODUCTION_APPROVAL: 'APPROVE_URAI_ADMIN_PRODUCTION',
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(PRODUCTION_PROJECT),
   }, { seedStatus: 7 }),
   /exited with status 7/,
   7,
@@ -262,6 +341,7 @@ expectFailure(
     URAI_ADMIN_PRODUCTION_APPROVAL: 'APPROVE_URAI_ADMIN_PRODUCTION',
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
+    ...cloudAuthority(PRODUCTION_PROJECT),
   }, { seedError: new Error('fixture start failure') }),
   /fixture start failure/,
 );
