@@ -89,7 +89,7 @@ if (!packageJson.scripts?.['receipt:system-registry:emulator']?.includes('run-sy
 if (!page.includes('collection="systemRegistry"')) failures.push('admin system page must read the live systemRegistry source');
 if (!page.includes('Not connected')) failures.push('admin system page must preserve safe Not connected display');
 if (!collectionTable.includes("| 'systemRegistry'")) failures.push('admin collection table must allow the systemRegistry collection key');
-if (!collectionRoute.includes("systemRegistry: {")) failures.push('authenticated admin collection API must explicitly allowlist systemRegistry');
+if (!collectionRoute.includes('systemRegistry: {')) failures.push('authenticated admin collection API must explicitly allowlist systemRegistry');
 if (!collectionRoute.includes("collection: 'systemRegistry'")) failures.push('authenticated admin collection API must read the systemRegistry collection');
 
 for (const [name, workflow] of [
@@ -103,6 +103,14 @@ for (const [name, workflow] of [
   if (!workflow.includes('test "$(git rev-parse HEAD)" = "$TARGET_SHA"')) failures.push(`${name} must prove the checked-out SHA`);
   if (!workflow.includes('git status --porcelain --untracked-files=all')) failures.push(`${name} must prove a clean exact checkout`);
   if (!workflow.includes('pnpm install --frozen-lockfile')) failures.push(`${name} must use the frozen lockfile`);
+
+  const concurrency = workflow.match(/\nconcurrency:\n([\s\S]*?)(?=\nenv:|\njobs:)/)?.[0] || '';
+  if (!concurrency) failures.push(`${name} must define backlog-safe concurrency`);
+  if (!concurrency.includes('github.ref')) failures.push(`${name} concurrency must group by PR ref`);
+  if (!concurrency.includes('cancel-in-progress: true')) failures.push(`${name} must cancel superseded runs`);
+  if (concurrency.includes('github.event.pull_request.head.sha') || concurrency.includes('github.sha')) {
+    failures.push(`${name} concurrency must not preserve one group per commit SHA`);
+  }
 }
 if (!adminCi.includes('pnpm receipt:system-registry:emulator')) failures.push('URAI Admin CI must generate the isolated emulator receipt');
 if (!adminCi.includes('admin-system-registry-emulator-receipt.json')) failures.push('URAI Admin CI must upload the emulator receipt JSON');
