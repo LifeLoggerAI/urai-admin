@@ -50,7 +50,7 @@ export type SystemRegistryRecord = {
   dataBoundary: string;
   privacyClassification: 'public' | 'internal' | 'restricted' | 'confidential';
   operationalRisk: 'low' | 'medium' | 'high';
-  evidenceLinks: string[];
+  evidenceLinks?: string[];
   updatedAt: string;
 };
 ```
