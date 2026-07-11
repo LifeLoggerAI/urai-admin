@@ -2,12 +2,13 @@
 
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import process from 'node:process';
 import admin from 'firebase-admin';
 import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
-import { validateRegistryCloudAuthority } from './system-registry-cloud-policy.mjs';
+import {
+  validateRegistryCloudAuthority,
+  writeConfinedRegistryCloudReceipt,
+} from './system-registry-cloud-policy.mjs';
 
 const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
 const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
@@ -62,9 +63,11 @@ if (!projectPattern.test(projectId)) fail(`Firebase project id is invalid: ${pro
 
 let actualSha;
 let worktree;
+let repoRoot;
 try {
   actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   worktree = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
+  repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
 } catch (error) {
   const reason = error instanceof Error ? error.message : String(error);
   fail(`Failed to inspect the current git checkout: ${reason}`);
@@ -251,8 +254,16 @@ if (cloudAuthority) {
     emulatorMode: false,
     secretValuesIncluded: false,
   };
-  mkdirSync(dirname(cloudAuthority.receiptPath), { recursive: true });
-  writeFileSync(cloudAuthority.receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+  try {
+    writeConfinedRegistryCloudReceipt({
+      receiptPath: cloudAuthority.receiptPath,
+      content: `${JSON.stringify(receipt, null, 2)}\n`,
+      repoRoot,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Registry mutation committed and verified, but immutable receipt creation failed: ${reason}`);
+  }
 }
 
 const targetKind = emulatorMode ? 'isolated emulator' : projectId;
