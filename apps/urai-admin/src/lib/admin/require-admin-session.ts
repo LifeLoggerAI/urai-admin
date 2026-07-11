@@ -18,6 +18,7 @@ const sessionSchema = z.object({ idToken: z.string().min(1) });
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
 const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
 const MAX_AUTH_AGE_SECONDS = 60 * 5;
+const MAX_CLOCK_SKEW_SECONDS = 30;
 
 export class AdminAuthError extends Error {
   status: number;
@@ -43,8 +44,17 @@ function normalizeOrigin(value: string | null | undefined): string | null {
   }
 }
 
-function allowedAdminOrigins(req: NextRequest) {
-  const origins = new Set<string>([req.nextUrl.origin]);
+function isLoopbackOrigin(value: string) {
+  try {
+    const url = new URL(value);
+    return ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function configuredAdminOrigins() {
+  const origins = new Set<string>();
   const candidates = [
     process.env.URAI_ADMIN_BASE_URL,
     process.env.URAI_ADMIN_PRODUCTION_URL,
@@ -52,14 +62,36 @@ function allowedAdminOrigins(req: NextRequest) {
   ];
 
   for (const candidate of candidates) {
-    const origin = normalizeOrigin(candidate?.trim());
-    if (origin) origins.add(origin);
+    const raw = candidate?.trim();
+    if (!raw) continue;
+
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      throw new AdminAuthError('Admin origin allowlist contains an invalid URL', 503);
+    }
+
+    if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+      throw new AdminAuthError('Production admin origins must use HTTPS', 503);
+    }
+    origins.add(parsed.origin);
   }
 
-  const forwardedHost = req.headers.get('x-forwarded-host');
-  const forwardedProto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const forwardedOrigin = normalizeOrigin(forwardedHost ? `${forwardedProto}://${forwardedHost}` : null);
-  if (forwardedOrigin) origins.add(forwardedOrigin);
+  return origins;
+}
+
+function allowedAdminOrigins(req: NextRequest) {
+  const origins = configuredAdminOrigins();
+
+  if (process.env.NODE_ENV !== 'production') {
+    const localOrigin = normalizeOrigin(req.nextUrl.origin);
+    if (localOrigin && isLoopbackOrigin(localOrigin)) origins.add(localOrigin);
+  }
+
+  if (process.env.NODE_ENV === 'production' && origins.size === 0) {
+    throw new AdminAuthError('Admin origin allowlist is not configured', 503);
+  }
 
   return origins;
 }
@@ -83,7 +115,9 @@ export function requireSameOrigin(req: NextRequest) {
 }
 
 function hasRecentAuthentication(authTime: unknown) {
-  return typeof authTime === 'number' && Math.floor(Date.now() / 1000) - authTime <= MAX_AUTH_AGE_SECONDS;
+  if (typeof authTime !== 'number') return false;
+  const ageSeconds = Math.floor(Date.now() / 1000) - authTime;
+  return ageSeconds >= -MAX_CLOCK_SKEW_SECONDS && ageSeconds <= MAX_AUTH_AGE_SECONDS;
 }
 
 export async function exchangeAdminIdToken(req: NextRequest, auditAction: string) {
@@ -127,7 +161,6 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
       target: { type: 'adminUser', id: decodedToken.uid },
       metadata: { canonicalRole: role },
     });
-
     return NextResponse.json(
       { success: false, refreshRequired: true, uid: decodedToken.uid, role },
       { status: 409, headers: noStoreHeaders },
