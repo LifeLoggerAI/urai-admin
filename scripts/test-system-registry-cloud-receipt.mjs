@@ -42,6 +42,19 @@ function authority(receiptPath) {
 
 try {
   {
+    const seedSource = readFileSync(new URL('./seed-system-registry.mjs', import.meta.url), 'utf8');
+    const preflightIndex = seedSource.indexOf('preparedCloudReceipt = prepareConfinedRegistryCloudReceiptTarget');
+    const initializeIndex = seedSource.indexOf('admin.initializeApp');
+    const mutationIndex = seedSource.indexOf('await batch.commit()');
+    const receiptWriteIndex = seedSource.indexOf('const writtenPath = writeConfinedRegistryCloudReceipt');
+    assert.ok(preflightIndex >= 0, 'seed child must invoke immutable receipt preflight');
+    assert.ok(initializeIndex > preflightIndex, 'receipt preflight must occur before Firebase initialization');
+    assert.ok(mutationIndex > initializeIndex, 'registry mutation must occur after receipt preflight');
+    assert.ok(receiptWriteIndex > mutationIndex, 'receipt content must be written only after mutation read-back');
+    console.log('OK: receipt target preflight precedes Firebase initialization and mutation');
+  }
+
+  {
     const repoRoot = createRoot();
     const policy = authority('docs/release-evidence/cloud/run-001.json');
     const absolutePath = writeConfinedRegistryCloudReceipt({
