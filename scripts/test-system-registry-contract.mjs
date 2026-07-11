@@ -1,64 +1,58 @@
 #!/usr/bin/env node
+
 import { readFileSync } from 'node:fs';
+import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
 
 const seed = readFileSync('scripts/seed-system-registry.mjs', 'utf8');
+const wrapper = readFileSync('scripts/run-system-registry-seed.mjs', 'utf8');
 const docs = readFileSync('docs/SYSTEM_OF_SYSTEMS.md', 'utf8');
 const page = readFileSync('apps/urai-admin/app/admin/system/page.jsx', 'utf8');
 const failures = [];
 
 const requiredSystems = [
-  'URAI Main Experience',
-  'URAI Admin',
-  'URAI Analytics',
-  'URAI Communications',
-  'URAI Privacy',
-  'URAI Foundation',
-  'URAI Spatial',
-  'URAI Studio',
-  'URAI Jobs',
-  'URAI Investors',
-  'URAI Marketing',
-  'URAI Asset Factory',
-  'URAI B2B Portal',
+  'URAI Main Experience', 'URAI Admin', 'URAI Analytics', 'URAI Communications',
+  'URAI Privacy', 'URAI Foundation', 'URAI Spatial', 'URAI Studio', 'URAI Jobs',
+  'URAI Investors', 'URAI Marketing', 'URAI Asset Factory', 'URAI Content',
+  'URAI B2B Portal', 'URAI Storytime', 'Legacy URAI Demo', 'Legacy Dev/Prod/Staging',
 ];
 
 const requiredFields = [
-  'id',
-  'name',
-  'repo',
-  'runtime',
-  'owner',
-  'status',
-  'productionUrl',
-  'stagingUrl',
-  'firebaseTarget',
-  'lastReleaseSha',
-  'lastSmokeResult',
-  'healthEndpoint',
-  'requiredSecrets',
-  'knownBlockers',
-  'integrationContracts',
-  'dataBoundary',
-  'privacyClassification',
-  'operationalRisk',
-  'updatedAt',
+  'id', 'name', 'repo', 'runtime', 'owner', 'status', 'productionUrl', 'stagingUrl',
+  'firebaseTarget', 'lastReleaseSha', 'rollbackSha', 'lastSmokeResult', 'healthEndpoint',
+  'monitoringUrl', 'requiredSecrets', 'knownBlockers', 'integrationContracts', 'dataBoundary',
+  'privacyClassification', 'operationalRisk', 'evidenceLinks',
 ];
 
+const ids = new Set();
+for (const record of SYSTEM_REGISTRY_RECORDS) {
+  if (ids.has(record.id)) failures.push(`duplicate registry id: ${record.id}`);
+  ids.add(record.id);
+  for (const field of requiredFields) {
+    if (!(field in record)) failures.push(`${record.id} missing field: ${field}`);
+  }
+  if (record.status === 'production_ready') failures.push(`${record.id} must not be predeclared production_ready`);
+}
+
 for (const system of requiredSystems) {
-  if (!seed.includes(system)) failures.push(`seed script missing system: ${system}`);
+  if (!SYSTEM_REGISTRY_RECORDS.some((record) => record.name === system)) failures.push(`registry data missing system: ${system}`);
   if (!docs.includes(system)) failures.push(`system docs missing system: ${system}`);
 }
 
-for (const field of requiredFields) {
-  if (!seed.includes(field)) failures.push(`seed script missing registry field: ${field}`);
+if (SYSTEM_REGISTRY_RECORDS.length !== requiredSystems.length) {
+  failures.push(`registry count ${SYSTEM_REGISTRY_RECORDS.length} does not match required count ${requiredSystems.length}`);
 }
 
-for (const status of ['not_connected', 'blocked', 'unknown']) {
-  if (!seed.includes(status)) failures.push(`seed script missing safe default status/result: ${status}`);
-}
-
-if (!seed.includes('adminOperationalEvents')) failures.push('seed script must write adminOperationalEvents audit evidence');
-if (!seed.includes('URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED')) failures.push('seed script must include staging override guard');
+if (!docs.includes(`Evidence date: ${REGISTRY_EVIDENCE_DATE}.`)) failures.push('docs evidence date must match canonical registry data');
+if (docs.includes('PR #433')) failures.push('docs contain stale spatial PR #433 authority');
+if (!seed.includes('SYSTEM_REGISTRY_RECORDS')) failures.push('seed must import canonical registry data');
+if (!seed.includes('registryDigest')) failures.push('seed must emit immutable registry digest evidence');
+if (!seed.includes('sourceSha: expectedSha')) failures.push('seed must bind records to the exact source SHA');
+if (!seed.includes('{ merge: false }')) failures.push('seed must replace canonical records rather than preserve stale fields');
+if (!seed.includes('URAI_ADMIN_SEED_GUARD_PASSED')) failures.push('direct seed execution must require the guarded wrapper');
+if (!wrapper.includes("git', ['status', '--porcelain']")) failures.push('wrapper must require a clean worktree');
+if (!wrapper.includes('APPROVE_URAI_ADMIN_PRODUCTION')) failures.push('wrapper must require explicit production approval');
+if (!wrapper.includes('APPROVE_URAI_ADMIN_STAGING')) failures.push('wrapper must require explicit staging approval');
+if (!wrapper.includes('serviceAccount.project_id')) failures.push('wrapper must reject service-account project mismatch');
 if (!page.includes('systemRegistry')) failures.push('admin system page must read or mention systemRegistry live source');
 if (!page.includes('Not connected') && !page.includes('not connected')) failures.push('admin system page must preserve safe not-connected display');
 
@@ -68,4 +62,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('OK: System registry contract passed.');
+console.log(`OK: System registry contract passed for ${SYSTEM_REGISTRY_RECORDS.length} records at evidence date ${REGISTRY_EVIDENCE_DATE}.`);
