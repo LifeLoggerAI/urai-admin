@@ -9,6 +9,7 @@ const expectedSha = process.env.URAI_ADMIN_SEED_SHA || '';
 const projectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'urai-4dc1d';
 const productionApproval = process.env.URAI_ADMIN_PRODUCTION_APPROVAL || '';
 const shaPattern = /^[0-9a-f]{40}$/;
+const legacyAuthorityPattern = /repo:\s*['"]LifeLoggerAI\/UrAi\*['"]/;
 const seedSource = readFileSync(new URL('./seed-system-registry.mjs', import.meta.url), 'utf8');
 
 function fail(message) {
@@ -24,10 +25,17 @@ if (!apply) {
 if (confirm !== 'SEED_SYSTEM_REGISTRY') fail('URAI_ADMIN_SEED_CONFIRM must equal SEED_SYSTEM_REGISTRY.');
 if (!shaPattern.test(expectedSha)) fail('URAI_ADMIN_SEED_SHA must be a full lowercase 40-character SHA.');
 
-const actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+let actualSha;
+try {
+  actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  fail(`Failed to retrieve current git SHA: ${reason}`);
+}
+
 if (actualSha !== expectedSha) fail(`Checked-out SHA ${actualSha} does not match URAI_ADMIN_SEED_SHA ${expectedSha}.`);
 
-if (seedSource.includes("repo: 'LifeLoggerAI/UrAi*'")) {
+if (legacyAuthorityPattern.test(seedSource)) {
   fail('Legacy LifeLoggerAI/UrAi* authority remains in seed-system-registry.mjs. Merge the canonical registry correction before seeding.');
 }
 
@@ -40,5 +48,8 @@ const result = spawnSync(process.execPath, ['scripts/seed-system-registry.mjs'],
   env: process.env,
 });
 
-if (result.error) throw result.error;
+if (result.error) {
+  fail(`Failed to start registry seed: ${result.error.message}`);
+}
+
 process.exit(result.status ?? 1);
