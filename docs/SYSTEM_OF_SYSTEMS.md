@@ -44,6 +44,7 @@ export type SystemRegistryRecord = {
   lastSmokeResult?: 'pass' | 'fail' | 'unknown';
   healthEndpoint?: string;
   monitoringUrl?: string;
+  requiredSecrets: string[];
   knownBlockers: string[];
   integrationContracts: string[];
   dataBoundary: string;
