@@ -1,4 +1,11 @@
-import { readFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 function fail(message) {
@@ -70,6 +77,78 @@ function confinedReceiptPath(value) {
     fail('URAI_ADMIN_SEED_RECEIPT_PATH must end in .json.');
   }
   return normalized;
+}
+
+function requireDirectoryWithoutSymlink(target, label, {
+  existsSyncFn,
+  lstatSyncFn,
+  mkdirSyncFn,
+}) {
+  if (!existsSyncFn(target)) mkdirSyncFn(target, { mode: 0o700 });
+  const metadata = lstatSyncFn(target);
+  if (metadata.isSymbolicLink()) fail(`${label} must not be a symbolic link.`);
+  if (!metadata.isDirectory()) fail(`${label} must be a directory.`);
+}
+
+export function writeConfinedRegistryCloudReceipt({
+  receiptPath,
+  content,
+  repoRoot,
+  existsSyncFn = existsSync,
+  lstatSyncFn = lstatSync,
+  mkdirSyncFn = mkdirSync,
+  realpathSyncFn = realpathSync,
+  writeFileSyncFn = writeFileSync,
+} = {}) {
+  const normalizedReceiptPath = confinedReceiptPath(receiptPath);
+  if (typeof repoRoot !== 'string' || !repoRoot.trim()) {
+    fail('Cloud receipt writing requires the exact repository root.');
+  }
+  if (typeof content !== 'string') fail('Cloud receipt content must be a string.');
+
+  let realRoot;
+  try {
+    realRoot = realpathSyncFn(repoRoot);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Repository root could not be resolved: ${reason}`);
+  }
+
+  const evidenceRoot = path.resolve(realRoot, 'docs', 'release-evidence');
+  const targetPath = path.resolve(realRoot, ...normalizedReceiptPath.split('/'));
+  const relativeToEvidence = path.relative(evidenceRoot, targetPath);
+  if (!relativeToEvidence || relativeToEvidence.startsWith('..') || path.isAbsolute(relativeToEvidence)) {
+    fail('Cloud receipt target must resolve to a file below docs/release-evidence/.');
+  }
+
+  let current = realRoot;
+  for (const segment of normalizedReceiptPath.split('/').slice(0, -1)) {
+    current = path.join(current, segment);
+    requireDirectoryWithoutSymlink(current, `Cloud receipt directory ${path.relative(realRoot, current)}`, {
+      existsSyncFn,
+      lstatSyncFn,
+      mkdirSyncFn,
+    });
+  }
+
+  if (existsSyncFn(targetPath)) {
+    const metadata = lstatSyncFn(targetPath);
+    if (metadata.isSymbolicLink()) fail('Cloud receipt target must not be a symbolic link.');
+    fail('Cloud receipt target already exists; use a fresh immutable receipt path.');
+  }
+
+  try {
+    writeFileSyncFn(targetPath, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Cloud receipt could not be created exclusively: ${reason}`);
+  }
+
+  const written = lstatSyncFn(targetPath);
+  if (written.isSymbolicLink() || !written.isFile()) {
+    fail('Cloud receipt target must be a newly created regular file.');
+  }
+  return targetPath;
 }
 
 export function validateRegistryCloudAuthority({
