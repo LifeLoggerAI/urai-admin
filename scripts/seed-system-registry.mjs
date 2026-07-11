@@ -6,6 +6,7 @@ import process from 'node:process';
 import admin from 'firebase-admin';
 import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
 import {
+  prepareConfinedRegistryCloudReceiptTarget,
   validateRegistryCloudAuthority,
   writeConfinedRegistryCloudReceipt,
 } from './system-registry-cloud-policy.mjs';
@@ -119,12 +120,17 @@ if (!SYSTEM_REGISTRY_RECORDS.some((record) => record.repo === 'LifeLoggerAI/urai
 }
 
 let cloudAuthority = null;
+let preparedCloudReceipt = null;
 if (!emulatorMode) {
   try {
     cloudAuthority = validateRegistryCloudAuthority({ env: process.env, projectId });
+    preparedCloudReceipt = prepareConfinedRegistryCloudReceiptTarget({
+      receiptPath: cloudAuthority.receiptPath,
+      repoRoot,
+    });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    fail(reason);
+    fail(`Cloud authority or immutable receipt preflight failed before mutation: ${reason}`);
   }
 }
 
@@ -255,11 +261,14 @@ if (cloudAuthority) {
     secretValuesIncluded: false,
   };
   try {
-    writeConfinedRegistryCloudReceipt({
+    const writtenPath = writeConfinedRegistryCloudReceipt({
       receiptPath: cloudAuthority.receiptPath,
       content: `${JSON.stringify(receipt, null, 2)}\n`,
       repoRoot,
     });
+    if (writtenPath !== preparedCloudReceipt?.absolutePath) {
+      fail('Cloud receipt path changed between preflight and exclusive creation.');
+    }
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     fail(`Registry mutation committed and verified, but immutable receipt creation failed: ${reason}`);
