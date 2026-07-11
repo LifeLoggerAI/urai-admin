@@ -17,7 +17,7 @@ env:
 
 jobs:
   validate:
-    runs-on: macos-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout exact reviewed head
         uses: actions/checkout@v4
@@ -39,12 +39,14 @@ jobs:
           node-version: 22
 
       - name: Setup pnpm
+        shell: bash
         run: |
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
           pnpm --version
 
       - name: Install dependencies
+        shell: bash
         run: pnpm install --frozen-lockfile
 
       - name: Prove install preserved exact clean head
@@ -52,10 +54,12 @@ jobs:
         run: test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Typecheck admin app
-        run: pnpm --filter urai-admin typecheck | tee /tmp/urai-admin-app-typecheck.log
+        shell: bash
+        run: pnpm --filter urai-admin typecheck | tee "$RUNNER_TEMP/urai-admin-app-typecheck.log"
 
       - name: Build admin app
-        run: pnpm --filter urai-admin build | tee /tmp/urai-admin-app-build.log
+        shell: bash
+        run: pnpm --filter urai-admin build | tee "$RUNNER_TEMP/urai-admin-app-build.log"
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -70,7 +74,7 @@ jobs:
         with:
           name: urai-admin-validate-evidence-${{ env.TARGET_SHA }}
           path: |
-            /tmp/urai-admin-app-typecheck.log
-            /tmp/urai-admin-app-build.log
+            ${{ runner.temp }}/urai-admin-app-typecheck.log
+            ${{ runner.temp }}/urai-admin-app-build.log
           if-no-files-found: warn
           retention-days: 365
