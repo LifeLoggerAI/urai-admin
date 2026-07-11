@@ -23,7 +23,7 @@
     "preflight": "pnpm check:types && pnpm lint && pnpm test:unit && pnpm test:rules && pnpm test:registry && pnpm build",
     "release:lock": "pnpm preflight && pnpm test:e2e && pnpm test:smoke && pnpm verify:release",
     "launch:lock": "bash scripts/launch-lock.sh",
-    "seed:system-registry": "node scripts/seed-system-registry.mjs",
+    "seed:system-registry": "node scripts/run-system-registry-seed.mjs",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "pnpm run deploy:production",
