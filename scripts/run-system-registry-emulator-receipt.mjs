@@ -65,14 +65,14 @@ const firestore = app.firestore();
 
 async function snapshotState() {
   const [registry, events] = await Promise.all([
-    firestore.collection('systemRegistry').orderBy(admin.firestore.FieldPath.documentId()).get(),
-    firestore.collection('adminOperationalEvents').orderBy(admin.firestore.FieldPath.documentId()).get(),
+    firestore.collection('systemRegistry').get(),
+    firestore.collection('adminOperationalEvents').get(),
   ]);
   return {
     registryCount: registry.size,
-    registryIds: registry.docs.map((doc) => doc.id),
+    registryIds: registry.docs.map((doc) => doc.id).sort(),
     operationalEventCount: events.size,
-    operationalEventIds: events.docs.map((doc) => doc.id),
+    operationalEventIds: events.docs.map((doc) => doc.id).sort(),
   };
 }
 
@@ -112,7 +112,7 @@ const applyOutput = run(process.execPath, ['scripts/run-system-registry-seed.mjs
 });
 
 const [registrySnapshot, eventSnapshot] = await Promise.all([
-  firestore.collection('systemRegistry').orderBy(admin.firestore.FieldPath.documentId()).get(),
+  firestore.collection('systemRegistry').get(),
   firestore.collection('adminOperationalEvents').where('action', '==', 'systemRegistry.seed').get(),
 ]);
 
