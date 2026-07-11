@@ -7,6 +7,7 @@ const SHA = 'a'.repeat(40);
 const OTHER_SHA = 'b'.repeat(40);
 const PRODUCTION_PROJECT = 'urai-4dc1d';
 const STAGING_PROJECT = 'urai-admin-staging';
+const EMULATOR_PROJECT = 'urai-admin-emulator';
 
 function createHarness({
   contractStatus = 0,
@@ -136,6 +137,67 @@ expectFailure(
   }),
   /Production seed requires/,
 );
+
+expectFailure(
+  'emulator apply rejects missing loopback host',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIRESTORE_EMULATOR: '1',
+    URAI_ADMIN_FIREBASE_PROJECT: EMULATOR_PROJECT,
+    URAI_ADMIN_EMULATOR_APPROVAL: 'APPROVE_URAI_ADMIN_EMULATOR',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+  }),
+  /explicit loopback host and port/,
+);
+
+expectFailure(
+  'emulator apply rejects noncanonical project id',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIRESTORE_EMULATOR: '1',
+    FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
+    URAI_ADMIN_FIREBASE_PROJECT: 'different-emulator',
+    URAI_ADMIN_EMULATOR_APPROVAL: 'APPROVE_URAI_ADMIN_EMULATOR',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+  }),
+  /must exactly equal urai-admin-emulator/,
+);
+
+expectFailure(
+  'emulator apply forbids cloud credentials',
+  invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIRESTORE_EMULATOR: '1',
+    FIRESTORE_EMULATOR_HOST: 'localhost:8080',
+    URAI_ADMIN_FIREBASE_PROJECT: EMULATOR_PROJECT,
+    URAI_ADMIN_EMULATOR_APPROVAL: 'APPROVE_URAI_ADMIN_EMULATOR',
+    FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({ project_id: EMULATOR_PROJECT }),
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+  }),
+  /forbids cloud service-account credentials/,
+);
+
+{
+  const { result, calls } = invoke({
+    URAI_ADMIN_SEED_APPLY: '1',
+    URAI_ADMIN_FIRESTORE_EMULATOR: '1',
+    FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
+    URAI_ADMIN_FIREBASE_PROJECT: EMULATOR_PROJECT,
+    URAI_ADMIN_EMULATOR_APPROVAL: 'APPROVE_URAI_ADMIN_EMULATOR',
+    URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
+    URAI_ADMIN_SEED_SHA: SHA,
+  });
+  assert.equal(result.ok, true);
+  assert.match(result.message, /isolated emulator/);
+  assert.equal(calls.spawn.length, 2);
+  assert.equal(calls.spawn[1].args[0], 'scripts/seed-system-registry.mjs');
+  assert.equal(calls.spawn[1].options.env.URAI_ADMIN_SEED_GUARD_PASSED, 'run-system-registry-seed.mjs');
+  assert.equal(calls.spawn[1].options.env.FIRESTORE_EMULATOR_HOST, '127.0.0.1:8080');
+  console.log('OK: controlled emulator apply reaches only the guarded seed child');
+}
 
 expectFailure(
   'staging apply rejects missing approved staging project',
