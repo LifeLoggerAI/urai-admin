@@ -90,21 +90,18 @@ function requireDirectoryWithoutSymlink(target, label, {
   if (!metadata.isDirectory()) fail(`${label} must be a directory.`);
 }
 
-export function writeConfinedRegistryCloudReceipt({
+export function prepareConfinedRegistryCloudReceiptTarget({
   receiptPath,
-  content,
   repoRoot,
   existsSyncFn = existsSync,
   lstatSyncFn = lstatSync,
   mkdirSyncFn = mkdirSync,
   realpathSyncFn = realpathSync,
-  writeFileSyncFn = writeFileSync,
 } = {}) {
   const normalizedReceiptPath = confinedReceiptPath(receiptPath);
   if (typeof repoRoot !== 'string' || !repoRoot.trim()) {
-    fail('Cloud receipt writing requires the exact repository root.');
+    fail('Cloud receipt preparation requires the exact repository root.');
   }
-  if (typeof content !== 'string') fail('Cloud receipt content must be a string.');
 
   let realRoot;
   try {
@@ -137,18 +134,45 @@ export function writeConfinedRegistryCloudReceipt({
     fail('Cloud receipt target already exists; use a fresh immutable receipt path.');
   }
 
+  return {
+    absolutePath: targetPath,
+    relativePath: normalizedReceiptPath,
+    repositoryRoot: realRoot,
+  };
+}
+
+export function writeConfinedRegistryCloudReceipt({
+  receiptPath,
+  content,
+  repoRoot,
+  existsSyncFn = existsSync,
+  lstatSyncFn = lstatSync,
+  mkdirSyncFn = mkdirSync,
+  realpathSyncFn = realpathSync,
+  writeFileSyncFn = writeFileSync,
+} = {}) {
+  if (typeof content !== 'string') fail('Cloud receipt content must be a string.');
+  const prepared = prepareConfinedRegistryCloudReceiptTarget({
+    receiptPath,
+    repoRoot,
+    existsSyncFn,
+    lstatSyncFn,
+    mkdirSyncFn,
+    realpathSyncFn,
+  });
+
   try {
-    writeFileSyncFn(targetPath, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+    writeFileSyncFn(prepared.absolutePath, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     fail(`Cloud receipt could not be created exclusively: ${reason}`);
   }
 
-  const written = lstatSyncFn(targetPath);
+  const written = lstatSyncFn(prepared.absolutePath);
   if (written.isSymbolicLink() || !written.isFile()) {
     fail('Cloud receipt target must be a newly created regular file.');
   }
-  return targetPath;
+  return prepared.absolutePath;
 }
 
 export function validateRegistryCloudAuthority({
