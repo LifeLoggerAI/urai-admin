@@ -44,21 +44,24 @@ function projectFromImpersonationUrl(value) {
 }
 
 function credentialProjectId(credential) {
-  const candidates = new Set();
-  if (typeof credential.project_id === 'string' && credential.project_id) {
-    candidates.add(credential.project_id);
-  }
+  const identityProjects = new Set();
   const emailProject = projectFromServiceAccountEmail(credential.client_email);
-  if (emailProject) candidates.add(emailProject);
+  if (emailProject) identityProjects.add(emailProject);
   const impersonationProject = projectFromImpersonationUrl(credential.service_account_impersonation_url);
-  if (impersonationProject) candidates.add(impersonationProject);
-  if (candidates.size === 0) {
-    fail('Cloud credential does not expose a project-bound service account identity.');
+  if (impersonationProject) identityProjects.add(impersonationProject);
+
+  if (identityProjects.size === 0) {
+    fail('Cloud credential does not expose a project-bound service account identity through client_email or service_account_impersonation_url.');
   }
-  if (candidates.size !== 1) {
-    fail(`Cloud credential contains conflicting project identities: ${[...candidates].sort().join(', ')}.`);
+  if (identityProjects.size !== 1) {
+    fail(`Cloud credential contains conflicting service-account project identities: ${[...identityProjects].sort().join(', ')}.`);
   }
-  return [...candidates][0];
+
+  const identityProject = [...identityProjects][0];
+  if (typeof credential.project_id === 'string' && credential.project_id && credential.project_id !== identityProject) {
+    fail(`Cloud credential project_id ${credential.project_id} conflicts with service-account identity project ${identityProject}.`);
+  }
+  return identityProject;
 }
 
 function confinedReceiptPath(value) {
