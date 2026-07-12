@@ -45,9 +45,10 @@ jobs:
       - name: Setup pnpm
         shell: bash
         run: |
+          set -euo pipefail
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
-          pnpm --version
+          test "$(pnpm --version)" = "9.15.0"
 
       - name: Install dependencies
         shell: bash
@@ -59,11 +60,15 @@ jobs:
 
       - name: Typecheck admin app
         shell: bash
-        run: pnpm --filter urai-admin typecheck | tee "$RUNNER_TEMP/urai-admin-app-typecheck.log"
+        run: |
+          set -euo pipefail
+          pnpm --filter urai-admin typecheck | tee "$RUNNER_TEMP/urai-admin-app-typecheck.log"
 
       - name: Build admin app
         shell: bash
-        run: pnpm --filter urai-admin build | tee "$RUNNER_TEMP/urai-admin-app-build.log"
+        run: |
+          set -euo pipefail
+          pnpm --filter urai-admin build | tee "$RUNNER_TEMP/urai-admin-app-build.log"
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -71,6 +76,13 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy
           NEXT_PUBLIC_FIREBASE_APP_ID: dummy
+
+      - name: Prove final clean exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Upload validate evidence logs
         if: always()
@@ -80,5 +92,5 @@ jobs:
           path: |
             ${{ runner.temp }}/urai-admin-app-typecheck.log
             ${{ runner.temp }}/urai-admin-app-build.log
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 365
