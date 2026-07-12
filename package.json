@@ -24,7 +24,7 @@
     "release:lock": "pnpm preflight && pnpm test:e2e && pnpm test:smoke && pnpm verify:release",
     "launch:lock": "bash scripts/launch-lock.sh",
     "seed:system-registry": "node scripts/run-system-registry-seed.mjs",
-    "receipt:system-registry:emulator": "firebase emulators:exec --only firestore --project urai-admin-emulator \"node scripts/run-system-registry-emulator-receipt.mjs\"",
+    "receipt:system-registry:emulator": "firebase emulators:exec --only firestore --config firebase.emulator.json --project urai-admin-emulator \"node scripts/run-system-registry-emulator-receipt.mjs\"",
     "functions:typecheck:active": "pnpm --dir functions exec tsc -p tsconfig.active.json --noEmit",
     "functions:build:active": "pnpm --dir functions exec tsc -p tsconfig.active.json",
     "deploy": "pnpm run deploy:production",
