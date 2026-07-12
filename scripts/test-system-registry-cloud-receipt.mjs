@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -25,7 +26,7 @@ const credential = JSON.stringify({
 const roots = [];
 
 function createRoot() {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'urai-admin-cloud-receipt-'));
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'urai-admin-cloud-receipt-')));
   roots.push(root);
   return root;
 }
