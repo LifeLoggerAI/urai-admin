@@ -6,6 +6,7 @@ import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-regist
 const seed = readFileSync('scripts/seed-system-registry.mjs', 'utf8');
 const wrapper = readFileSync('scripts/run-system-registry-seed.mjs', 'utf8');
 const cloudPolicy = readFileSync('scripts/system-registry-cloud-policy.mjs', 'utf8');
+const cloudReceiptTests = readFileSync('scripts/test-system-registry-cloud-receipt.mjs', 'utf8');
 const emulatorReceipt = readFileSync('scripts/run-system-registry-emulator-receipt.mjs', 'utf8');
 const guardTests = readFileSync('scripts/test-system-registry-seed-guard.mjs', 'utf8');
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -68,6 +69,11 @@ if (!seed.includes('APPROVE_URAI_ADMIN_EMULATOR')) failures.push('seed child mus
 if (!seed.includes('loopbackEmulatorPattern')) failures.push('seed child must bind emulator writes to loopback');
 if (!seed.includes('Emulator seed forbids cloud service-account credentials')) failures.push('seed child must reject cloud credentials in emulator mode');
 if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
+if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
+if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
+if (!seed.includes('transaction.set(registryCollection.doc')) failures.push('canonical registry writes must occur inside the transaction');
+if (seed.includes('firestore.batch()')) failures.push('seed must not use a non-atomic batch after separate stale-record inspection');
+if (!seed.includes('atomicPreflightAndMutationVerified: true')) failures.push('cloud receipt must attest atomic stale-record inspection and mutation');
 if (!seed.includes('validateRegistryCloudAuthority')) failures.push('seed child must independently validate cloud credential and receipt authority');
 if (!seed.includes('Post-commit registry field mismatch')) failures.push('seed child must verify canonical fields after commit');
 if (!seed.includes('Post-commit operational event')) failures.push('seed child must verify the exact operational event after commit');
@@ -88,6 +94,8 @@ if (!wrapper.includes('validateRegistryCloudAuthority')) failures.push('wrapper 
 for (const [phrase, description] of [
   ['exactly one credential source', 'cloud policy must reject ambiguous credential sources'],
   ['service_account_impersonation_url', 'cloud policy must bind workload identity impersonation'],
+  ['client_email or service_account_impersonation_url', 'cloud policy must require an actual service-account identity'],
+  ['conflicts with service-account identity project', 'cloud policy must treat project_id only as a consistency check'],
   ['Cloud credential project', 'cloud policy must reject credential project mismatch'],
   ['docs/release-evidence/', 'cloud receipt must be confined to release evidence'],
   ['must end in .json', 'cloud receipt must be machine-readable JSON'],
@@ -95,6 +103,8 @@ for (const [phrase, description] of [
   if (!cloudPolicy.includes(phrase)) failures.push(description);
 }
 
+if (!cloudReceiptTests.includes('project-only credential JSON')) failures.push('cloud receipt tests must reject project-only credential JSON');
+if (!cloudReceiptTests.includes('atomic stale-record/write transaction')) failures.push('cloud receipt tests must prove transaction ordering');
 if (!guardTests.includes('dry-run validates without spawning the seed child')) failures.push('guard tests must prove dry-run nonmutation');
 if (!guardTests.includes('apply rejects legacy wildcard repository authority')) failures.push('guard tests must reject legacy wildcard authority');
 if (!guardTests.includes('controlled staging apply requires project-bound credential and receipt authority')) failures.push('guard tests must prove project-bound staging cloud authority');
@@ -108,6 +118,7 @@ if (!emulatorReceipt.includes('productionMutationPerformed: false')) failures.pu
 if (!emulatorReceipt.includes('stagingAuthorityAsserted: false')) failures.push('emulator receipt must not assert staging authority');
 if (!packageJson.scripts?.['test:registry']?.includes('test-system-registry-seed-guard.mjs')) failures.push('test:registry must execute behavioral seed guard tests');
 if (!packageJson.scripts?.['receipt:system-registry:emulator']?.includes('run-system-registry-emulator-receipt.mjs')) failures.push('package scripts must expose the guarded emulator receipt command');
+if (!String(packageJson.packageManager || '').endsWith('e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c')) failures.push('packageManager must retain the full pnpm integrity hash');
 if (!page.includes('collection="systemRegistry"')) failures.push('admin system page must read the live systemRegistry source');
 if (!page.includes('Not connected')) failures.push('admin system page must preserve safe Not connected display');
 if (!collectionTable.includes("| 'systemRegistry'")) failures.push('admin collection table must allow the systemRegistry collection key');
