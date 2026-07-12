@@ -15,6 +15,8 @@ const requiredSnippets = [
   'match /adminReleaseEvidence/{evidenceId}',
   'match /systemRegistry/{systemId}',
   'match /governanceEvidence/{evidenceId}',
+  'match /{rawAnalyticsCollection}/{eventId}',
+  "rawAnalyticsCollection.matches('^analytics_events_raw_[0-9]{4}-[0-9]{2}-[0-9]{2}$')",
   'allow update, delete: if false'
 ];
 
@@ -25,11 +27,12 @@ for (const snippet of requiredSnippets) {
 const forbiddenBroadAllows = [
   /allow\s+read,\s*write:\s*if\s+true/,
   /allow\s+write:\s*if\s+isSignedIn\(\)/,
-  /allow\s+read:\s*if\s+isSignedIn\(\)\s*;/
+  /allow\s+read:\s*if\s+isSignedIn\(\)\s*;/,
+  /match\s+\/analytics_events_raw_\{[^}]+\}\//
 ];
 
 for (const pattern of forbiddenBroadAllows) {
-  if (pattern.test(rules)) failures.push(`unsafe broad rule matched: ${pattern}`);
+  if (pattern.test(rules)) failures.push(`unsafe or invalid rule matched: ${pattern}`);
 }
 
 if (failures.length) {
