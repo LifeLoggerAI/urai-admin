@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import process from 'node:process';
 import admin from 'firebase-admin';
@@ -11,14 +11,36 @@ const PROJECT_ID = 'urai-admin-emulator';
 const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
 const RECEIPT_SCHEMA = 'urai-admin-system-registry-emulator-receipt-1';
 const DEFAULT_RECEIPT_PATH = 'docs/release-evidence/admin-system-registry-emulator-receipt.json';
+const diagnosticPath = process.env.URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH || '';
 const shaPattern = /^[0-9a-f]{40}$/;
 const digestPattern = /^[0-9a-f]{64}$/;
 const loopbackEmulatorPattern = /^(?:127\.0\.0\.1|localhost|\[::1\]):[1-9][0-9]{0,4}$/;
 
+function record(message) {
+  const line = `[system-registry-emulator-receipt] ${message}`;
+  console.error(line);
+  if (diagnosticPath) {
+    mkdirSync(dirname(diagnosticPath), { recursive: true });
+    appendFileSync(diagnosticPath, `${line}\n`, { encoding: 'utf8', mode: 0o600 });
+  }
+}
+
 function fail(message) {
-  console.error(`[system-registry-emulator-receipt] ${message}`);
+  record(`FAIL: ${message}`);
   process.exit(1);
 }
+
+process.on('uncaughtException', (error) => {
+  const reason = error instanceof Error ? `${error.stack || error.message}` : String(error);
+  record(`UNCAUGHT_EXCEPTION: ${reason}`);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+  const reason = error instanceof Error ? `${error.stack || error.message}` : String(error);
+  record(`UNHANDLED_REJECTION: ${reason}`);
+  process.exit(1);
+});
 
 function run(command, args, env = process.env) {
   try {
@@ -47,6 +69,7 @@ function sameState(left, right) {
   return JSON.stringify(stable(left)) === JSON.stringify(stable(right));
 }
 
+record('phase=environment-preflight');
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '';
 if (!loopbackEmulatorPattern.test(emulatorHost)) {
   fail('FIRESTORE_EMULATOR_HOST must name an explicit loopback host and port. Start this through Firebase emulators:exec.');
@@ -55,11 +78,13 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_APPLICATION_C
   fail('Cloud service-account credentials are forbidden for the emulator receipt.');
 }
 
+record('phase=source-identity');
 const exactSha = run('git', ['rev-parse', 'HEAD']);
 if (!shaPattern.test(exactSha)) fail(`Checked-out SHA is invalid: ${exactSha}`);
-const worktree = run('git', ['status', '--porcelain']);
-if (worktree) fail('Emulator receipt requires a clean worktree before execution.');
+const worktree = run('git', ['status', '--porcelain', '--untracked-files=all']);
+if (worktree) fail(`Emulator receipt requires a clean worktree before execution. Dirty paths:\n${worktree}`);
 
+record('phase=initialize-admin-sdk');
 const app = admin.initializeApp({ projectId: PROJECT_ID }, `system-registry-receipt-${process.pid}`);
 const firestore = app.firestore();
 
@@ -93,11 +118,13 @@ delete guardedBaseEnv.URAI_ADMIN_STAGING_APPROVAL;
 delete guardedBaseEnv.URAI_ADMIN_STAGING_FIREBASE_PROJECT;
 delete guardedBaseEnv.URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED;
 
+record('phase=initial-snapshot');
 const before = await snapshotState();
 if (before.registryCount !== 0 || before.operationalEventCount !== 0) {
   fail('Emulator namespace is not empty. Restart the disposable Firestore emulator before generating a receipt.');
 }
 
+record('phase=initial-dry-run');
 const initialDryRunEnv = { ...guardedBaseEnv };
 delete initialDryRunEnv.URAI_ADMIN_SEED_APPLY;
 const initialDryRunOutput = run(process.execPath, ['scripts/run-system-registry-seed.mjs'], initialDryRunEnv);
@@ -106,11 +133,13 @@ if (!sameState(before, afterInitialDryRun)) {
   fail('Initial dry run mutated the Firestore emulator.');
 }
 
+record('phase=guarded-apply');
 const applyOutput = run(process.execPath, ['scripts/run-system-registry-seed.mjs'], {
   ...guardedBaseEnv,
   URAI_ADMIN_SEED_APPLY: '1',
 });
 
+record('phase=post-apply-readback');
 const [registrySnapshot, eventSnapshot] = await Promise.all([
   firestore.collection('systemRegistry').get(),
   firestore.collection('adminOperationalEvents').where('action', '==', 'systemRegistry.seed').get(),
@@ -140,6 +169,7 @@ for (const doc of registrySnapshot.docs) {
 if (digests.size !== 1) fail('Applied registry records do not share one immutable registry digest.');
 const [registryDigest] = [...digests];
 
+record('phase=post-apply-dry-run');
 const afterApply = await snapshotState();
 const postApplyDryRunEnv = { ...guardedBaseEnv };
 delete postApplyDryRunEnv.URAI_ADMIN_SEED_APPLY;
@@ -157,6 +187,7 @@ if (seedEvent.metadata?.sourceSha !== exactSha || seedEvent.metadata?.registryDi
   fail('Operational event does not bind the exact source SHA and registry digest.');
 }
 
+record('phase=write-receipt');
 const receipt = {
   schemaVersion: RECEIPT_SCHEMA,
   generatedAt: new Date().toISOString(),
@@ -185,4 +216,4 @@ const receiptPath = process.env.URAI_ADMIN_EMULATOR_RECEIPT_PATH || DEFAULT_RECE
 mkdirSync(dirname(receiptPath), { recursive: true });
 writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
 await app.delete();
-console.log(`[system-registry-emulator-receipt] PASS: ${receiptPath}`);
+record(`PASS: ${receiptPath}`);
