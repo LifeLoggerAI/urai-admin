@@ -45,13 +45,47 @@ try {
     const seedSource = readFileSync(new URL('./seed-system-registry.mjs', import.meta.url), 'utf8');
     const preflightIndex = seedSource.indexOf('preparedCloudReceipt = prepareConfinedRegistryCloudReceiptTarget');
     const initializeIndex = seedSource.indexOf('admin.initializeApp');
-    const mutationIndex = seedSource.indexOf('await batch.commit()');
+    const transactionIndex = seedSource.indexOf('await firestore.runTransaction');
+    const transactionReadIndex = seedSource.indexOf('await transaction.get(registryCollection)');
+    const transactionWriteIndex = seedSource.indexOf('transaction.set(registryCollection.doc');
     const receiptWriteIndex = seedSource.indexOf('const writtenPath = writeConfinedRegistryCloudReceipt');
     assert.ok(preflightIndex >= 0, 'seed child must invoke immutable receipt preflight');
     assert.ok(initializeIndex > preflightIndex, 'receipt preflight must occur before Firebase initialization');
-    assert.ok(mutationIndex > initializeIndex, 'registry mutation must occur after receipt preflight');
-    assert.ok(receiptWriteIndex > mutationIndex, 'receipt content must be written only after mutation read-back');
-    console.log('OK: receipt target preflight precedes Firebase initialization and mutation');
+    assert.ok(transactionIndex > initializeIndex, 'atomic registry transaction must occur after receipt preflight');
+    assert.ok(transactionReadIndex > transactionIndex, 'stale-record query must execute inside the transaction');
+    assert.ok(transactionWriteIndex > transactionReadIndex, 'transaction must read stale records before writing canonical records');
+    assert.ok(receiptWriteIndex > transactionWriteIndex, 'receipt content must be written only after transactional mutation and read-back');
+    assert.equal(seedSource.includes('firestore.batch()'), false, 'registry seed must not use a non-atomic batch after separate stale-record read');
+    console.log('OK: receipt preflight precedes Firebase initialization and atomic stale-record/write transaction');
+  }
+
+  {
+    const policy = authority('docs/release-evidence/cloud/identity.json');
+    assert.equal(policy.credentialProjectId, PROJECT);
+    assert.throws(
+      () => validateRegistryCloudAuthority({
+        env: {
+          FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({ project_id: PROJECT }),
+          URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/project-only.json',
+        },
+        projectId: PROJECT,
+      }),
+      /does not expose a project-bound service account identity/,
+    );
+    assert.throws(
+      () => validateRegistryCloudAuthority({
+        env: {
+          FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
+            project_id: 'different-project',
+            client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
+          }),
+          URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/conflict.json',
+        },
+        projectId: PROJECT,
+      }),
+      /project_id different-project conflicts with service-account identity project/,
+    );
+    console.log('OK: cloud apply requires a service-account identity and treats project_id only as a consistency check');
   }
 
   {
@@ -158,7 +192,7 @@ try {
     console.log('OK: non-directory receipt path component is rejected');
   }
 
-  console.log('PASS: system registry cloud receipt confinement and immutability');
+  console.log('PASS: system registry cloud receipt confinement, identity binding and atomic mutation policy');
 } finally {
   for (const root of roots.reverse()) rmSync(root, { recursive: true, force: true });
 }
