@@ -144,67 +144,69 @@ if (!admin.apps.length) {
 }
 
 const firestore = admin.firestore();
+const registryCollection = firestore.collection('systemRegistry');
+const eventRef = firestore.collection('adminOperationalEvents').doc();
 const now = admin.firestore.FieldValue.serverTimestamp();
 const registryDigest = crypto
   .createHash('sha256')
   .update(JSON.stringify({ evidenceDate: REGISTRY_EVIDENCE_DATE, records: SYSTEM_REGISTRY_RECORDS }))
   .digest('hex');
 
-let existingRegistry;
+let preflightExistingCount = 0;
+let unexpectedRegistryIds = [];
 try {
-  existingRegistry = await firestore.collection('systemRegistry').get();
+  await firestore.runTransaction(async (transaction) => {
+    const existingRegistry = await transaction.get(registryCollection);
+    preflightExistingCount = existingRegistry.size;
+    unexpectedRegistryIds = existingRegistry.docs
+      .map((doc) => doc.id)
+      .filter((id) => !ids.has(id))
+      .sort();
+
+    if (unexpectedRegistryIds.length) {
+      throw new Error(`Refusing to seed while unexpected systemRegistry documents exist: ${unexpectedRegistryIds.join(', ')}.`);
+    }
+
+    for (const system of SYSTEM_REGISTRY_RECORDS) {
+      transaction.set(registryCollection.doc(system.id), {
+        ...system,
+        registryEvidenceDate: REGISTRY_EVIDENCE_DATE,
+        registryDigest,
+        sourceSha: expectedSha,
+        seededBy: 'scripts/seed-system-registry.mjs',
+        seededActor: actor,
+        updatedAt: now,
+      }, { merge: false });
+    }
+
+    transaction.set(eventRef, {
+      actor,
+      action: 'systemRegistry.seed',
+      target: { type: 'collection', id: 'systemRegistry' },
+      metadata: {
+        projectId,
+        count: SYSTEM_REGISTRY_RECORDS.length,
+        evidenceDate: REGISTRY_EVIDENCE_DATE,
+        registryDigest,
+        sourceSha: expectedSha,
+        script: 'scripts/seed-system-registry.mjs',
+        allowNonProduction,
+        emulatorMode,
+        preflightExistingCount,
+      },
+      createdAt: now,
+    });
+  });
 } catch (error) {
   const reason = error instanceof Error ? error.message : String(error);
-  fail(`Failed to inspect existing systemRegistry documents before mutation: ${reason}`);
+  fail(`Atomic registry preflight and mutation failed: ${reason}`);
 }
-
-const unexpectedRegistryIds = existingRegistry.docs
-  .map((doc) => doc.id)
-  .filter((id) => !ids.has(id))
-  .sort();
-if (unexpectedRegistryIds.length) {
-  fail(`Refusing to seed while unexpected systemRegistry documents exist: ${unexpectedRegistryIds.join(', ')}.`);
-}
-
-const batch = firestore.batch();
-for (const system of SYSTEM_REGISTRY_RECORDS) {
-  batch.set(firestore.collection('systemRegistry').doc(system.id), {
-    ...system,
-    registryEvidenceDate: REGISTRY_EVIDENCE_DATE,
-    registryDigest,
-    sourceSha: expectedSha,
-    seededBy: 'scripts/seed-system-registry.mjs',
-    seededActor: actor,
-    updatedAt: now,
-  }, { merge: false });
-}
-
-const eventRef = firestore.collection('adminOperationalEvents').doc();
-batch.set(eventRef, {
-  actor,
-  action: 'systemRegistry.seed',
-  target: { type: 'collection', id: 'systemRegistry' },
-  metadata: {
-    projectId,
-    count: SYSTEM_REGISTRY_RECORDS.length,
-    evidenceDate: REGISTRY_EVIDENCE_DATE,
-    registryDigest,
-    sourceSha: expectedSha,
-    script: 'scripts/seed-system-registry.mjs',
-    allowNonProduction,
-    emulatorMode,
-    preflightExistingCount: existingRegistry.size,
-  },
-  createdAt: now,
-});
-
-await batch.commit();
 
 let verifiedRegistry;
 let verifiedEvent;
 try {
   [verifiedRegistry, verifiedEvent] = await Promise.all([
-    firestore.collection('systemRegistry').get(),
+    registryCollection.get(),
     eventRef.get(),
   ]);
 } catch (error) {
@@ -253,6 +255,7 @@ if (cloudAuthority) {
     credentialSource: cloudAuthority.credentialSource,
     credentialProjectId: cloudAuthority.credentialProjectId,
     credentialProjectVerified: true,
+    atomicPreflightAndMutationVerified: true,
     postCommitReadbackVerified: true,
     unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
     productionMutationPerformed: projectId === PRODUCTION_PROJECT_ID,
