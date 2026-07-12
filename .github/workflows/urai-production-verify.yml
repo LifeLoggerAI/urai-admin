@@ -44,10 +44,12 @@ jobs:
           node-version: '22'
 
       - name: Setup pnpm
+        shell: bash
         run: |
+          set -euo pipefail
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
-          pnpm --version
+          test "$(pnpm --version)" = "9.15.0"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -57,7 +59,17 @@ jobs:
         run: test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Verify
-        run: node scripts/urai-production-verify.mjs | tee /tmp/urai-admin-production-verify.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/urai-production-verify.mjs | tee /tmp/urai-admin-production-verify.log
+
+      - name: Prove final clean exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Upload production verifier evidence
         if: always()
@@ -65,5 +77,5 @@ jobs:
         with:
           name: urai-admin-production-verify-evidence-${{ env.TARGET_SHA }}
           path: /tmp/urai-admin-production-verify.log
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 365
