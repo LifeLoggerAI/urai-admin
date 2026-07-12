@@ -75,10 +75,18 @@ jobs:
         shell: bash
         env:
           URAI_ADMIN_EMULATOR_RECEIPT_PATH: /tmp/urai-admin-system-registry-emulator-receipt.json
+          URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH: /tmp/urai-admin-system-registry-emulator-diagnostic.log
         run: |
           set -euo pipefail
           pnpm test:registry | tee /tmp/urai-admin-registry-contract.log
-          pnpm receipt:system-registry:emulator | tee /tmp/urai-admin-registry-emulator.log
+          set +e
+          pnpm receipt:system-registry:emulator 2>&1 | tee /tmp/urai-admin-registry-emulator.log
+          emulator_status=${PIPESTATUS[0]}
+          set -e
+          if [[ -f "$URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH" ]]; then
+            cat "$URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH"
+          fi
+          test "$emulator_status" -eq 0
           test -s "$URAI_ADMIN_EMULATOR_RECEIPT_PATH"
 
       - name: Security gate
@@ -132,7 +140,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
-          test -z "$(git status --porcelain --untracked-files=all)"
+          git status --porcelain=v1 --untracked-files=all | tee /tmp/urai-admin-final-source-status.log
+          test ! -s /tmp/urai-admin-final-source-status.log
 
       - name: Upload immutable registry emulator receipt
         if: always()
@@ -141,9 +150,10 @@ jobs:
           name: urai-admin-registry-emulator-${{ env.TARGET_SHA }}
           path: |
             /tmp/urai-admin-system-registry-emulator-receipt.json
+            /tmp/urai-admin-system-registry-emulator-diagnostic.log
             /tmp/urai-admin-registry-contract.log
             /tmp/urai-admin-registry-emulator.log
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 365
 
       - name: Upload CI evidence logs
@@ -156,6 +166,7 @@ jobs:
             /tmp/urai-admin-test.log
             /tmp/urai-admin-build.log
             /tmp/urai-admin-preflight.log
+            /tmp/urai-admin-final-source-status.log
             docs/EVIDENCE_LOG.md
             docs/DEPLOYMENT_RUNBOOK.md
             docs/URAI_ADMIN_STANDALONE_READINESS.md
