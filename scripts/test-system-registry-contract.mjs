@@ -103,7 +103,7 @@ for (const [phrase, description] of [
   if (!cloudPolicy.includes(phrase)) failures.push(description);
 }
 
-if (!cloudReceiptTests.includes('project-only credential JSON')) failures.push('cloud receipt tests must reject project-only credential JSON');
+if (!cloudReceiptTests.includes('project_id only as a consistency check')) failures.push('cloud receipt tests must reject project-only credential JSON');
 if (!cloudReceiptTests.includes('atomic stale-record/write transaction')) failures.push('cloud receipt tests must prove transaction ordering');
 if (!guardTests.includes('dry-run validates without spawning the seed child')) failures.push('guard tests must prove dry-run nonmutation');
 if (!guardTests.includes('apply rejects legacy wildcard repository authority')) failures.push('guard tests must reject legacy wildcard authority');
