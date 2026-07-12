@@ -73,11 +73,13 @@ jobs:
 
       - name: Registry contract and isolated emulator receipt
         shell: bash
+        env:
+          URAI_ADMIN_EMULATOR_RECEIPT_PATH: /tmp/urai-admin-system-registry-emulator-receipt.json
         run: |
           set -euo pipefail
           pnpm test:registry | tee /tmp/urai-admin-registry-contract.log
           pnpm receipt:system-registry:emulator | tee /tmp/urai-admin-registry-emulator.log
-          test -s docs/release-evidence/admin-system-registry-emulator-receipt.json
+          test -s "$URAI_ADMIN_EMULATOR_RECEIPT_PATH"
 
       - name: Security gate
         run: pnpm security:gate
@@ -138,7 +140,7 @@ jobs:
         with:
           name: urai-admin-registry-emulator-${{ env.TARGET_SHA }}
           path: |
-            docs/release-evidence/admin-system-registry-emulator-receipt.json
+            /tmp/urai-admin-system-registry-emulator-receipt.json
             /tmp/urai-admin-registry-contract.log
             /tmp/urai-admin-registry-emulator.log
           if-no-files-found: error
