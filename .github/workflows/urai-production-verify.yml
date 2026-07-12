@@ -69,13 +69,16 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
-          test -z "$(git status --porcelain --untracked-files=all)"
+          git status --porcelain=v1 --untracked-files=all | tee /tmp/urai-admin-final-source-status.log
+          test ! -s /tmp/urai-admin-final-source-status.log
 
       - name: Upload production verifier evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: urai-admin-production-verify-evidence-${{ env.TARGET_SHA }}
-          path: /tmp/urai-admin-production-verify.log
+          path: |
+            /tmp/urai-admin-production-verify.log
+            /tmp/urai-admin-final-source-status.log
           if-no-files-found: error
           retention-days: 365
