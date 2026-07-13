@@ -138,12 +138,10 @@ for (const [name, workflow] of [
   if (!workflow.includes('pnpm install --frozen-lockfile')) failures.push(`${name} must use the frozen lockfile`);
 
   const concurrency = workflow.match(/\nconcurrency:\n([\s\S]*?)(?=\nenv:|\njobs:)/)?.[0] || '';
-  if (!concurrency) failures.push(`${name} must define backlog-safe concurrency`);
-  if (!concurrency.includes('github.ref')) failures.push(`${name} concurrency must group by PR ref`);
+  if (!concurrency) failures.push(`${name} must define exact-head concurrency`);
+  if (!concurrency.includes('github.event.pull_request.number || github.ref')) failures.push(`${name} concurrency must identify the PR or ref`);
+  if (!concurrency.includes('github.event.pull_request.head.sha || github.sha')) failures.push(`${name} concurrency must isolate evidence by exact reviewed SHA`);
   if (!concurrency.includes('cancel-in-progress: true')) failures.push(`${name} must cancel superseded runs`);
-  if (concurrency.includes('github.event.pull_request.head.sha') || concurrency.includes('github.sha')) {
-    failures.push(`${name} concurrency must not preserve one group per commit SHA`);
-  }
 }
 if (!adminCi.includes('pnpm receipt:system-registry:emulator')) failures.push('URAI Admin CI must generate the isolated emulator receipt');
 if (!adminCi.includes('admin-system-registry-emulator-receipt.json')) failures.push('URAI Admin CI must upload the emulator receipt JSON');
