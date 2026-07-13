@@ -135,13 +135,33 @@ if (!emulatorMode) {
   }
 }
 
-const inlineCredential = cloudAuthority?.credentialSource === 'inline-service-account-json'
-  ? cloudAuthority.credential
+const validatedCloudCredential = cloudAuthority?.credential || null;
+const validatedCloudCredentialDigest = validatedCloudCredential
+  ? crypto.createHash('sha256').update(JSON.stringify(stable(validatedCloudCredential))).digest('hex')
   : null;
-if (!admin.apps.length) {
-  admin.initializeApp(inlineCredential
-    ? { credential: admin.credential.cert(inlineCredential), projectId }
-    : { projectId });
+
+if (admin.apps.length) fail('Registry seed requires a fresh process with no preinitialized Firebase Admin app.');
+if (emulatorMode) {
+  admin.initializeApp({ projectId });
+} else {
+  if (
+    validatedCloudCredential?.type !== 'service_account'
+    || typeof validatedCloudCredential.client_email !== 'string'
+    || !validatedCloudCredential.client_email
+    || typeof validatedCloudCredential.private_key !== 'string'
+    || !validatedCloudCredential.private_key
+  ) {
+    fail('Cloud registry seed requires complete validated service_account JSON with client_email and private_key so Firebase Admin cannot re-read mutable credential-path contents.');
+  }
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(validatedCloudCredential),
+      projectId,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Validated cloud credential could not initialize Firebase Admin: ${reason}`);
+  }
 }
 
 const firestore = admin.firestore();
@@ -255,7 +275,9 @@ if (cloudAuthority) {
     operationalEventId: eventRef.id,
     credentialSource: cloudAuthority.credentialSource,
     credentialProjectId: cloudAuthority.credentialProjectId,
+    credentialMaterialDigest: validatedCloudCredentialDigest,
     credentialProjectVerified: true,
+    credentialMaterialBoundBeforeInitialization: true,
     atomicPreflightAndMutationVerified: true,
     postCommitReadbackVerified: true,
     unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
