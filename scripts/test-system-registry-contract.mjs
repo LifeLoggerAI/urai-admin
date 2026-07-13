@@ -22,6 +22,8 @@ const failures = [];
 const executableCloudEmulatorGuard = /^\s*if\s*\(\s*!emulatorMode\s*&&\s*emulatorHost\s*\)\s*fail\(\s*['"]Cloud registry seed forbids FIRESTORE_EMULATOR_HOST\.['"]\s*\)\s*;?\s*$/m;
 const cloudEmulatorGuardMatch = executableCloudEmulatorGuard.exec(seed);
 const firebaseInitializationIndex = seed.indexOf('admin.initializeApp(');
+const validatedCredentialIndex = seed.indexOf('const validatedCloudCredential =');
+const boundCredentialInitializationIndex = seed.indexOf('credential: admin.credential.cert(validatedCloudCredential)');
 
 const requiredSystems = [
   'URAI Main Experience', 'URAI Admin', 'URAI Analytics', 'URAI Communications',
@@ -77,6 +79,16 @@ if (firebaseInitializationIndex === -1) failures.push('seed child must initializ
 if (cloudEmulatorGuardMatch && firebaseInitializationIndex !== -1 && cloudEmulatorGuardMatch.index > firebaseInitializationIndex) {
   failures.push('seed child must reject inherited emulator routing before Firebase Admin initialization');
 }
+if (validatedCredentialIndex === -1) failures.push('seed child must retain the already-validated cloud credential object');
+if (boundCredentialInitializationIndex === -1) failures.push('cloud Firebase initialization must use the already-validated credential object');
+if (validatedCredentialIndex !== -1 && boundCredentialInitializationIndex !== -1 && validatedCredentialIndex > boundCredentialInitializationIndex) {
+  failures.push('cloud credential material must be validated and bound before Firebase Admin initialization');
+}
+if (seed.includes('const inlineCredential =')) failures.push('seed must not re-read file credentials through application default fallback');
+if (!seed.includes('complete validated service_account JSON with client_email and private_key')) failures.push('seed must reject cloud credentials that cannot be bound from validated material');
+if (!seed.includes('Registry seed requires a fresh process with no preinitialized Firebase Admin app')) failures.push('seed must reject preinitialized Admin state');
+if (!seed.includes('credentialMaterialDigest: validatedCloudCredentialDigest')) failures.push('cloud receipt must bind the non-secret digest of validated credential material');
+if (!seed.includes('credentialMaterialBoundBeforeInitialization: true')) failures.push('cloud receipt must attest pre-initialization credential binding');
 if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
