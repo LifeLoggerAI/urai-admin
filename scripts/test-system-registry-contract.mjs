@@ -68,6 +68,7 @@ if (!seed.includes('URAI_ADMIN_FIRESTORE_EMULATOR')) failures.push('seed child m
 if (!seed.includes('APPROVE_URAI_ADMIN_EMULATOR')) failures.push('seed child must independently require emulator approval');
 if (!seed.includes('loopbackEmulatorPattern')) failures.push('seed child must bind emulator writes to loopback');
 if (!seed.includes('Emulator seed forbids cloud service-account credentials')) failures.push('seed child must reject cloud credentials in emulator mode');
+if (!seed.includes("if (!emulatorMode && emulatorHost) fail('Cloud registry seed forbids FIRESTORE_EMULATOR_HOST.')")) failures.push('seed child must reject inherited emulator routing in cloud mode');
 if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
