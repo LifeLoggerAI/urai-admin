@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: urai-admin-ci-${{ github.ref }}
+  group: urai-admin-ci-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 env:
@@ -32,11 +32,12 @@ jobs:
 
     steps:
       - name: Checkout exact reviewed head
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.TARGET_SHA }}
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
+          show-progress: false
 
       - name: Prove exact clean head
         shell: bash
@@ -46,12 +47,12 @@ jobs:
           test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
       - name: Setup Java for Firestore emulator
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: 21
@@ -145,7 +146,7 @@ jobs:
 
       - name: Upload immutable registry emulator receipt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: urai-admin-registry-emulator-${{ env.TARGET_SHA }}
           path: |
@@ -158,7 +159,7 @@ jobs:
 
       - name: Upload CI evidence logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: urai-admin-ci-evidence-${{ env.TARGET_SHA }}
           path: |
