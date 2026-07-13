@@ -76,6 +76,7 @@ try {
 
 if (actualSha !== expectedSha) fail(`Checked-out SHA ${actualSha} does not match URAI_ADMIN_SEED_SHA ${expectedSha}.`);
 if (worktree) fail('Registry seed requires a clean worktree.');
+if (!emulatorMode && emulatorHost) fail('Cloud registry seed forbids FIRESTORE_EMULATOR_HOST.');
 
 if (emulatorMode) {
   if (projectId !== EMULATOR_PROJECT_ID) fail(`Emulator seed target must exactly equal ${EMULATOR_PROJECT_ID}.`);
