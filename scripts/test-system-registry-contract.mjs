@@ -19,6 +19,10 @@ const validateAdmin = readFileSync('.github/workflows/validate-admin.yml', 'utf8
 const productionVerify = readFileSync('.github/workflows/urai-production-verify.yml', 'utf8');
 const failures = [];
 
+const executableCloudEmulatorGuard = /^\s*if\s*\(\s*!emulatorMode\s*&&\s*emulatorHost\s*\)\s*fail\(\s*['"]Cloud registry seed forbids FIRESTORE_EMULATOR_HOST\.['"]\s*\)\s*;?\s*$/m;
+const cloudEmulatorGuardMatch = executableCloudEmulatorGuard.exec(seed);
+const firebaseInitializationIndex = seed.indexOf('admin.initializeApp(');
+
 const requiredSystems = [
   'URAI Main Experience', 'URAI Admin', 'URAI Analytics', 'URAI Communications',
   'URAI Privacy', 'URAI Foundation', 'URAI Spatial', 'URAI Studio', 'URAI Jobs',
@@ -68,7 +72,11 @@ if (!seed.includes('URAI_ADMIN_FIRESTORE_EMULATOR')) failures.push('seed child m
 if (!seed.includes('APPROVE_URAI_ADMIN_EMULATOR')) failures.push('seed child must independently require emulator approval');
 if (!seed.includes('loopbackEmulatorPattern')) failures.push('seed child must bind emulator writes to loopback');
 if (!seed.includes('Emulator seed forbids cloud service-account credentials')) failures.push('seed child must reject cloud credentials in emulator mode');
-if (!seed.includes("if (!emulatorMode && emulatorHost) fail('Cloud registry seed forbids FIRESTORE_EMULATOR_HOST.')")) failures.push('seed child must reject inherited emulator routing in cloud mode');
+if (!cloudEmulatorGuardMatch) failures.push('seed child must contain an executable cloud-mode emulator-host rejection');
+if (firebaseInitializationIndex === -1) failures.push('seed child must initialize Firebase Admin only after all preflight guards');
+if (cloudEmulatorGuardMatch && firebaseInitializationIndex !== -1 && cloudEmulatorGuardMatch.index > firebaseInitializationIndex) {
+  failures.push('seed child must reject inherited emulator routing before Firebase Admin initialization');
+}
 if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
