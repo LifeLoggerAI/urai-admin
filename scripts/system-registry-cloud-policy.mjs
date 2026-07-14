@@ -25,39 +25,30 @@ function parseCredentialJson(raw, label) {
   return value;
 }
 
+function requireUsableServiceAccountCredential(credential) {
+  if (
+    credential.type !== 'service_account'
+    || typeof credential.client_email !== 'string'
+    || !credential.client_email
+    || typeof credential.private_key !== 'string'
+    || !credential.private_key
+  ) {
+    fail('Cloud registry apply requires complete service_account JSON with client_email and private_key; external-account and impersonation-only files are not accepted by this seed path.');
+  }
+}
+
 function projectFromServiceAccountEmail(value) {
   if (typeof value !== 'string') return '';
   const match = value.match(/@([a-z][a-z0-9-]{4,28}[a-z0-9])\.iam\.gserviceaccount\.com$/);
   return match?.[1] || '';
 }
 
-function projectFromImpersonationUrl(value) {
-  if (typeof value !== 'string' || !value) return '';
-  let decoded;
-  try {
-    decoded = decodeURIComponent(value);
-  } catch {
-    decoded = value;
-  }
-  const match = decoded.match(/serviceAccounts\/([^/:]+)(?::generateAccessToken)?$/);
-  return projectFromServiceAccountEmail(match?.[1] || '');
-}
-
 function credentialProjectId(credential) {
-  const identityProjects = new Set();
-  const emailProject = projectFromServiceAccountEmail(credential.client_email);
-  if (emailProject) identityProjects.add(emailProject);
-  const impersonationProject = projectFromImpersonationUrl(credential.service_account_impersonation_url);
-  if (impersonationProject) identityProjects.add(impersonationProject);
-
-  if (identityProjects.size === 0) {
-    fail('Cloud credential does not expose a project-bound service account identity through client_email or service_account_impersonation_url.');
+  requireUsableServiceAccountCredential(credential);
+  const identityProject = projectFromServiceAccountEmail(credential.client_email);
+  if (!identityProject) {
+    fail('Cloud service-account client_email does not expose a valid project-bound identity.');
   }
-  if (identityProjects.size !== 1) {
-    fail(`Cloud credential contains conflicting service-account project identities: ${[...identityProjects].sort().join(', ')}.`);
-  }
-
-  const identityProject = [...identityProjects][0];
   if (typeof credential.project_id === 'string' && credential.project_id && credential.project_id !== identityProject) {
     fail(`Cloud credential project_id ${credential.project_id} conflicts with service-account identity project ${identityProject}.`);
   }
