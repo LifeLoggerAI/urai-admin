@@ -1,0 +1,120 @@
+name: One-time Admin final review fixes v3
+
+on:
+  push:
+    branches:
+      - fix/system-registry-truth-rebased-20260711
+    paths:
+      - '.github/workflows/one-time-admin-final-review-fixes-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact Admin branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fix/system-registry-truth-rebased-20260711
+          fetch-depth: 0
+          persist-credentials: true
+          show-progress: false
+
+      - name: Apply minimal exact repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          policy = Path('scripts/system-registry-cloud-policy.mjs')
+          text = policy.read_text()
+          anchor = '  const boundProjectId = credentialProjectId(credential);'
+          guard = """  if (
+            credential.type !== 'service_account'
+            || typeof credential.client_email !== 'string'
+            || !credential.client_email
+            || typeof credential.private_key !== 'string'
+            || !credential.private_key
+          ) {
+            fail('Cloud apply requires complete private-key service_account JSON with client_email and private_key.');
+          }
+
+          """
+          if guard not in text:
+              if text.count(anchor) != 1:
+                  raise SystemExit('policy authority anchor mismatch')
+              text = text.replace(anchor, guard + anchor, 1)
+          policy.write_text(text)
+
+          receipt = Path('scripts/test-system-registry-cloud-receipt.mjs')
+          text = receipt.read_text()
+          primary = "  client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,\n});"
+          if "private_key: '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n'" not in text:
+              if text.count(primary) != 1:
+                  raise SystemExit('primary credential fixture mismatch')
+              text = text.replace(primary, "  client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,\n  private_key: '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n',\n});", 1)
+          text = text.replace('/does not expose a project-bound service account identity/', '/complete private-key service_account JSON/', 1)
+          conflict = "            project_id: 'different-project',\n            client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,"
+          if text.count(conflict) == 1:
+              text = text.replace(conflict, "            type: 'service_account',\n            project_id: 'different-project',\n            client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,\n            private_key: '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n',", 1)
+          external_anchor = "    console.log('OK: cloud apply requires a service-account identity and treats project_id only as a consistency check');"
+          external_test = """    assert.throws(
+              () => validateRegistryCloudAuthority({
+                env: {
+                  FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
+                    type: 'external_account',
+                    service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/registry-deployer@${PROJECT}.iam.gserviceaccount.com:generateAccessToken`,
+                  }),
+                  URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/external-account.json',
+                },
+                projectId: PROJECT,
+              }),
+              /complete private-key service_account JSON/,
+            );
+          """
+          if external_test not in text:
+              if text.count(external_anchor) != 1:
+                  raise SystemExit('external-account test anchor mismatch')
+              text = text.replace(external_anchor, external_test + external_anchor, 1)
+          receipt.write_text(text)
+
+          seed_guard = Path('scripts/test-system-registry-seed-guard.mjs')
+          text = seed_guard.read_text()
+          fixture = "      client_email: `registry-deployer@${projectId}.iam.gserviceaccount.com`,\n    }),"
+          if text.count(fixture) == 1:
+              text = text.replace(fixture, "      client_email: `registry-deployer@${projectId}.iam.gserviceaccount.com`,\n      private_key: '-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----\\n',\n    }),", 1)
+          seed_guard.write_text(text)
+
+          package_path = Path('functions/apps/urai-admin/package.json')
+          package = json.loads(package_path.read_text())
+          package['scripts']['build'] = 'next build'
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+          PY
+
+      - name: Verify minimal Admin repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/system-registry-cloud-policy.mjs
+          node --check scripts/test-system-registry-cloud-receipt.mjs
+          node --check scripts/test-system-registry-seed-guard.mjs
+          node scripts/test-system-registry-cloud-receipt.mjs
+          node scripts/test-system-registry-seed-guard.mjs
+          node -e "const p=require('./functions/apps/urai-admin/package.json'); if(p.scripts.build!=='next build') process.exit(1)"
+          git diff --check
+
+      - name: Commit permanent files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'LifeLoggerAI release automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add scripts/system-registry-cloud-policy.mjs scripts/test-system-registry-cloud-receipt.mjs scripts/test-system-registry-seed-guard.mjs functions/apps/urai-admin/package.json
+          git diff --cached --check
+          git commit -m 'Align Admin credential and Functions build contracts'
+          git push origin HEAD:fix/system-registry-truth-rebased-20260711
