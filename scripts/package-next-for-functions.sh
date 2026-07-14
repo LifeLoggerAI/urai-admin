@@ -17,7 +17,7 @@ mkdir -p "${FUNCTIONS_APP_DIR}"
 
 cp -R "${APP_DIR}/.next" "${FUNCTIONS_APP_DIR}/.next"
 
-for path in package.json next.config.js next.config.mjs public src app pages styles tailwind.config.js tailwind.config.ts postcss.config.js postcss.config.mjs tsconfig.json; do
+for path in package.json next.config.js next.config.mjs public src app pages styles scripts tailwind.config.js tailwind.config.ts postcss.config.js postcss.config.mjs tsconfig.json; do
   if [[ -e "${APP_DIR}/${path}" ]]; then
     cp -R "${APP_DIR}/${path}" "${FUNCTIONS_APP_DIR}/${path}"
   fi
