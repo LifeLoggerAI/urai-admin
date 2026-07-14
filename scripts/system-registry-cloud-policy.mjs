@@ -204,6 +204,16 @@ export function validateRegistryCloudAuthority({
     credentialSource = 'credential-file';
   }
 
+  if (
+  credential.type !== 'service_account'
+  || typeof credential.client_email !== 'string'
+  || !credential.client_email
+  || typeof credential.private_key !== 'string'
+  || !credential.private_key
+) {
+  fail('Cloud apply requires complete private-key service_account JSON with client_email and private_key.');
+}
+
   const boundProjectId = credentialProjectId(credential);
   if (boundProjectId !== projectId) {
     fail(`Cloud credential project ${boundProjectId} does not match target ${projectId}.`);

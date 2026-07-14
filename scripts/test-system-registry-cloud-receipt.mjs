@@ -22,6 +22,7 @@ const credential = JSON.stringify({
   type: 'service_account',
   project_id: PROJECT,
   client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
+  private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
 });
 const roots = [];
 
@@ -71,14 +72,16 @@ try {
         },
         projectId: PROJECT,
       }),
-      /does not expose a project-bound service account identity/,
+      /complete private-key service_account JSON/,
     );
     assert.throws(
       () => validateRegistryCloudAuthority({
         env: {
           FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
+            type: 'service_account',
             project_id: 'different-project',
             client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
+            private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
           }),
           URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/conflict.json',
         },
@@ -86,6 +89,19 @@ try {
       }),
       /project_id different-project conflicts with service-account identity project/,
     );
+    assert.throws(
+    () => validateRegistryCloudAuthority({
+      env: {
+        FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
+          type: 'external_account',
+          service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/registry-deployer@${PROJECT}.iam.gserviceaccount.com:generateAccessToken`,
+        }),
+        URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/external-account.json',
+      },
+      projectId: PROJECT,
+    }),
+    /complete private-key service_account JSON/,
+  );
     console.log('OK: cloud apply requires a service-account identity and treats project_id only as a consistency check');
   }
 

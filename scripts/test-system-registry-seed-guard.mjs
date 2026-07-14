@@ -15,6 +15,7 @@ function cloudAuthority(projectId) {
       type: 'service_account',
       project_id: projectId,
       client_email: `registry-deployer@${projectId}.iam.gserviceaccount.com`,
+      private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
     }),
     URAI_ADMIN_SEED_RECEIPT_PATH: `docs/release-evidence/test-${projectId}.json`,
   };
