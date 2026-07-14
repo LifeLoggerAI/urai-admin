@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm typecheck && node test/source-contracts.test.mjs"
+    "test": "pnpm typecheck && node test/source-contracts.test.mjs && node test/admin-origin-policy.behavior.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

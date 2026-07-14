@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       base_url:
-        description: "Base URL to verify after deploy"
+        description: "Allowlisted production URL to verify after deploy"
         required: false
         default: "https://urai-admin.web.app"
         type: string
@@ -50,6 +50,8 @@ jobs:
       FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
       URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_PRODUCTION_URL: ${{ vars.URAI_ADMIN_PRODUCTION_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_ALLOWED_ORIGINS: ${{ vars.URAI_ADMIN_ALLOWED_ORIGINS || vars.URAI_ADMIN_PRODUCTION_URL || 'https://urai-admin.web.app' }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
       URAI_ADMIN_TARGET_SHA: ${{ inputs.target_sha }}
       URAI_ADMIN_ROLLBACK_SHA: ${{ inputs.rollback_sha }}
@@ -64,7 +66,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Validate explicit deployment and rollback authorization
+      - name: Validate explicit deployment, origin and rollback authorization
         env:
           DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
         shell: bash
@@ -77,6 +79,27 @@ jobs:
           [[ "${URAI_ADMIN_ROLLBACK_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "rollback_sha must be a full lowercase commit SHA." >&2; exit 1; }
           [[ "${URAI_ADMIN_TARGET_SHA}" != "${URAI_ADMIN_ROLLBACK_SHA}" ]] || { echo "rollback_sha must differ from target_sha." >&2; exit 1; }
           [[ "$(git rev-parse HEAD)" == "${URAI_ADMIN_TARGET_SHA}" ]] || { echo "Checked-out SHA does not match target_sha." >&2; exit 1; }
+
+          node - <<'NODE'
+          const fail = (message) => { console.error(message); process.exit(1); };
+          let target;
+          try { target = new URL(process.env.URAI_ADMIN_BASE_URL); } catch { fail('base_url must be a valid URL.'); }
+          if (target.protocol !== 'https:') fail('base_url must use HTTPS.');
+          const configured = [
+            process.env.URAI_ADMIN_PRODUCTION_URL,
+            ...(process.env.URAI_ADMIN_ALLOWED_ORIGINS || '').split(','),
+          ].map((value) => String(value || '').trim()).filter(Boolean);
+          if (!configured.length) fail('Protected admin origin allowlist is empty.');
+          const allowed = new Set();
+          for (const value of configured) {
+            let parsed;
+            try { parsed = new URL(value); } catch { fail(`Configured admin origin is invalid: ${value}`); }
+            if (parsed.protocol !== 'https:') fail(`Configured admin origin must use HTTPS: ${value}`);
+            allowed.add(parsed.origin);
+          }
+          if (!allowed.has(target.origin)) fail(`base_url origin ${target.origin} is not in the protected admin origin allowlist.`);
+          console.log(`ADMIN_ORIGIN_AUTHORITY=${target.origin}`);
+          NODE
 
           git fetch origin main --no-tags --prune
           git cat-file -e "${URAI_ADMIN_ROLLBACK_SHA}^{commit}"
@@ -174,6 +197,7 @@ jobs:
             rollbackResult: process.env.ROLLBACK_RESULT || 'not-run',
             finalLiveSha,
             publicUrl: process.env.URAI_ADMIN_BASE_URL,
+            allowedOrigins: process.env.URAI_ADMIN_ALLOWED_ORIGINS,
             functionsBaseUrl: process.env.URAI_ADMIN_FUNCTIONS_BASE_URL,
           };
           fs.writeFileSync(process.env.URAI_ADMIN_RECEIPT_PATH, `${JSON.stringify(receipt, null, 2)}\n`);
@@ -187,6 +211,7 @@ jobs:
             echo "- Target outcome: ${TARGET_OUTCOME}"
             echo "- Rollback attempted: ${ROLLBACK_ATTEMPTED:-false}"
             echo "- Rollback result: ${ROLLBACK_RESULT:-not-run}"
+            echo "- Admin origin: ${URAI_ADMIN_BASE_URL}"
             echo "- Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } > tmp/urai-admin-launch-evidence.md
 
