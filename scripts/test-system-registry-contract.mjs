@@ -114,8 +114,8 @@ if (!wrapper.includes('validateRegistryCloudAuthority')) failures.push('wrapper 
 
 for (const [phrase, description] of [
   ['exactly one credential source', 'cloud policy must reject ambiguous credential sources'],
-  ['service_account_impersonation_url', 'cloud policy must bind workload identity impersonation'],
-  ['client_email or service_account_impersonation_url', 'cloud policy must require an actual service-account identity'],
+  ['complete private-key service_account JSON', 'cloud policy must reject unsupported external-account credentials'],
+  ['client_email and private_key', 'cloud policy must require complete private-key service-account material'],
   ['conflicts with service-account identity project', 'cloud policy must treat project_id only as a consistency check'],
   ['Cloud credential project', 'cloud policy must reject credential project mismatch'],
   ['docs/release-evidence/', 'cloud receipt must be confined to release evidence'],
