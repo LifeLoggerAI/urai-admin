@@ -67,13 +67,15 @@ export async function POST(request: NextRequest) {
       role: targetRole,
     };
 
-    await auth.setCustomUserClaims(payload.uid, nextClaims);
-    await auth.revokeRefreshTokens(payload.uid);
-
-    const now = new Date();
-    const auditLogRef = firestore.collection('auditLogs').doc();
-
+    let claimsChanged = false;
     try {
+      await auth.setCustomUserClaims(payload.uid, nextClaims);
+      claimsChanged = true;
+      await auth.revokeRefreshTokens(payload.uid);
+
+      const now = new Date();
+      const auditLogRef = firestore.collection('auditLogs').doc();
+
       await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
         const currentDoc = await transaction.get(userRef);
         if (!currentDoc.exists) {
@@ -109,8 +111,15 @@ export async function POST(request: NextRequest) {
         });
       });
     } catch (error) {
-      await auth.setCustomUserClaims(payload.uid, previousClaims);
-      await auth.revokeRefreshTokens(payload.uid);
+      if (claimsChanged) {
+        try {
+          await auth.setCustomUserClaims(payload.uid, previousClaims);
+          await auth.revokeRefreshTokens(payload.uid);
+        } catch (rollbackError) {
+          console.error('Failed to restore admin claims after active-state update failure:', rollbackError);
+          throw new AdminAuthError('Admin active-state update failed and claim rollback failed', 500);
+        }
+      }
       throw error;
     }
 
