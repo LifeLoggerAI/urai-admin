@@ -1,0 +1,62 @@
+name: One-time Admin registry contract alignment
+
+on:
+  push:
+    branches:
+      - fix/system-registry-truth-rebased-20260711
+    paths:
+      - '.github/workflows/one-time-admin-contract-alignment.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact Admin branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fix/system-registry-truth-rebased-20260711
+          fetch-depth: 0
+          persist-credentials: true
+          show-progress: false
+      - name: Align credential assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/test-system-registry-contract.mjs')
+          text = path.read_text()
+          pairs = [
+            (
+              "  ['service_account_impersonation_url', 'cloud policy must bind workload identity impersonation'],",
+              "  ['complete private-key service_account JSON', 'cloud policy must reject unsupported external-account credentials'],",
+            ),
+            (
+              "  ['client_email or service_account_impersonation_url', 'cloud policy must require an actual service-account identity'],",
+              "  ['client_email and private_key', 'cloud policy must require complete private-key service-account material'],",
+            ),
+          ]
+          for old, new in pairs:
+              if text.count(old) != 1:
+                  raise SystemExit(f'contract assertion mismatch: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          node scripts/test-system-registry-contract.mjs
+          node scripts/test-system-registry-cloud-receipt.mjs
+          node scripts/test-system-registry-seed-guard.mjs
+          git diff --check
+      - name: Commit permanent contract only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'LifeLoggerAI release automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add scripts/test-system-registry-contract.mjs
+          git diff --cached --check
+          git commit -m 'Align Admin registry contract with private-key credentials'
+          git push origin HEAD:fix/system-registry-truth-rebased-20260711
