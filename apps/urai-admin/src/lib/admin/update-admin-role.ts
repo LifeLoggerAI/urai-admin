@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import type { Transaction } from 'firebase-admin/firestore';
+
 import type { AdminRole, AdminSession } from '@/lib/admin/require-admin-session';
 import { AdminAuthError } from '@/lib/admin/require-admin-session';
 import { auth, firestore } from '@/lib/firebase/admin';
@@ -33,7 +35,7 @@ export async function updateAdminRole(input: {
   const mutationId = randomUUID();
   const userRef = firestore.collection('adminUsers').doc(uid);
 
-  const reservation = await firestore.runTransaction(async (transaction): Promise<RoleReservation> => {
+  const reservation = await firestore.runTransaction(async (transaction: Transaction): Promise<RoleReservation> => {
     const userDoc = await transaction.get(userRef);
     if (!userDoc.exists) throw new AdminAuthError('Admin user not found', 404);
 
@@ -68,7 +70,7 @@ export async function updateAdminRole(input: {
     await auth.revokeRefreshTokens(uid);
 
     const auditRef = firestore.collection('auditLogs').doc(mutationId);
-    await firestore.runTransaction(async (transaction) => {
+    await firestore.runTransaction(async (transaction: Transaction) => {
       const currentDoc = await transaction.get(userRef);
       const current = currentDoc.data() ?? {};
       if (!currentDoc.exists || current.roleMutation?.id !== mutationId || current.isActive !== false) {
@@ -102,7 +104,7 @@ export async function updateAdminRole(input: {
     let firestoreRestored = false;
     try {
       const failureAuditRef = firestore.collection('auditLogs').doc(`${mutationId}-failed`);
-      await firestore.runTransaction(async (transaction) => {
+      await firestore.runTransaction(async (transaction: Transaction) => {
         const currentDoc = await transaction.get(userRef);
         const current = currentDoc.data() ?? {};
         if (!currentDoc.exists || current.roleMutation?.id !== mutationId) throw new Error('Admin role reservation changed before compensation');
