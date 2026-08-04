@@ -87,8 +87,12 @@ assert.match(roleService, /Cannot change your own role/, 'role mutation must pre
 assert.match(roleService, /userRecord\.customClaims/, 'role mutation must preserve unrelated custom claims');
 assert.match(roleService, /auth\.revokeRefreshTokens\(uid\)/, 'role mutation must revoke existing sessions');
 assert.match(roleService, /auth\.setCustomUserClaims\(uid, previousClaims\)/, 'role mutation must compensate after a Firestore failure');
-assert.match(roleService, /previousRole/, 'role mutation audit metadata must include previous role');
-assert.match(roleService, /writeAuditLog/, 'role mutation must write an audit log');
+assert.match(roleService, /roleMutation:\s*\{\s*id:\s*mutationId,\s*status:\s*'pending'/s, 'role mutation must reserve the target before changing claims');
+assert.match(roleService, /Admin role update already in progress/, 'concurrent role mutations must fail closed');
+assert.match(roleService, /transaction\.set\(auditRef/, 'successful role mutation must commit its audit record atomically');
+assert.match(roleService, /transaction\.set\(failureAuditRef/, 'failed role mutation must commit a durable failure audit');
+assert.match(roleService, /status:\s*'rollback-required'/, 'incomplete compensation must leave explicit rollback-required evidence');
+assert.doesNotMatch(roleService, /await\s+writeAuditLog\s*\(/, 'role mutation audit must not be detached from the canonical transaction');
 
 const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
 assert.match(roleRoute, /requireAdminMutationSession\(req, \['owner'\]\)/, 'role mutation must require owner role and trusted origin');
@@ -116,8 +120,9 @@ assert.match(firebaseAdmin, /runTransaction/, 'build Firestore stub must expose 
 
 const firestoreRules = await readRoot('firestore.rules');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
-assert.match(firestoreRules, /request\.auth\.token\.admin\s*==\s*true/, 'Firestore admin access must require the admin custom claim');
-assert.match(firestoreRules, /get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data\.isActive\s*==\s*true/, 'Firestore admin access must require active adminUsers record');
+assert.match(firestoreRules, /function\s+adminRecord\(\)\s*\{\s*return get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data;\s*\}/s, 'Firestore rules must resolve the canonical adminUsers record');
+assert.match(firestoreRules, /function\s+hasActiveAdminRecord\(\)\s*\{[\s\S]*exists\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)[\s\S]*adminRecord\(\)\.isActive\s*==\s*true;\s*\}/, 'Firestore admin access must require an existing active adminUsers record');
+assert.match(firestoreRules, /function\s+tokenRoleMatchesRecord\(\)\s*\{[\s\S]*request\.auth\.token\.admin\s*==\s*true[\s\S]*request\.auth\.token\.role\s*==\s*adminRecord\(\)\.role;\s*\}/, 'Firestore admin access must require the admin claim and canonical role parity');
 assert.match(firestoreRules, /allow write: if false;/, 'client-side Firestore writes to protected admin collections must remain disabled');
 assert.doesNotMatch(firestoreRules, /allow\s+(read|write|create|update|delete)(,\s*(read|write|create|update|delete))*:\s*if\s*true/, 'Firestore rules must not allow unconditional access');
 
