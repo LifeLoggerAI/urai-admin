@@ -1,6 +1,23 @@
+import { randomUUID } from 'node:crypto';
+
 import type { AdminRole, AdminSession } from '@/lib/admin/require-admin-session';
 import { AdminAuthError } from '@/lib/admin/require-admin-session';
-import { auth, firestore, writeAuditLog } from '@/lib/firebase/admin';
+import { auth, firestore } from '@/lib/firebase/admin';
+
+type RoleReservation = {
+  previousRole: AdminRole;
+  previousRoleVersion: number;
+  previousIsActive: boolean;
+  nextRoleVersion: number;
+};
+
+function isAdminRole(value: unknown): value is AdminRole {
+  return value === 'owner' || value === 'admin' || value === 'viewer';
+}
+
+function readRoleVersion(value: unknown): number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : 0;
+}
 
 export async function updateAdminRole(input: {
   actor: AdminSession;
@@ -12,48 +29,173 @@ export async function updateAdminRole(input: {
     throw new AdminAuthError('Cannot change your own role', 400);
   }
 
+  const mutationId = randomUUID();
   const userRef = firestore.collection('adminUsers').doc(uid);
-  const userDoc = await userRef.get();
-  const before = userDoc.data();
-  if (!userDoc.exists) {
-    throw new AdminAuthError('Admin user not found', 404);
-  }
 
-  const userRecord = await auth.getUser(uid);
-  const previousClaims = userRecord.customClaims ?? {};
-  const nextClaims = { ...previousClaims, admin: true, role };
+  const reservation = await firestore.runTransaction(async (transaction): Promise<RoleReservation> => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+      throw new AdminAuthError('Admin user not found', 404);
+    }
 
-  await auth.setCustomUserClaims(uid, nextClaims);
-  await auth.revokeRefreshTokens(uid);
+    const before = userDoc.data() ?? {};
+    if (before.roleMutation?.id) {
+      throw new AdminAuthError('Admin role update already in progress', 409);
+    }
+    if (!isAdminRole(before.role)) {
+      throw new AdminAuthError('Admin user has an invalid canonical role', 409);
+    }
 
-  try {
-    await userRef.set({
-      role,
+    const previousRoleVersion = readRoleVersion(before.roleVersion);
+    const nextRoleVersion = previousRoleVersion + 1;
+    const previousIsActive = before.isActive === true;
+
+    transaction.set(userRef, {
+      isActive: false,
+      roleMutation: {
+        id: mutationId,
+        status: 'pending',
+        actorUid: actor.uid,
+        previousRole: before.role,
+        previousRoleVersion,
+        requestedRole: role,
+        nextRoleVersion,
+        startedAt: new Date(),
+      },
       updatedAt: new Date(),
       updatedBy: actor.uid,
     }, { merge: true });
-  } catch (error) {
-    await auth.setCustomUserClaims(uid, previousClaims);
-    await auth.revokeRefreshTokens(uid);
-    throw error;
-  }
 
-  await writeAuditLog({
-    actorUid: actor.uid,
-    actorEmail: actor.email ?? 'unknown-admin@urai.local',
-    action: 'adminUsers.role.update',
-    target: { type: 'adminUser', id: uid },
-    metadata: {
-      previousRole: before?.role ?? null,
-      newRole: role,
-      sessionsRevoked: true,
-    },
+    return {
+      previousRole: before.role,
+      previousRoleVersion,
+      previousIsActive,
+      nextRoleVersion,
+    };
   });
 
-  return {
-    success: true as const,
-    uid,
-    role,
-    sessionsRevoked: true as const,
-  };
+  let previousClaims: Record<string, unknown> | null = null;
+  let claimsMutationAttempted = false;
+
+  try {
+    const userRecord = await auth.getUser(uid);
+    previousClaims = userRecord.customClaims ?? {};
+    const nextClaims = {
+      ...previousClaims,
+      admin: true,
+      role,
+      roleVersion: reservation.nextRoleVersion,
+    };
+
+    claimsMutationAttempted = true;
+    await auth.setCustomUserClaims(uid, nextClaims);
+    await auth.revokeRefreshTokens(uid);
+
+    const auditRef = firestore.collection('auditLogs').doc(mutationId);
+    await firestore.runTransaction(async (transaction) => {
+      const currentDoc = await transaction.get(userRef);
+      const current = currentDoc.data() ?? {};
+      if (!currentDoc.exists || current.roleMutation?.id !== mutationId || current.isActive !== false) {
+        throw new AdminAuthError('Admin user changed during role update', 409);
+      }
+
+      transaction.set(userRef, {
+        role,
+        roleVersion: reservation.nextRoleVersion,
+        isActive: reservation.previousIsActive,
+        roleMutation: null,
+        updatedAt: new Date(),
+        updatedBy: actor.uid,
+      }, { merge: true });
+
+      transaction.set(auditRef, {
+        actorUid: actor.uid,
+        actorEmail: actor.email ?? 'unknown-admin@urai.local',
+        action: 'adminUsers.role.update',
+        target: { type: 'adminUser', id: uid },
+        metadata: {
+          mutationId,
+          previousRole: reservation.previousRole,
+          previousRoleVersion: reservation.previousRoleVersion,
+          newRole: role,
+          newRoleVersion: reservation.nextRoleVersion,
+          sessionsRevoked: true,
+        },
+        createdAt: new Date(),
+      });
+    });
+
+    return {
+      success: true as const,
+      uid,
+      role,
+      roleVersion: reservation.nextRoleVersion,
+      sessionsRevoked: true as const,
+    };
+  } catch (error) {
+    let authRestored = !claimsMutationAttempted;
+    if (claimsMutationAttempted && previousClaims) {
+      try {
+        await auth.setCustomUserClaims(uid, previousClaims);
+        await auth.revokeRefreshTokens(uid);
+        authRestored = true;
+      } catch (rollbackError) {
+        console.error('Failed to restore Firebase Auth claims after admin role mutation failure', rollbackError);
+      }
+    }
+
+    let firestoreRestored = false;
+    try {
+      const failureAuditRef = firestore.collection('auditLogs').doc(`${mutationId}-failed`);
+      await firestore.runTransaction(async (transaction) => {
+        const currentDoc = await transaction.get(userRef);
+        const current = currentDoc.data() ?? {};
+        if (!currentDoc.exists || current.roleMutation?.id !== mutationId) {
+          throw new Error('Admin role reservation changed before compensation');
+        }
+
+        transaction.set(userRef, {
+          role: reservation.previousRole,
+          roleVersion: reservation.previousRoleVersion,
+          isActive: authRestored ? reservation.previousIsActive : false,
+          roleMutation: authRestored
+            ? null
+            : {
+                ...current.roleMutation,
+                status: 'rollback-required',
+                failedAt: new Date(),
+              },
+          updatedAt: new Date(),
+          updatedBy: actor.uid,
+        }, { merge: true });
+
+        transaction.set(failureAuditRef, {
+          actorUid: actor.uid,
+          actorEmail: actor.email ?? 'unknown-admin@urai.local',
+          action: 'adminUsers.role.update.failed',
+          target: { type: 'adminUser', id: uid },
+          metadata: {
+            mutationId,
+            previousRole: reservation.previousRole,
+            requestedRole: role,
+            authRestored,
+            accountDisabled: !authRestored,
+          },
+          createdAt: new Date(),
+        });
+      });
+      firestoreRestored = true;
+    } catch (rollbackError) {
+      console.error('Failed to compensate Firestore after admin role mutation failure', rollbackError);
+    }
+
+    if (!authRestored || !firestoreRestored) {
+      throw new AdminAuthError(
+        'Admin role update failed and compensation was incomplete; the account remains disabled pending recovery',
+        500,
+      );
+    }
+
+    throw error;
+  }
 }
