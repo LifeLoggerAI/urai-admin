@@ -73,9 +73,18 @@ requireTokens(join(appRoot, 'api/auth/login/route.ts'), ['exchangeAdminIdToken',
 requireTokens(join(appRoot, 'api/auth/session/route.ts'), ['exchangeAdminIdToken', 'requireSameOrigin', 'DELETE']);
 requireTokens(join(appRoot, 'api/admin/users/[uid]/role/route.ts'), [
   'requireAdminMutationSession',
+  'updateAdminRole',
+]);
+requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
+  'runTransaction',
+  'roleMutation',
+  'setCustomUserClaims',
   'revokeRefreshTokens',
   'previousClaims',
   'sessionsRevoked: true',
+  'adminUsers.role.update',
+  'rollback-required',
+  'account remains disabled pending recovery',
 ]);
 requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'COLLECTIONS',
