@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
@@ -8,6 +9,10 @@ const runtimeAuthPaths = [
   'apps/urai-admin/src/config/firebase-admin.ts',
   'functions/apps/urai-admin/src/config/firebase-admin.ts',
   'packages/governance-sdk/src/firebase.ts',
+];
+const forbiddenTrackedEnvPaths = [
+  '.env.local',
+  'apps/urai-admin/.env.local',
 ];
 const governanceSdk = readFileSync('packages/governance-sdk/src/firebase.ts', 'utf8');
 
@@ -28,6 +33,19 @@ requireMatch(workflow, /create_credentials_file:\s*true/, 'temporary ADC credent
 requireMatch(workflow, /persist-credentials:\s*false/, 'GitHub checkout credential isolation');
 requireMatch(workflow, /workflow_dispatch:/, 'manual deployment dispatch');
 requireMatch(gitignore, /^gha-creds-\*\.json$/m, 'generated WIF ADC credential ignore');
+requireMatch(gitignore, /^\.env\.\*$/m, 'local env wildcard ignore');
+
+const trackedForbiddenEnvPaths = execFileSync(
+  'git',
+  ['ls-files', '--', ...forbiddenTrackedEnvPaths],
+  { encoding: 'utf8' },
+)
+  .split(/\r?\n/)
+  .map((value) => value.trim())
+  .filter(Boolean);
+for (const path of trackedForbiddenEnvPaths) {
+  failures.push(`forbidden tracked local env file: ${path}`);
+}
 
 forbidMatch(workflow, /\$\{\{\s*secrets\.FIREBASE_TOKEN\s*\}\}/, 'FIREBASE_TOKEN secret interpolation');
 forbidMatch(workflow, /\$\{\{\s*secrets\.FIREBASE_SERVICE_ACCOUNT_KEY\s*\}\}/, 'FIREBASE_SERVICE_ACCOUNT_KEY secret interpolation');
@@ -48,7 +66,7 @@ forbidMatch(workflow, /URAI_ADMIN_DEPLOY_MARKER=.*pnpm run deploy:production/, '
 for (const path of runtimeAuthPaths) {
   const source = readFileSync(path, 'utf8');
   requireMatch(source, /initializeApp\(/, `${path} Firebase Admin initialization`);
-  forbidMatch(source, /credential\.cert\(/, `${path} certificate credential construction`);
+  forbidMatch(source, /credential\.cert\s*\(/, `${path} certificate credential construction`);
   forbidMatch(source, /FIREBASE_PRIVATE_KEY/, `${path} private-key environment fallback`);
   forbidMatch(source, /FIREBASE_CLIENT_EMAIL/, `${path} client-email environment fallback`);
   forbidMatch(source, /ServiceAccount/, `${path} service-account parameter contract`);
