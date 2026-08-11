@@ -23,7 +23,7 @@ const executableCloudEmulatorGuard = /^\s*if\s*\(\s*!emulatorMode\s*&&\s*emulato
 const cloudEmulatorGuardMatch = executableCloudEmulatorGuard.exec(seed);
 const firebaseInitializationIndex = seed.indexOf('admin.initializeApp(');
 const validatedCredentialIndex = seed.indexOf('const validatedCloudCredential =');
-const boundCredentialInitializationIndex = seed.indexOf('credential: admin.credential.cert(validatedCloudCredential)');
+const boundCredentialInitializationIndex = seed.indexOf('credential: admin.credential.applicationDefault()');
 
 const requiredSystems = [
   'URAI Main Experience', 'URAI Admin', 'URAI Analytics', 'URAI Communications',
@@ -80,15 +80,15 @@ if (cloudEmulatorGuardMatch && firebaseInitializationIndex !== -1 && cloudEmulat
   failures.push('seed child must reject inherited emulator routing before Firebase Admin initialization');
 }
 if (validatedCredentialIndex === -1) failures.push('seed child must retain the already-validated cloud credential object');
-if (boundCredentialInitializationIndex === -1) failures.push('cloud Firebase initialization must use the already-validated credential object');
+if (boundCredentialInitializationIndex === -1) failures.push('cloud Firebase initialization must use ADC only after WIF external_account validation');
 if (validatedCredentialIndex !== -1 && boundCredentialInitializationIndex !== -1 && validatedCredentialIndex > boundCredentialInitializationIndex) {
   failures.push('cloud credential material must be validated and bound before Firebase Admin initialization');
 }
 if (seed.includes('const inlineCredential =')) failures.push('seed must not re-read file credentials through application default fallback');
-if (!seed.includes('complete validated service_account JSON with client_email and private_key')) failures.push('seed must reject cloud credentials that cannot be bound from validated material');
+if (!seed.includes('Cloud registry seed requires validated WIF external_account ADC')) failures.push('seed must reject cloud credentials that are not validated WIF external_account ADC');
 if (!seed.includes('Registry seed requires a fresh process with no preinitialized Firebase Admin app')) failures.push('seed must reject preinitialized Admin state');
 if (!seed.includes('credentialMaterialDigest: validatedCloudCredentialDigest')) failures.push('cloud receipt must bind the non-secret digest of validated credential material');
-if (!seed.includes('credentialMaterialBoundBeforeInitialization: true')) failures.push('cloud receipt must attest pre-initialization credential binding');
+if (!seed.includes('credentialConfigurationVerifiedBeforeInitialization: true')) failures.push('cloud receipt must attest pre-initialization WIF credential validation');
 if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reject unexpected stale registry documents before mutation');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
@@ -113,10 +113,10 @@ if (!wrapper.includes('Emulator seed target must exactly equal')) failures.push(
 if (!wrapper.includes('validateRegistryCloudAuthority')) failures.push('wrapper must validate exact cloud credential and receipt authority before child execution');
 
 for (const [phrase, description] of [
-  ['exactly one credential source', 'cloud policy must reject ambiguous credential sources'],
-  ['complete private-key service_account JSON', 'cloud policy must reject unsupported external-account credentials'],
-  ['client_email and private_key', 'cloud policy must require complete private-key service-account material'],
-  ['conflicts with service-account identity project', 'cloud policy must treat project_id only as a consistency check'],
+  ['explicit WIF/ADC credential file', 'cloud policy must require an explicit ephemeral ADC credential file'],
+  ['requires WIF external_account ADC', 'cloud policy must reject unsupported ADC credential types'],
+  ['forbids raw service-account key material', 'cloud policy must reject raw service-account key material'],
+  ['does not match target', 'cloud policy must require target/impersonated-service-account project equality'],
   ['Cloud credential project', 'cloud policy must reject credential project mismatch'],
   ['docs/release-evidence/', 'cloud receipt must be confined to release evidence'],
   ['must end in .json', 'cloud receipt must be machine-readable JSON'],
@@ -124,7 +124,7 @@ for (const [phrase, description] of [
   if (!cloudPolicy.includes(phrase)) failures.push(description);
 }
 
-if (!cloudReceiptTests.includes('project_id only as a consistency check')) failures.push('cloud receipt tests must reject project-only credential JSON');
+if (!cloudReceiptTests.includes('rejects long-lived service-account credentials')) failures.push('cloud receipt tests must reject long-lived service-account credentials');
 if (!cloudReceiptTests.includes('atomic stale-record/write transaction')) failures.push('cloud receipt tests must prove transaction ordering');
 if (!guardTests.includes('dry-run validates without spawning the seed child')) failures.push('guard tests must prove dry-run nonmutation');
 if (!guardTests.includes('apply rejects legacy wildcard repository authority')) failures.push('guard tests must reject legacy wildcard authority');
