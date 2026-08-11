@@ -35,7 +35,7 @@ requireMatch(rollback, /GOOGLE_APPLICATION_CREDENTIALS/, 'WIF\/ADC rollback chec
 forbidMatch(rollback, /--token(?:\s|=)/, 'rollback --token authentication');
 forbidMatch(rollback, /FIREBASE_TOKEN is required/, 'rollback FIREBASE_TOKEN requirement');
 
-requireMatch(workflow, /firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d/, 'ADC-compatible rollback deploy command');
+requireMatch(workflow, /corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d/, 'worktree-local ADC-compatible rollback deploy command');
 requireMatch(workflow, /verify-production-live\.sh/, 'post-rollback live verification');
 forbidMatch(workflow, /URAI_ADMIN_DEPLOY_MARKER=.*pnpm run deploy:production/, 'historical rollback deploy script invocation');
 
