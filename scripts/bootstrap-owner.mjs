@@ -29,14 +29,7 @@ if (projectId !== 'urai-4dc1d') {
 }
 
 if (!admin.apps.length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-      projectId,
-    });
-  } else {
-    admin.initializeApp({ projectId });
-  }
+  admin.initializeApp({ projectId });
 }
 
 const firestore = admin.firestore();
@@ -84,4 +77,4 @@ await firestore.collection('auditLogs').add({
   createdAt: now,
 });
 
-console.log(`Bootstrapped URAI Admin owner ${email} (${uid}) in ${projectId}`);
+console.log(`Bootstrapped URAI Admin owner ${email} (${uid}) in ${projectId} using Application Default Credentials.`);

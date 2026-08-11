@@ -14,8 +14,12 @@ fail() {
 echo "--- URAI Admin production rollback helper ---"
 echo "Project: ${PROJECT_ID}"
 
-if [[ -z "${FIREBASE_TOKEN:-}" ]]; then
-  fail "FIREBASE_TOKEN is required for rollback operations."
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  if [[ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" || ! -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]]; then
+    fail "GitHub rollback requires the temporary WIF/ADC credential file created by google-github-actions/auth."
+  fi
+else
+  echo "INFO: Local rollback requires approved Google Application Default Credentials. Firebase CLI tokens are not supported."
 fi
 
 if [[ -z "${HOSTING_SITE}" ]]; then
@@ -31,7 +35,7 @@ echo "Hosting site: ${HOSTING_SITE}"
 if [[ -n "${ROLLBACK_RELEASE}" ]]; then
   echo "Rollback release: ${ROLLBACK_RELEASE}"
   echo "About to clone Firebase Hosting version from release ${ROLLBACK_RELEASE}."
-  firebase hosting:clone "${HOSTING_SITE}:${ROLLBACK_RELEASE}" "${HOSTING_SITE}:live" --project "${PROJECT_ID}" --token "${FIREBASE_TOKEN}"
+  firebase hosting:clone "${HOSTING_SITE}:${ROLLBACK_RELEASE}" "${HOSTING_SITE}:live" --project "${PROJECT_ID}"
   echo "OK: Firebase Hosting rollback command completed."
 fi
 
@@ -54,7 +58,7 @@ Recommended operator steps:
 11. pnpm deploy
 12. pnpm verify:production
 
-Record all evidence in docs/EVIDENCE_LOG.md.
+Use approved ADC/WIF identity for any deploy step and record all evidence in docs/EVIDENCE_LOG.md.
 EOF
 fi
 

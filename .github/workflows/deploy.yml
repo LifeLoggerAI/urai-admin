@@ -28,6 +28,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: urai-admin-production
@@ -47,8 +48,6 @@ jobs:
       NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
       URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
       URAI_ADMIN_TARGET_SHA: ${{ inputs.target_sha }}
@@ -83,6 +82,25 @@ jobs:
           git merge-base --is-ancestor "${URAI_ADMIN_TARGET_SHA}" origin/main || { echo "target_sha must belong to origin/main." >&2; exit 1; }
           git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" "${URAI_ADMIN_TARGET_SHA}" || { echo "rollback_sha must be an ancestor of target_sha." >&2; exit 1; }
           git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" origin/main || { echo "rollback_sha must belong to origin/main." >&2; exit 1; }
+
+      - name: Require WIF deploy identity
+        shell: bash
+        env:
+          WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          [[ -n "$WIF_PROVIDER" ]] || { echo "GCP_WIF_PROVIDER is required; long-lived Firebase deploy credentials are prohibited." >&2; exit 1; }
+          [[ -n "$DEPLOY_SERVICE_ACCOUNT" ]] || { echo "GCP_DEPLOY_SERVICE_ACCOUNT is required; long-lived Firebase deploy credentials are prohibited." >&2; exit 1; }
+
+      - name: Authenticate to Google Cloud with WIF
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: urai-4dc1d
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -124,7 +142,9 @@ jobs:
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
           corepack pnpm install --frozen-lockfile
-          URAI_ADMIN_DEPLOY_MARKER="${RUNNER_TEMP}/urai-admin-rollback-deployed.json" pnpm run deploy:production
+          corepack pnpm build
+          corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d
+          URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL}" bash "${GITHUB_WORKSPACE}/scripts/verify-production-live.sh"
           echo "result=success" >> "${GITHUB_OUTPUT}"
 
       - name: Write deployment receipt

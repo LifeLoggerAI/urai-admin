@@ -13,14 +13,18 @@ Use this checklist for every production release to `https://www.uraiadmin.com`.
 
 ## 2. Production configuration
 
-- [ ] `FIREBASE_TOKEN` exists in GitHub production secrets.
-- [ ] `NEXT_PUBLIC_FIREBASE_API_KEY` exists in GitHub production secrets.
-- [ ] `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` exists in GitHub production secrets.
+- [ ] Protected GitHub variable `GCP_WIF_PROVIDER` points to the approved Workload Identity Provider.
+- [ ] Protected GitHub variable `GCP_DEPLOY_SERVICE_ACCOUNT` points to the least-privilege deploy service account.
+- [ ] Provider-side WIF trust conditions restrict the approved repository/workflow context.
+- [ ] Deploy service-account IAM is least privilege and verified before production dispatch.
+- [ ] Runtime Google/Firebase access uses a managed runtime identity or approved ADC path; no raw service-account JSON is required by the application.
+- [ ] `NEXT_PUBLIC_FIREBASE_API_KEY` exists in protected production configuration.
+- [ ] `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` exists in protected production configuration.
 - [ ] `NEXT_PUBLIC_FIREBASE_PROJECT_ID` is set to `urai-4dc1d`.
-- [ ] `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` exists in GitHub production secrets.
-- [ ] `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` exists in GitHub production secrets.
-- [ ] `NEXT_PUBLIC_FIREBASE_APP_ID` exists in GitHub production secrets.
-- [ ] `FIREBASE_SERVICE_ACCOUNT_KEY` is configured if required by the runtime.
+- [ ] `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` exists in protected production configuration.
+- [ ] `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` exists in protected production configuration.
+- [ ] `NEXT_PUBLIC_FIREBASE_APP_ID` exists in protected production configuration.
+- [ ] No `FIREBASE_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_KEY`, or equivalent long-lived JSON deploy credential is configured for the governed deploy path.
 
 ## 3. Domain and Firebase readiness
 
@@ -30,21 +34,21 @@ Use this checklist for every production release to `https://www.uraiadmin.com`.
 - [ ] Apex `uraiadmin.com` redirects or is intentionally handled.
 - [ ] Firestore rules are ready to deploy.
 - [ ] Storage rules are ready to deploy.
-- [ ] Functions deploy permissions are confirmed.
+- [ ] Functions deploy permissions are confirmed for the governed deploy identity.
 
 ## 4. Admin owner bootstrap
 
 - [ ] Initial owner has a Firebase Auth user.
 - [ ] `URAI_ADMIN_OWNER_UID` is known.
 - [ ] `URAI_ADMIN_OWNER_EMAIL` is known.
-- [ ] Run `pnpm bootstrap:owner` with production credentials.
+- [ ] Run `pnpm bootstrap:owner` with approved ADC or managed identity credentials; do not use raw service-account JSON.
 - [ ] Confirm `adminUsers/{uid}` has `role: owner` and `isActive: true`.
 - [ ] Confirm owner custom claims are set.
 - [ ] Confirm bootstrap audit log exists.
 
 ## 5. Local/operator validation
 
-Run from the repository root:
+Run from the repository root with an approved ADC identity when Google/Firebase access is required:
 
 ```bash
 pnpm install --frozen-lockfile=false
@@ -65,24 +69,19 @@ pnpm build
 
 ## 6. Deployment
 
-Preferred path:
+Canonical path:
 
 - [ ] Open GitHub Actions.
-- [ ] Run `Deploy URAI Admin`.
+- [ ] Run `Deploy URAI Admin` for the exact reviewed commit SHA.
+- [ ] Confirm the workflow fails closed if `GCP_WIF_PROVIDER` or `GCP_DEPLOY_SERVICE_ACCOUNT` is absent.
+- [ ] Confirm OIDC/WIF authentication succeeds without JSON credentials or Firebase CLI tokens.
 - [ ] Confirm `Production preflight` passes.
 - [ ] Confirm `Security gate` passes.
 - [ ] Confirm validation passes.
 - [ ] Confirm Firebase deploy succeeds.
 - [ ] Confirm `Verify production live deployment` passes.
 
-Manual fallback:
-
-```bash
-pnpm preflight:production
-pnpm security:gate
-pnpm deploy
-pnpm verify:production
-```
+Local deployment is not the canonical production path. If an emergency operator procedure is explicitly authorized, it must use approved ADC/short-lived identity and preserve the same exact-SHA, validation, evidence, and rollback controls.
 
 ## 7. Manual production QA
 
@@ -103,15 +102,17 @@ pnpm verify:production
 - [ ] Firebase Hosting rollback path is understood.
 - [ ] Functions-only rollback path is understood.
 - [ ] Rules-only rollback path is understood.
+- [ ] Rollback execution uses the governed WIF/ADC identity path and no long-lived Firebase CLI token.
 - [ ] Incident owner is identified.
 
 ## 9. Release closure
 
 - [ ] Release commit SHA recorded.
 - [ ] GitHub Actions run URL recorded.
+- [ ] WIF authentication and deploy-identity evidence recorded.
 - [ ] Production verifier output recorded.
 - [ ] Manual QA result recorded.
 - [ ] Rollback readiness confirmed.
 - [ ] GitHub issue #4 updated or closed only if all launch blockers are complete.
 
-Do not mark production complete unless every required item above is done.
+Do not mark production complete unless every required item above is done. Repository-side WIF configuration alone does not prove provider-side trust, IAM, runtime identity installation, or production authorization.
