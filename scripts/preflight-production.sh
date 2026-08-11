@@ -56,7 +56,20 @@ require_file "docs/URAI_ADMIN_STANDALONE_READINESS.md"
 require_file "scripts/smoke-test.sh"
 require_file "scripts/verify-production-live.sh"
 
-require_env "FIREBASE_TOKEN"
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  if [[ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+    echo "ERROR: GitHub production deploy must authenticate through WIF/ADC before running preflight." >&2
+    missing=1
+  elif [[ ! -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]]; then
+    echo "ERROR: GOOGLE_APPLICATION_CREDENTIALS does not point to the temporary WIF credential file." >&2
+    missing=1
+  else
+    echo "OK: GitHub deploy is using a temporary WIF/ADC credential file"
+  fi
+else
+  echo "INFO: Local operators must use Application Default Credentials or another approved short-lived Google identity. Firebase CLI tokens and raw service-account JSON are not accepted by the production workflow."
+fi
+
 require_env "NEXT_PUBLIC_FIREBASE_API_KEY"
 require_env "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"
 require_env "NEXT_PUBLIC_FIREBASE_PROJECT_ID"
