@@ -21,6 +21,13 @@ type ConfigState = {
   projectId?: string;
 };
 
+type AdminSessionPayload = {
+  success?: boolean;
+  error?: string;
+  refreshRequired?: boolean;
+  reauthRequired?: boolean;
+};
+
 function loginErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('auth/invalid-credential') || message.includes('auth/wrong-password')) {
@@ -41,20 +48,37 @@ function loginErrorMessage(error: unknown) {
   if (message.includes('Admin access is not active')) {
     return 'This account exists, but it is not active in adminUsers yet. Run pnpm bootstrap:owner or activate the admin record.';
   }
+  if (message.includes('Recent sign-in required')) {
+    return 'Your Firebase sign-in is too old for an admin session. Sign in again to continue.';
+  }
   return message || 'Login failed. Check Firebase config, adminUsers, and server logs.';
 }
 
-async function openAdminSession(credential: UserCredential) {
-  const idToken = await credential.user.getIdToken(true);
+async function exchangeAdminSession(idToken: string) {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken }),
+    cache: 'no-store',
   });
-  const payload = await response.json().catch(() => ({}));
+  const payload = await response.json().catch(() => ({} as AdminSessionPayload)) as AdminSessionPayload;
+  return { response, payload };
+}
 
-  if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.error || `Admin session failed with status ${response.status}`);
+async function openAdminSession(credential: UserCredential) {
+  let idToken = await credential.user.getIdToken(true);
+  let exchange = await exchangeAdminSession(idToken);
+
+  if (exchange.response.status === 409 && exchange.payload.refreshRequired === true) {
+    idToken = await credential.user.getIdToken(true);
+    exchange = await exchangeAdminSession(idToken);
+  }
+
+  if (!exchange.response.ok || exchange.payload.success === false) {
+    if (exchange.payload.reauthRequired) {
+      throw new Error('Recent sign-in required');
+    }
+    throw new Error(exchange.payload.error || `Admin session failed with status ${exchange.response.status}`);
   }
 
   window.location.assign('/admin');

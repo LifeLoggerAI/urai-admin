@@ -46,6 +46,12 @@ function createBuildFirestoreStub(): any {
       delete: () => undefined,
       commit: async () => undefined,
     }),
+    runTransaction: async (callback: (transaction: any) => unknown) => callback({
+      get: async () => createEmptyDocument(),
+      set: () => undefined,
+      update: () => undefined,
+      delete: () => undefined,
+    }),
   };
 }
 
@@ -57,13 +63,24 @@ function createBuildAuthStub(): any {
     verifyIdToken: async () => {
       throw Object.assign(new Error('Admin auth is unavailable during build'), { status: 401 });
     },
+    createSessionCookie: async () => {
+      throw Object.assign(new Error('Admin auth is unavailable during build'), { status: 503 });
+    },
     setCustomUserClaims: async () => undefined,
-    getUser: async () => ({ uid: 'build-stub', email: null }),
+    revokeRefreshTokens: async () => undefined,
+    getUser: async () => ({ uid: 'build-stub', email: null, customClaims: {} }),
   };
 }
 
 if (!shouldStubFirebaseAdmin && !admin.apps.length) {
-  admin.initializeApp();
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } else {
+    admin.initializeApp();
+  }
 }
 
 const firestore = shouldStubFirebaseAdmin ? createBuildFirestoreStub() : getFirestore();

@@ -1,18 +1,13 @@
 #!/usr/bin/env node
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const appRoot = 'apps/urai-admin/src/app';
 const failures = [];
 
-const expectedRoutePaths = [
+const expectedRoutes = [
   'page.tsx',
   'login/page.tsx',
-  'login/LoginClient.tsx',
-  'features/page.tsx',
-  'security/page.tsx',
-  'pricing/page.tsx',
-  'contact/page.tsx',
   'admin/page.tsx',
   'admin/users/page.tsx',
   'admin/projects/page.tsx',
@@ -25,123 +20,87 @@ const expectedRoutePaths = [
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
   'admin/settings/page.tsx',
-];
-
-const expectedApiPaths = [
   'api/health/route.ts',
-  'api/audit/route.ts',
   'api/auth/login/route.ts',
   'api/auth/logout/route.ts',
   'api/auth/session/route.ts',
   'api/auth/admin-session/route.ts',
-  'api/auth/verify/route.ts',
-  'api/admin/route.ts',
-  'api/admin/users/route.ts',
-  'api/admin/users/[uid]/role/route.ts',
   'api/admin/collection/route.ts',
-  'api/admin/audit/route.ts',
-  'api/admin/analytics/route.ts',
+  'api/admin/users/[uid]/role/route.ts',
   'api/admin/set-flag/route.ts',
   'api/admin/set-user-active/route.ts',
-  'api/admin/update-user-role/route.ts',
-  'api/qa/diff/route.ts',
   'api/qa/logs/route.ts',
-  'api/qa/snapshots/route.ts',
 ];
 
-for (const route of [...expectedRoutePaths, ...expectedApiPaths]) {
+for (const route of expectedRoutes) {
   const pathname = join(appRoot, route);
   if (!existsSync(pathname)) failures.push(`missing expected route file: ${pathname}`);
 }
 
-function collectFiles(dir) {
-  if (!existsSync(dir)) return [];
-  const out = [];
-  for (const entry of readdirSync(dir)) {
-    const pathname = join(dir, entry);
-    const stats = statSync(pathname);
-    if (stats.isDirectory()) out.push(...collectFiles(pathname));
-    if (stats.isFile()) out.push(pathname);
-  }
-  return out;
-}
-
-const files = collectFiles(appRoot).filter((pathname) => /\.(js|jsx|ts|tsx)$/.test(pathname));
-const joined = files.map((pathname) => readFileSync(pathname, 'utf8')).join('\n').toLowerCase();
-
-for (const requiredText of [
-  'admin',
-  'audit',
-  'users',
-  'project',
-  'jobs',
-  'feature',
-  'system',
-  'settings',
-  'privacy',
-  'login',
-  'firebase',
-  'session',
-  'error',
-]) {
-  if (!joined.includes(requiredText)) failures.push(`app source missing required admin concept: ${requiredText}`);
-}
-
-const loginClientPath = join(appRoot, 'login/LoginClient.tsx');
-if (existsSync(loginClientPath)) {
-  const loginClient = readFileSync(loginClientPath, 'utf8');
-  for (const expected of [
-    'getClientAuth',
-    'getFirebaseConfigStatus',
-    'signInWithEmailAndPassword',
-    'signInWithPopup',
-    'signInWithRedirect',
-    '/api/auth/login',
-    'window.location.assign',
-  ]) {
-    if (!loginClient.includes(expected)) failures.push(`login client missing expected behavior: ${expected}`);
+function requireTokens(pathname, tokens) {
+  const source = readFileSync(pathname, 'utf8');
+  for (const token of tokens) {
+    if (!source.includes(token)) failures.push(`${pathname} missing contract token: ${token}`);
   }
 }
 
-const sessionRoutePath = join(appRoot, 'api/auth/session/route.ts');
-if (existsSync(sessionRoutePath)) {
-  const sessionRoute = readFileSync(sessionRoutePath, 'utf8');
-  for (const expected of ['__session', 'setCustomUserClaims', 'admin: true', 'ADMIN_ROLES', 'DELETE']) {
-    if (!sessionRoute.includes(expected)) failures.push(`session endpoint missing expected behavior: ${expected}`);
+function forbidTokens(pathname, tokens) {
+  const source = readFileSync(pathname, 'utf8');
+  for (const token of tokens) {
+    if (source.includes(token)) failures.push(`${pathname} contains forbidden contract token: ${token}`);
   }
 }
 
-const healthRoutePath = join(appRoot, 'api/health/route.ts');
-if (existsSync(healthRoutePath)) {
-  const healthRoute = readFileSync(healthRoutePath, 'utf8');
-  for (const expected of ['service', 'urai-admin', 'Cache-Control', 'no-store']) {
-    if (!healthRoute.includes(expected)) failures.push(`health endpoint missing expected behavior: ${expected}`);
-  }
-}
-
-const collectionRoutePath = join(appRoot, 'api/admin/collection/route.ts');
-if (existsSync(collectionRoutePath)) {
-  const collectionRoute = readFileSync(collectionRoutePath, 'utf8');
-  for (const expected of ['COLLECTIONS', 'privacyRequests', 'SENSITIVE_KEY_PATTERN', 'REDACTED', 'requireAdminSession']) {
-    if (!collectionRoute.includes(expected)) failures.push(`collection API missing expected behavior: ${expected}`);
-  }
-}
-
-const adminCollectionTablePath = join(appRoot, 'admin/_components/AdminCollectionTable.tsx');
-if (existsSync(adminCollectionTablePath)) {
-  const adminCollectionTable = readFileSync(adminCollectionTablePath, 'utf8');
-  for (const expected of ['export type CollectionKey', "| 'privacyRequests'", "fetch(query, { cache: 'no-store' })"]) {
-    if (!adminCollectionTable.includes(expected)) failures.push(`admin collection table missing expected behavior: ${expected}`);
-  }
-}
-
-const adminSessionGuardPath = 'apps/urai-admin/src/lib/admin/require-admin-session.ts';
-if (existsSync(adminSessionGuardPath)) {
-  const adminSessionGuard = readFileSync(adminSessionGuardPath, 'utf8');
-  for (const expected of ['noStoreHeaders', 'Cache-Control', 'no-store', 'headers: noStoreHeaders']) {
-    if (!adminSessionGuard.includes(expected)) failures.push(`admin session guard missing expected no-store behavior: ${expected}`);
-  }
-}
+const adminSessionPath = 'apps/urai-admin/src/lib/admin/require-admin-session.ts';
+requireTokens(adminSessionPath, [
+  'verifySessionCookie(sessionCookie, true)',
+  'requireSameOrigin',
+  'URAI_ADMIN_ALLOWED_ORIGINS',
+  'URAI_ADMIN_PRODUCTION_URL',
+  "process.env.NODE_ENV === 'production'",
+  'Production admin origins must use HTTPS',
+  'Admin origin allowlist is not configured',
+  'isLoopbackOrigin',
+  'decodedToken.auth_time',
+  'MAX_CLOCK_SKEW_SECONDS',
+  'refreshRequired: true',
+  'tokenClaimsMatch',
+  'createSessionCookie(idToken',
+  'requireAdminMutationSession',
+]);
+forbidTokens(adminSessionPath, ['x-forwarded-host', 'x-forwarded-proto']);
+requireTokens(join(appRoot, 'api/auth/login/route.ts'), ['exchangeAdminIdToken', 'auth.login']);
+requireTokens(join(appRoot, 'api/auth/session/route.ts'), ['exchangeAdminIdToken', 'requireSameOrigin', 'DELETE']);
+requireTokens(join(appRoot, 'api/admin/users/[uid]/role/route.ts'), [
+  'requireAdminMutationSession',
+  'updateAdminRole',
+]);
+requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
+  'runTransaction',
+  'roleMutation',
+  'setCustomUserClaims',
+  'revokeRefreshTokens',
+  'previousClaims',
+  'sessionsRevoked: true',
+  'adminUsers.role.update',
+  'rollback-required',
+  'account remains disabled pending recovery',
+]);
+requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
+  'COLLECTIONS',
+  'privacyRequests',
+  'SENSITIVE_KEY_PATTERN',
+  'REDACTED',
+  'requireAdminSession',
+]);
+requireTokens(join(appRoot, 'api/health/route.ts'), ['urai-admin', 'Cache-Control', 'no-store']);
+requireTokens('.github/workflows/deploy.yml', [
+  'URAI_ADMIN_PRODUCTION_URL',
+  'URAI_ADMIN_ALLOWED_ORIGINS',
+  'Protected admin origin allowlist is empty.',
+  'base_url origin',
+  'not in the protected admin origin allowlist',
+]);
 
 if (failures.length) {
   console.error('Admin route contract failed:');

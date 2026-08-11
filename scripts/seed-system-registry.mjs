@@ -1,315 +1,306 @@
 #!/usr/bin/env node
 
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import admin from 'firebase-admin';
+import { REGISTRY_EVIDENCE_DATE, SYSTEM_REGISTRY_RECORDS } from './system-registry-data.mjs';
+import {
+  prepareConfinedRegistryCloudReceiptTarget,
+  validateRegistryCloudAuthority,
+  writeConfinedRegistryCloudReceipt,
+} from './system-registry-cloud-policy.mjs';
 
-const projectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'urai-4dc1d';
+const PRODUCTION_PROJECT_ID = 'urai-4dc1d';
+const EMULATOR_PROJECT_ID = 'urai-admin-emulator';
+const SEED_CONFIRMATION = 'SEED_SYSTEM_REGISTRY';
+const PRODUCTION_APPROVAL = 'APPROVE_URAI_ADMIN_PRODUCTION';
+const STAGING_APPROVAL = 'APPROVE_URAI_ADMIN_STAGING';
+const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
+const CLOUD_RECEIPT_SCHEMA = 'urai-admin-system-registry-cloud-receipt-1';
+const explicitProjectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
+const projectId = explicitProjectId || PRODUCTION_PROJECT_ID;
+const stagingProjectId = process.env.URAI_ADMIN_STAGING_FIREBASE_PROJECT || '';
 const allowNonProduction = process.env.URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED === '1';
+const emulatorMode = process.env.URAI_ADMIN_FIRESTORE_EMULATOR === '1';
+const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST || '';
 const actor = process.env.URAI_ADMIN_SEED_ACTOR || process.env.URAI_ADMIN_OWNER_EMAIL || 'system-registry-seed';
+const expectedSha = process.env.URAI_ADMIN_SEED_SHA || '';
+const guardPassed = process.env.URAI_ADMIN_SEED_GUARD_PASSED === 'run-system-registry-seed.mjs';
+const shaPattern = /^[0-9a-f]{40}$/;
+const projectPattern = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
+const loopbackEmulatorPattern = /^(?:127\.0\.0\.1|localhost|\[::1\]):[1-9][0-9]{0,4}$/;
+const allowedStatuses = new Set(['not_connected', 'blocked', 'staging_ready', 'production_ready', 'degraded']);
+const requiredFields = [
+  'id', 'name', 'repo', 'runtime', 'owner', 'status', 'productionUrl', 'stagingUrl',
+  'firebaseTarget', 'lastReleaseSha', 'rollbackSha', 'lastSmokeResult', 'healthEndpoint',
+  'monitoringUrl', 'requiredSecrets', 'knownBlockers', 'integrationContracts', 'dataBoundary',
+  'privacyClassification', 'operationalRisk', 'evidenceLinks',
+];
 
-if (projectId !== 'urai-4dc1d' && !allowNonProduction) {
-  console.error(`Refusing to seed non-production project ${projectId}. Set URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1 for staging.`);
+function fail(message) {
+  console.error(`[system-registry-seed] ${message}`);
   process.exit(1);
 }
 
-if (!admin.apps.length) {
+function stable(value) {
+  if (Array.isArray(value)) return value.map(stable);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+  }
+  return value;
+}
+
+function sameValue(left, right) {
+  return JSON.stringify(stable(left)) === JSON.stringify(stable(right));
+}
+
+if (!guardPassed) fail('Direct seed execution is disabled. Use pnpm seed:system-registry through the guarded wrapper.');
+if (process.env.URAI_ADMIN_SEED_APPLY !== '1') fail('URAI_ADMIN_SEED_APPLY=1 is required.');
+if (!explicitProjectId) fail('Apply mode requires URAI_ADMIN_FIREBASE_PROJECT or NEXT_PUBLIC_FIREBASE_PROJECT_ID to explicitly select the target project.');
+if (process.env.URAI_ADMIN_SEED_CONFIRM !== SEED_CONFIRMATION) fail(`URAI_ADMIN_SEED_CONFIRM must equal ${SEED_CONFIRMATION}.`);
+if (!shaPattern.test(expectedSha)) fail('URAI_ADMIN_SEED_SHA must be a full lowercase 40-character SHA.');
+if (!projectPattern.test(projectId)) fail(`Firebase project id is invalid: ${projectId}.`);
+
+let actualSha;
+let worktree;
+let repoRoot;
+try {
+  actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  worktree = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
+  repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  fail(`Failed to inspect the current git checkout: ${reason}`);
+}
+
+if (actualSha !== expectedSha) fail(`Checked-out SHA ${actualSha} does not match URAI_ADMIN_SEED_SHA ${expectedSha}.`);
+if (worktree) fail('Registry seed requires a clean worktree.');
+if (!emulatorMode && emulatorHost) fail('Cloud registry seed forbids FIRESTORE_EMULATOR_HOST.');
+
+if (emulatorMode) {
+  if (projectId !== EMULATOR_PROJECT_ID) fail(`Emulator seed target must exactly equal ${EMULATOR_PROJECT_ID}.`);
+  if (!loopbackEmulatorPattern.test(emulatorHost)) {
+    fail('Emulator seed requires FIRESTORE_EMULATOR_HOST to be an explicit loopback host and port.');
+  }
+  if (process.env.URAI_ADMIN_EMULATOR_APPROVAL !== EMULATOR_APPROVAL) {
+    fail(`Emulator seed requires URAI_ADMIN_EMULATOR_APPROVAL=${EMULATOR_APPROVAL}.`);
+  }
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    fail('Emulator seed forbids cloud service-account credentials.');
+  }
+} else if (projectId === PRODUCTION_PROJECT_ID) {
+  if (process.env.URAI_ADMIN_PRODUCTION_APPROVAL !== PRODUCTION_APPROVAL) {
+    fail(`Production seed requires URAI_ADMIN_PRODUCTION_APPROVAL=${PRODUCTION_APPROVAL}.`);
+  }
+} else {
+  if (!stagingProjectId) fail('Non-production seed requires URAI_ADMIN_STAGING_FIREBASE_PROJECT to name the approved staging project.');
+  if (projectId !== stagingProjectId) fail(`Non-production target ${projectId} does not match approved staging project ${stagingProjectId}.`);
+  if (!allowNonProduction) fail('Non-production seed requires URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1.');
+  if (process.env.URAI_ADMIN_STAGING_APPROVAL !== STAGING_APPROVAL) {
+    fail(`Non-production seed requires URAI_ADMIN_STAGING_APPROVAL=${STAGING_APPROVAL}.`);
+  }
+}
+
+const ids = new Set();
+for (const record of SYSTEM_REGISTRY_RECORDS) {
+  for (const field of requiredFields) {
+    if (!(field in record)) fail(`Registry record ${record.id || '<unknown>'} is missing ${field}.`);
+  }
+  if (!record.id || ids.has(record.id)) fail(`Registry record id is missing or duplicated: ${record.id || '<empty>'}.`);
+  ids.add(record.id);
+  if (!allowedStatuses.has(record.status)) fail(`Registry record ${record.id} has unsupported status ${record.status}.`);
+  if (record.repo.includes('*')) fail(`Registry record ${record.id} contains forbidden wildcard repository authority.`);
+  if (record.status === 'production_ready' && (!record.lastReleaseSha || !record.rollbackSha || record.lastSmokeResult !== 'pass' || !record.monitoringUrl)) {
+    fail(`Registry record ${record.id} cannot be production_ready without deployed SHA, rollback SHA, passing smoke and monitoring evidence.`);
+  }
+}
+
+if (!SYSTEM_REGISTRY_RECORDS.some((record) => record.repo === 'LifeLoggerAI/urai-spatial')) {
+  fail('Canonical urai-spatial authority is missing from registry data.');
+}
+
+let cloudAuthority = null;
+let preparedCloudReceipt = null;
+if (!emulatorMode) {
+  try {
+    cloudAuthority = validateRegistryCloudAuthority({ env: process.env, projectId });
+    preparedCloudReceipt = prepareConfinedRegistryCloudReceiptTarget({
+      receiptPath: cloudAuthority.receiptPath,
+      repoRoot,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Cloud authority or immutable receipt preflight failed before mutation: ${reason}`);
+  }
+}
+
+const validatedCloudCredential = cloudAuthority?.credential || null;
+const validatedCloudCredentialDigest = validatedCloudCredential
+  ? crypto.createHash('sha256').update(JSON.stringify(stable(validatedCloudCredential))).digest('hex')
+  : null;
+
+if (admin.apps.length) fail('Registry seed requires a fresh process with no preinitialized Firebase Admin app.');
+if (emulatorMode) {
   admin.initializeApp({ projectId });
+} else {
+  if (
+    validatedCloudCredential?.type !== 'service_account'
+    || typeof validatedCloudCredential.client_email !== 'string'
+    || !validatedCloudCredential.client_email
+    || typeof validatedCloudCredential.private_key !== 'string'
+    || !validatedCloudCredential.private_key
+  ) {
+    fail('Cloud registry seed requires complete validated service_account JSON with client_email and private_key so Firebase Admin cannot re-read mutable credential-path contents.');
+  }
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(validatedCloudCredential),
+      projectId,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Validated cloud credential could not initialize Firebase Admin: ${reason}`);
+  }
 }
 
 const firestore = admin.firestore();
+const registryCollection = firestore.collection('systemRegistry');
+const eventRef = firestore.collection('adminOperationalEvents').doc();
 const now = admin.firestore.FieldValue.serverTimestamp();
+const registryDigest = crypto
+  .createHash('sha256')
+  .update(JSON.stringify({ evidenceDate: REGISTRY_EVIDENCE_DATE, records: SYSTEM_REGISTRY_RECORDS }))
+  .digest('hex');
 
-const systems = [
-  {
-    id: 'urai-main-experience',
-    name: 'URAI Main Experience',
-    repo: 'LifeLoggerAI/UrAi*',
-    runtime: 'React/Firebase as configured by repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Firebase public config', 'App runtime secrets'],
-    knownBlockers: ['Needs live contract'],
-    integrationContracts: ['Safe aggregate app status only'],
-    dataBoundary: 'Consumer app data; admin sees only approved summaries',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-admin',
-    name: 'URAI Admin',
-    repo: 'LifeLoggerAI/urai-admin',
-    runtime: 'Next.js 14, Firebase Hosting/Functions, Node 20',
-    owner: 'Adam Clamp',
-    status: 'blocked',
-    productionUrl: 'https://www.uraiadmin.com',
-    stagingUrl: '',
-    firebaseTarget: 'urai-4dc1d',
-    lastReleaseSha: process.env.GITHUB_SHA || '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '/status',
-    requiredSecrets: ['Firebase public config', 'Managed Google runtime/deploy identity', 'Owner seed UID/email'],
-    knownBlockers: ['Needs staging/prod evidence', 'Needs owner approval'],
-    integrationContracts: ['Operational metadata only'],
-    dataBoundary: 'Operational metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-analytics',
-    name: 'URAI Analytics',
-    repo: 'apps/urai-analytics, packages/analytics-core',
-    runtime: 'Workspace app/package',
-    owner: 'Adam Clamp',
-    status: 'blocked',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Analytics service config'],
-    knownBlockers: ['Needs integration evidence', 'Needs live health/status card'],
-    integrationContracts: ['Aggregates/status only; no raw telemetry in admin without review'],
-    dataBoundary: 'Aggregate analytics status only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-communications',
-    name: 'URAI Communications',
-    repo: 'LifeLoggerAI/urai-communications',
-    runtime: 'TBD by communications repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Provider API keys', 'Firebase config'],
-    knownBlockers: ['Needs health contract'],
-    integrationContracts: ['Notification status and delivery metadata only'],
-    dataBoundary: 'Notification status and delivery metadata only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-privacy',
-    name: 'URAI Privacy',
-    repo: 'LifeLoggerAI/urai-privacy',
-    runtime: 'TBD by privacy repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Policy publishing credentials'],
-    knownBlockers: ['Needs policy link evidence'],
-    integrationContracts: ['Policy, deletion, retention, DPA and subprocessor metadata'],
-    dataBoundary: 'Policy metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-foundation',
-    name: 'URAI Foundation',
-    repo: 'LifeLoggerAI/urai-foundation',
-    runtime: 'TBD by foundation repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Governance doc credentials'],
-    knownBlockers: ['Needs governance evidence'],
-    integrationContracts: ['Governance and ethical review evidence'],
-    dataBoundary: 'Governance metadata only',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-spatial',
-    name: 'URAI Spatial',
-    repo: 'LifeLoggerAI/urai-spatial',
-    runtime: 'Spatial/WebXR/AR as configured',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Spatial service config'],
-    knownBlockers: ['Needs status endpoint'],
-    integrationContracts: ['Spatial metadata only unless approved'],
-    dataBoundary: 'Spatial metadata only unless approved',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-studio',
-    name: 'URAI Studio',
-    repo: 'LifeLoggerAI/urai-studio',
-    runtime: 'TBD by studio repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Studio deploy config'],
-    knownBlockers: ['Needs production URL'],
-    integrationContracts: ['Creative asset metadata'],
-    dataBoundary: 'Creative asset metadata',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-jobs',
-    name: 'URAI Jobs',
-    repo: 'LifeLoggerAI/urai-jobs',
-    runtime: 'TBD by jobs repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Jobs service config'],
-    knownBlockers: ['Needs registry seed'],
-    integrationContracts: ['Job metadata only'],
-    dataBoundary: 'Job metadata, no secrets in admin UI',
-    privacyClassification: 'internal',
-    operationalRisk: 'medium',
-  },
-  {
-    id: 'urai-investors',
-    name: 'URAI Investors',
-    repo: 'LifeLoggerAI/urai-investors',
-    runtime: 'TBD by investors repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Investor portal config'],
-    knownBlockers: ['Needs access boundary'],
-    integrationContracts: ['Investor-facing published materials only'],
-    dataBoundary: 'Investor-facing published materials only',
-    privacyClassification: 'confidential',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-marketing',
-    name: 'URAI Marketing',
-    repo: 'LifeLoggerAI/urai-marketing',
-    runtime: 'TBD by marketing repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Marketing deploy config'],
-    knownBlockers: ['Needs URL evidence'],
-    integrationContracts: ['Public campaign metadata'],
-    dataBoundary: 'Public campaign metadata',
-    privacyClassification: 'internal',
-    operationalRisk: 'low',
-  },
-  {
-    id: 'urai-asset-factory',
-    name: 'URAI Asset Factory',
-    repo: 'LifeLoggerAI/asset-factory',
-    runtime: 'Asset generation pipeline',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['Storage/model provider config'],
-    knownBlockers: ['Needs data boundary review'],
-    integrationContracts: ['Asset metadata and approved generated assets only'],
-    dataBoundary: 'Asset metadata and approved generated assets only',
-    privacyClassification: 'restricted',
-    operationalRisk: 'high',
-  },
-  {
-    id: 'urai-b2b-portal',
-    name: 'URAI B2B Portal',
-    repo: 'LifeLoggerAI/B2Bportal',
-    runtime: 'TBD by B2B portal repo',
-    owner: 'Adam Clamp',
-    status: 'not_connected',
-    productionUrl: '',
-    stagingUrl: '',
-    firebaseTarget: '',
-    lastReleaseSha: '',
-    lastSmokeResult: 'unknown',
-    healthEndpoint: '',
-    requiredSecrets: ['B2B portal config'],
-    knownBlockers: ['Needs partner access contract'],
-    integrationContracts: ['Partner/account metadata only'],
-    dataBoundary: 'Partner/account metadata only',
-    privacyClassification: 'confidential',
-    operationalRisk: 'high',
-  },
-];
+let preflightExistingCount = 0;
+let unexpectedRegistryIds = [];
+try {
+  await firestore.runTransaction(async (transaction) => {
+    const existingRegistry = await transaction.get(registryCollection);
+    preflightExistingCount = existingRegistry.size;
+    unexpectedRegistryIds = existingRegistry.docs
+      .map((doc) => doc.id)
+      .filter((id) => !ids.has(id))
+      .sort();
 
-const batch = firestore.batch();
-for (const system of systems) {
-  const ref = firestore.collection('systemRegistry').doc(system.id);
-  batch.set(
-    ref,
-    {
-      ...system,
-      seededBy: 'scripts/seed-system-registry.mjs',
-      seededActor: actor,
-      updatedAt: now,
-    },
-    { merge: true },
-  );
+    if (unexpectedRegistryIds.length) {
+      throw new Error(`Refusing to seed while unexpected systemRegistry documents exist: ${unexpectedRegistryIds.join(', ')}.`);
+    }
+
+    for (const system of SYSTEM_REGISTRY_RECORDS) {
+      transaction.set(registryCollection.doc(system.id), {
+        ...system,
+        registryEvidenceDate: REGISTRY_EVIDENCE_DATE,
+        registryDigest,
+        sourceSha: expectedSha,
+        seededBy: 'scripts/seed-system-registry.mjs',
+        seededActor: actor,
+        updatedAt: now,
+      }, { merge: false });
+    }
+
+    transaction.set(eventRef, {
+      actor,
+      action: 'systemRegistry.seed',
+      target: { type: 'collection', id: 'systemRegistry' },
+      metadata: {
+        projectId,
+        count: SYSTEM_REGISTRY_RECORDS.length,
+        evidenceDate: REGISTRY_EVIDENCE_DATE,
+        registryDigest,
+        sourceSha: expectedSha,
+        script: 'scripts/seed-system-registry.mjs',
+        allowNonProduction,
+        emulatorMode,
+        preflightExistingCount,
+      },
+      createdAt: now,
+    });
+  });
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  fail(`Atomic registry preflight and mutation failed: ${reason}`);
 }
 
-const seedEventRef = firestore.collection('adminOperationalEvents').doc();
-batch.set(seedEventRef, {
-  actor,
-  action: 'systemRegistry.seed',
-  target: { type: 'collection', id: 'systemRegistry' },
-  metadata: {
-    projectId,
-    count: systems.length,
-    script: 'scripts/seed-system-registry.mjs',
-    allowNonProduction,
-  },
-  createdAt: now,
-});
+let verifiedRegistry;
+let verifiedEvent;
+try {
+  [verifiedRegistry, verifiedEvent] = await Promise.all([
+    registryCollection.get(),
+    eventRef.get(),
+  ]);
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  fail(`Registry mutation committed but post-commit read-back failed: ${reason}`);
+}
 
-await batch.commit();
-console.log(`Seeded ${systems.length} URAI system registry records into ${projectId} using Application Default Credentials.`);
+if (verifiedRegistry.size !== SYSTEM_REGISTRY_RECORDS.length) {
+  fail(`Post-commit registry count ${verifiedRegistry.size} does not equal ${SYSTEM_REGISTRY_RECORDS.length}.`);
+}
+const verifiedById = new Map(verifiedRegistry.docs.map((doc) => [doc.id, doc.data()]));
+for (const expected of SYSTEM_REGISTRY_RECORDS) {
+  const observed = verifiedById.get(expected.id);
+  if (!observed) fail(`Post-commit registry is missing ${expected.id}.`);
+  for (const field of requiredFields) {
+    if (!sameValue(observed[field], expected[field])) {
+      fail(`Post-commit registry field mismatch for ${expected.id}.${field}.`);
+    }
+  }
+  if (observed.registryEvidenceDate !== REGISTRY_EVIDENCE_DATE) fail(`Post-commit evidence date mismatch for ${expected.id}.`);
+  if (observed.registryDigest !== registryDigest) fail(`Post-commit digest mismatch for ${expected.id}.`);
+  if (observed.sourceSha !== expectedSha) fail(`Post-commit source SHA mismatch for ${expected.id}.`);
+  if (observed.seededBy !== 'scripts/seed-system-registry.mjs') fail(`Post-commit seededBy mismatch for ${expected.id}.`);
+}
+
+if (!verifiedEvent.exists) fail('Post-commit operational event is missing.');
+const event = verifiedEvent.data();
+if (event?.action !== 'systemRegistry.seed') fail('Post-commit operational event action mismatch.');
+if (event?.metadata?.projectId !== projectId) fail('Post-commit operational event project mismatch.');
+if (event?.metadata?.registryDigest !== registryDigest) fail('Post-commit operational event digest mismatch.');
+if (event?.metadata?.sourceSha !== expectedSha) fail('Post-commit operational event source SHA mismatch.');
+if (event?.metadata?.count !== SYSTEM_REGISTRY_RECORDS.length) fail('Post-commit operational event count mismatch.');
+
+if (cloudAuthority) {
+  const receipt = {
+    schemaVersion: CLOUD_RECEIPT_SCHEMA,
+    generatedAt: new Date().toISOString(),
+    repository: process.env.GITHUB_REPOSITORY || 'LifeLoggerAI/urai-admin',
+    exactSha: expectedSha,
+    projectId,
+    environment: projectId === PRODUCTION_PROJECT_ID ? 'production' : 'staging',
+    registryDigest,
+    expectedRegistryCount: SYSTEM_REGISTRY_RECORDS.length,
+    observedRegistryCount: verifiedRegistry.size,
+    operationalEventId: eventRef.id,
+    credentialSource: cloudAuthority.credentialSource,
+    credentialProjectId: cloudAuthority.credentialProjectId,
+    credentialMaterialDigest: validatedCloudCredentialDigest,
+    credentialProjectVerified: true,
+    credentialMaterialBoundBeforeInitialization: true,
+    atomicPreflightAndMutationVerified: true,
+    postCommitReadbackVerified: true,
+    unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
+    productionMutationPerformed: projectId === PRODUCTION_PROJECT_ID,
+    stagingMutationPerformed: projectId !== PRODUCTION_PROJECT_ID,
+    emulatorMode: false,
+    secretValuesIncluded: false,
+  };
+  try {
+    const writtenPath = writeConfinedRegistryCloudReceipt({
+      receiptPath: cloudAuthority.receiptPath,
+      content: `${JSON.stringify(receipt, null, 2)}\n`,
+      repoRoot,
+    });
+    if (writtenPath !== preparedCloudReceipt?.absolutePath) {
+      fail('Cloud receipt path changed between preflight and exclusive creation.');
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`Registry mutation committed and verified, but immutable receipt creation failed: ${reason}`);
+  }
+}
+
+const targetKind = emulatorMode ? 'isolated emulator' : projectId;
+const receiptMessage = cloudAuthority ? ` Receipt: ${cloudAuthority.receiptPath}.` : '';
+console.log(`Seeded and read-back verified ${SYSTEM_REGISTRY_RECORDS.length} canonical URAI registry records into ${targetKind} at ${expectedSha}. Digest: ${registryDigest}.${receiptMessage}`);
