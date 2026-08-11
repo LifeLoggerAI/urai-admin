@@ -74,13 +74,9 @@ function createBuildAuthStub(): any {
 
 if (!shouldStubFirebaseAdmin && !admin.apps.length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } else {
-    admin.initializeApp();
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is forbidden; URAI Admin runtime requires provider ADC.');
   }
+  admin.initializeApp();
 }
 
 const firestore = shouldStubFirebaseAdmin ? createBuildFirestoreStub() : getFirestore();
