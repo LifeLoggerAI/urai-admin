@@ -9,6 +9,7 @@ const runtimeAuthPaths = [
   'functions/apps/urai-admin/src/config/firebase-admin.ts',
   'packages/governance-sdk/src/firebase.ts',
 ];
+const governanceSdk = readFileSync('packages/governance-sdk/src/firebase.ts', 'utf8');
 
 const failures = [];
 const requireMatch = (source, pattern, label) => {
@@ -52,6 +53,13 @@ for (const path of runtimeAuthPaths) {
   forbidMatch(source, /FIREBASE_CLIENT_EMAIL/, `${path} client-email environment fallback`);
   forbidMatch(source, /ServiceAccount/, `${path} service-account parameter contract`);
 }
+
+requireMatch(governanceSdk, /const CENTRAL_PROJECT_ID = 'urai-4dc1d'/, 'governance SDK explicit central project');
+requireMatch(governanceSdk, /const CENTRAL_APP_NAME = 'urai-admin-governance'/, 'governance SDK named app');
+requireMatch(governanceSdk, /admin\.credential\.applicationDefault\(\)/, 'governance SDK ADC credential');
+requireMatch(governanceSdk, /projectId:\s*CENTRAL_PROJECT_ID/, 'governance SDK pinned project initialization');
+requireMatch(governanceSdk, /admin\.app\(CENTRAL_APP_NAME\)/, 'governance SDK named app reuse');
+requireMatch(governanceSdk, /centralApp\.firestore\(\)/, 'governance SDK named Firestore instance');
 
 if (failures.length > 0) {
   for (const failure of failures) console.error(`[FAIL] ${failure}`);
