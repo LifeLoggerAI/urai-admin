@@ -1,6 +1,6 @@
 # URAI Admin Production Terminal Commands
 
-These commands finish the evidence and deployment work that cannot be completed from a repo-only edit pass.
+These commands finish evidence and operator-side validation that cannot be completed from a repo-only edit pass.
 
 Run from a clean local checkout of `LifeLoggerAI/urai-admin` after merging this branch.
 
@@ -37,10 +37,13 @@ URAI_ADMIN_VERIFIER_RUN_COMMANDS=1 pnpm verify:release
 
 ## 3. Production preflight environment
 
-Export or configure these values in your shell/GitHub Actions environment. Do not commit real values.
+The canonical production deploy path is the manual `Deploy URAI Admin` GitHub Actions workflow. It authenticates through GitHub OIDC to Google Cloud Workload Identity Federation using protected non-secret variables `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SERVICE_ACCOUNT`.
+
+For local/operator validation that needs Google/Firebase access, authenticate with an approved short-lived ADC identity before running the preflight. Do not export `FIREBASE_TOKEN`, raw service-account JSON, or private-key material.
+
+Configure only the non-secret/public application settings needed by the app, for example:
 
 ```bash
-export FIREBASE_TOKEN='<firebase-ci-token>'
 export NEXT_PUBLIC_FIREBASE_API_KEY='<firebase-web-api-key>'
 export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN='urai-4dc1d.firebaseapp.com'
 export NEXT_PUBLIC_FIREBASE_PROJECT_ID='urai-4dc1d'
@@ -58,9 +61,11 @@ pnpm preflight:production
 pnpm security:gate
 ```
 
+In GitHub Actions, preflight requires the temporary WIF credential file exported by `google-github-actions/auth`. A local shell must instead have approved ADC available.
+
 ## 4. Seed first owner
 
-Use the Firebase Auth UID for the owner account.
+Use the Firebase Auth UID for the owner account. Run the bootstrap with approved ADC or a managed runtime/operator identity; do not use raw service-account JSON.
 
 ```bash
 export URAI_ADMIN_OWNER_UID='<firebase-auth-owner-uid>'
@@ -74,7 +79,8 @@ Evidence to record:
 - owner email;
 - timestamp;
 - command result;
-- Firebase project ID.
+- Firebase project ID;
+- identity method used (ADC/managed identity), without secret material.
 
 ## 5. Seed system-of-systems registry
 
@@ -96,6 +102,8 @@ export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
 pnpm seed:system-registry
 ```
 
+Both flows require approved ADC or managed identity credentials.
+
 Evidence to record:
 
 - project ID;
@@ -105,6 +113,8 @@ Evidence to record:
 
 ## 6. Staging deploy
 
+Use an approved short-lived ADC identity or a governed WIF-backed staging workflow. Never restore Firebase CLI token or raw JSON-key authentication.
+
 ```bash
 firebase use <STAGING_FIREBASE_PROJECT_ID>
 firebase deploy --only firestore:rules,firestore:indexes,storage
@@ -113,20 +123,19 @@ export URAI_ADMIN_STAGING_URL='<firebase-preview-url>'
 pnpm test:smoke
 ```
 
-Record the preview URL and smoke output in `docs/EVIDENCE_LOG.md`.
+Record the identity method, preview URL, and smoke output in `docs/EVIDENCE_LOG.md`.
 
 ## 7. Production deploy
 
-Only run this after the staging gates are recorded and owner approval is ready.
+Production deployment is governed through GitHub Actions, not an ad hoc terminal deploy:
 
-```bash
-firebase use urai-4dc1d
-firebase deploy --only firestore:rules,firestore:indexes,storage,functions,hosting -P urai-4dc1d
-export URAI_ADMIN_PRODUCTION_URL='https://www.uraiadmin.com'
-pnpm verify:production
-```
+1. Confirm the exact reviewed commit SHA is on `main`.
+2. Confirm protected `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SERVICE_ACCOUNT` variables resolve to the approved provider and least-privilege deploy identity.
+3. Confirm provider-side trust conditions and IAM bindings have been reviewed and evidenced.
+4. Run the manual `Deploy URAI Admin` workflow for the exact target SHA.
+5. Preserve the workflow URL, auth/deploy evidence, verifier output, and live read-back evidence.
 
-Verify these routes:
+After deployment, verify these routes:
 
 ```bash
 curl -I https://www.uraiadmin.com/
@@ -134,6 +143,8 @@ curl -I https://www.uraiadmin.com/status
 curl -I https://www.uraiadmin.com/privacy
 curl -I https://www.uraiadmin.com/terms
 ```
+
+Do not substitute a local Firebase CLI token deployment for the governed WIF workflow.
 
 ## 8. DNS and SSL evidence
 
@@ -147,7 +158,7 @@ Record the SSL issuer/validity summary in `docs/EVIDENCE_LOG.md`.
 
 ## 9. Rollback evidence
 
-List releases and pick the previous known-good release.
+List releases and pick the previous known-good release using approved ADC or the governed WIF identity path.
 
 ```bash
 firebase hosting:releases:list --site "$URAI_ADMIN_HOSTING_SITE" -P urai-4dc1d
@@ -156,7 +167,7 @@ export URAI_ADMIN_HOSTING_SITE='<hosting-site-id>'
 pnpm rollback:production
 ```
 
-If you are only proving rollback readiness, record the exact known-good release ID and do not perform a destructive rollback unless needed.
+The rollback script must execute without `--token`. If you are only proving rollback readiness, record the exact known-good release ID and do not perform a destructive rollback unless needed.
 
 ## 10. Final lock update
 
@@ -172,6 +183,7 @@ Production URL: https://www.uraiadmin.com
 Rollback release/SHA: <known-good-release>
 Monitoring dashboard: <link or evidence>
 DNS/SSL proof: <summary>
+WIF/provider IAM proof: <evidence location>
 ```
 
-Do not mark production-ready before the evidence exists.
+Do not mark production-ready before provider-side WIF trust/IAM, protected identity installation, exact-head deployment, and live evidence exist.
