@@ -4,6 +4,12 @@ const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
 const preflight = readFileSync('scripts/preflight-production.sh', 'utf8');
 const rollback = readFileSync('scripts/rollback-production.sh', 'utf8');
 const gitignore = readFileSync('.gitignore', 'utf8');
+const runtimeAuthPaths = [
+  'apps/urai-admin/src/config/firebase-admin.ts',
+  'functions/apps/urai-admin/src/config/firebase-admin.ts',
+  'packages/governance-sdk/src/firebase.ts',
+];
+const governanceSdk = readFileSync('packages/governance-sdk/src/firebase.ts', 'utf8');
 
 const failures = [];
 const requireMatch = (source, pattern, label) => {
@@ -38,6 +44,22 @@ forbidMatch(rollback, /FIREBASE_TOKEN is required/, 'rollback FIREBASE_TOKEN req
 requireMatch(workflow, /corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d/, 'worktree-local ADC-compatible rollback deploy command');
 requireMatch(workflow, /verify-production-live\.sh/, 'post-rollback live verification');
 forbidMatch(workflow, /URAI_ADMIN_DEPLOY_MARKER=.*pnpm run deploy:production/, 'historical rollback deploy script invocation');
+
+for (const path of runtimeAuthPaths) {
+  const source = readFileSync(path, 'utf8');
+  requireMatch(source, /initializeApp\(/, `${path} Firebase Admin initialization`);
+  forbidMatch(source, /credential\.cert\(/, `${path} certificate credential construction`);
+  forbidMatch(source, /FIREBASE_PRIVATE_KEY/, `${path} private-key environment fallback`);
+  forbidMatch(source, /FIREBASE_CLIENT_EMAIL/, `${path} client-email environment fallback`);
+  forbidMatch(source, /ServiceAccount/, `${path} service-account parameter contract`);
+}
+
+requireMatch(governanceSdk, /const CENTRAL_PROJECT_ID = 'urai-4dc1d'/, 'governance SDK explicit central project');
+requireMatch(governanceSdk, /const CENTRAL_APP_NAME = 'urai-admin-governance'/, 'governance SDK named app');
+requireMatch(governanceSdk, /admin\.credential\.applicationDefault\(\)/, 'governance SDK ADC credential');
+requireMatch(governanceSdk, /projectId:\s*CENTRAL_PROJECT_ID/, 'governance SDK pinned project initialization');
+requireMatch(governanceSdk, /admin\.app\(CENTRAL_APP_NAME\)/, 'governance SDK named app reuse');
+requireMatch(governanceSdk, /centralApp\.firestore\(\)/, 'governance SDK named Firestore instance');
 
 if (failures.length > 0) {
   for (const failure of failures) console.error(`[FAIL] ${failure}`);

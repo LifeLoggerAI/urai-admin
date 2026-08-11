@@ -1,24 +1,36 @@
 import * as admin from 'firebase-admin';
 
+const CENTRAL_PROJECT_ID = 'urai-4dc1d';
+const CENTRAL_APP_NAME = 'urai-admin-governance';
+
 let centralFirestoreInstance: admin.firestore.Firestore;
 
 /**
- * Initializes the connection to the central urai-admin Firestore database.
- * This must be called once by the satellite service at boot time.
- * @param serviceAccount The service account key with permissions to access the central Firestore.
+ * Initializes the connection to the central urai-admin Firestore database
+ * using approved Application Default Credentials while pinning the central
+ * project independently from any satellite runtime's default Firebase app.
  */
-export function initializeCentralDatabase(serviceAccount: admin.ServiceAccount) {
+export function initializeCentralDatabase() {
   if (centralFirestoreInstance) {
     console.warn('Central database already initialized.');
     return;
   }
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  let centralApp: admin.app.App;
+  try {
+    centralApp = admin.app(CENTRAL_APP_NAME);
+  } catch {
+    centralApp = admin.initializeApp(
+      {
+        credential: admin.credential.applicationDefault(),
+        projectId: CENTRAL_PROJECT_ID,
+      },
+      CENTRAL_APP_NAME
+    );
+  }
 
-  centralFirestoreInstance = admin.firestore();
-  console.log('✅ Connection to central governance database established.');
+  centralFirestoreInstance = centralApp.firestore();
+  console.log('Connection to central governance database established.');
 }
 
 /**
