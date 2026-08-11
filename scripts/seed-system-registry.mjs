@@ -13,14 +13,7 @@ if (projectId !== 'urai-4dc1d' && !allowNonProduction) {
 }
 
 if (!admin.apps.length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-      projectId,
-    });
-  } else {
-    admin.initializeApp({ projectId });
-  }
+  admin.initializeApp({ projectId });
 }
 
 const firestore = admin.firestore();
@@ -60,7 +53,7 @@ const systems = [
     lastReleaseSha: process.env.GITHUB_SHA || '',
     lastSmokeResult: 'unknown',
     healthEndpoint: '/status',
-    requiredSecrets: ['Firebase public config', 'FIREBASE_TOKEN', 'Owner seed UID/email'],
+    requiredSecrets: ['Firebase public config', 'Managed Google runtime/deploy identity', 'Owner seed UID/email'],
     knownBlockers: ['Needs staging/prod evidence', 'Needs owner approval'],
     integrationContracts: ['Operational metadata only'],
     dataBoundary: 'Operational metadata only',
@@ -319,4 +312,4 @@ batch.set(seedEventRef, {
 });
 
 await batch.commit();
-console.log(`Seeded ${systems.length} URAI system registry records into ${projectId}.`);
+console.log(`Seeded ${systems.length} URAI system registry records into ${projectId} using Application Default Credentials.`);
