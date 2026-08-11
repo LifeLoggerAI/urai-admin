@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "clean:legacy": "bash scripts/clean-functions-legacy.sh && bash scripts/clean-app-generated.sh",
-    "security:gate": "bash scripts/security-gate.sh",
+    "security:gate": "bash scripts/security-gate.sh && node scripts/wif-deploy-auth-contract.mjs",
     "analytics:core:test": "pnpm --dir packages/analytics-core test",
     "analytics:typecheck": "pnpm --dir packages/analytics-core typecheck && pnpm --dir apps/urai-analytics typecheck",
     "analytics:test": "pnpm analytics:core:test && pnpm --dir apps/urai-analytics test",
