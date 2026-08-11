@@ -45,18 +45,35 @@ assert.match(requireAdminSession, /isActive\s*!==\s*true/, 'inactive admin users
 assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom claim role must match adminUsers role');
 assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
 assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
+assert.match(requireAdminSession, /requireSameOrigin/, 'admin mutations must reject untrusted origins');
+assert.match(requireAdminSession, /URAI_ADMIN_ALLOWED_ORIGINS/, 'production origin authority must come from explicit configuration');
+assert.match(requireAdminSession, /Production admin origins must use HTTPS/, 'production origin configuration must require HTTPS');
+assert.match(requireAdminSession, /Admin origin allowlist is not configured/, 'production must fail closed without configured origins');
+assert.match(requireAdminSession, /isLoopbackOrigin/, 'non-production may allow only explicit loopback development origins');
+assert.doesNotMatch(requireAdminSession, /x-forwarded-host|x-forwarded-proto/i, 'forwarded request headers must not define trusted admin origins');
+assert.doesNotMatch(requireAdminSession, /new Set<string>\(\[req\.nextUrl\.origin\]\)/, 'request-derived origin must not seed the production allowlist');
+assert.match(requireAdminSession, /decodedToken\.auth_time/, 'session creation must require recent authentication');
+assert.match(requireAdminSession, /ageSeconds >= -MAX_CLOCK_SKEW_SECONDS/, 'future-dated authentication must be bounded by explicit clock skew');
+assert.match(requireAdminSession, /refreshRequired:\s*true/, 'stale claims must require a refreshed ID token');
+assert.match(requireAdminSession, /tokenClaimsMatch/, 'a stale token must not mint an admin cookie');
+assert.match(requireAdminSession, /sameSite:\s*'strict'/, 'admin cookies must use strict same-site policy');
 
 const loginRoute = await read('src/app/api/auth/login/route.ts');
-assert.match(loginRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'login must recognize owner, admin, and viewer roles');
-assert.match(loginRoute, /admin:\s*true/, 'all active admin roles, including viewer, must receive admin claim for read-only rules access');
-assert.match(loginRoute, /role:\s*adminUser\.role/, 'login custom claims must preserve exact adminUsers role');
-assert.match(loginRoute, /auth\.setCustomUserClaims/, 'login must refresh Firebase custom claims before session creation');
+assert.match(loginRoute, /exchangeAdminIdToken/, 'login must use the canonical two-pass exchange');
+assert.match(loginRoute, /auth\.verifyIdToken/, 'login must fail closed without token verification support');
+assert.match(loginRoute, /auth\.createSessionCookie/, 'login must fail closed without cookie exchange support');
+
+const loginClient = await read('src/app/login/LoginClient.tsx');
+assert.match(loginClient, /exchange\.response\.status === 409/, 'client must recognize the claim synchronization response');
+assert.match(loginClient, /exchange\.payload\.refreshRequired === true/, 'client must require the explicit refresh flag');
+assert.equal((loginClient.match(/credential\.user\.getIdToken\(true\)/g) ?? []).length, 2, 'client must allow exactly one forced-token retry path');
+assert.doesNotMatch(loginClient, /while\s*\(/, 'admin claim refresh must not loop indefinitely');
 
 const sessionRoute = await read('src/app/api/auth/session/route.ts');
-assert.match(sessionRoute, /ADMIN_ROLES\s*=\s*\['owner',\s*'admin',\s*'viewer'\]/, 'session refresh must recognize owner, admin, and viewer roles');
-assert.match(sessionRoute, /admin:\s*true/, 'session refresh must keep all active admin roles behind the admin claim');
-assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refresh must set the hardened __session cookie');
+assert.match(sessionRoute, /exchangeAdminIdToken/, 'session refresh must use the canonical exchange');
+assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refresh must support session clearing');
 assert.match(sessionRoute, /export\s+async\s+function\s+DELETE/, 'session endpoint must support session clearing');
+assert.match(sessionRoute, /requireSameOrigin/, 'session clearing must reject untrusted origins');
 
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
@@ -65,18 +82,47 @@ assert.match(collectionRoute, /SENSITIVE_KEY_PATTERN/, 'generic collection reads
 assert.match(collectionRoute, /REDACTED/, 'generic collection reads must redact secret-like fields');
 assert.doesNotMatch(collectionRoute, /collection\(collectionKey\)/, 'collection route must not query arbitrary client-provided collection names');
 
+const roleService = await read('src/lib/admin/update-admin-role.ts');
+assert.match(roleService, /Cannot change your own role/, 'role mutation must prevent self-demotion');
+assert.match(roleService, /userRecord\.customClaims/, 'role mutation must preserve unrelated custom claims');
+assert.match(roleService, /auth\.revokeRefreshTokens\(uid\)/, 'role mutation must revoke existing sessions');
+assert.match(roleService, /auth\.setCustomUserClaims\(uid, previousClaims\)/, 'role mutation must compensate after a Firestore failure');
+assert.match(roleService, /roleMutation:\s*\{\s*id:\s*mutationId,\s*status:\s*'pending'/s, 'role mutation must reserve the target before changing claims');
+assert.match(roleService, /Admin role update already in progress/, 'concurrent role mutations must fail closed');
+assert.match(roleService, /transaction\.set\(auditRef/, 'successful role mutation must commit its audit record atomically');
+assert.match(roleService, /transaction\.set\(failureAuditRef/, 'failed role mutation must commit a durable failure audit');
+assert.match(roleService, /status:\s*'rollback-required'/, 'incomplete compensation must leave explicit rollback-required evidence');
+assert.doesNotMatch(roleService, /await\s+writeAuditLog\s*\(/, 'role mutation audit must not be detached from the canonical transaction');
+
 const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
-assert.match(roleRoute, /requireAdminSession\(req,\s*\['owner'\]\)/, 'role mutation must require owner role');
-assert.match(roleRoute, /Cannot change your own role/, 'role mutation must prevent self-demotion');
-assert.match(roleRoute, /z\.enum\(\['owner',\s*'admin',\s*'viewer'\]\)/, 'role mutation must use schema validation for allowed roles');
-assert.match(roleRoute, /auth\.setCustomUserClaims\(uid,\s*\{\s*admin:\s*true,\s*role\s*\}/s, 'role mutation must keep viewer behind admin claim while preserving exact role');
-assert.match(roleRoute, /previousRole/, 'role mutation audit metadata must include previous role');
-assert.match(roleRoute, /writeAuditLog/, 'role mutation must write an audit log');
+assert.match(roleRoute, /requireAdminMutationSession\(req, \['owner'\]\)/, 'role mutation must require owner role and trusted origin');
+assert.match(roleRoute, /updateAdminRole/, 'canonical role route must use the shared mutation service');
+assert.match(roleRoute, /z\.enum\(\['owner', 'admin', 'viewer'\]\)/, 'role mutation must schema-check allowed roles');
+
+const legacyRoleRoute = await read('src/app/api/admin/update-user-role/route.ts');
+assert.match(legacyRoleRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'legacy role route must use the same origin and owner guard');
+assert.match(legacyRoleRoute, /updateAdminRole/, 'legacy role route must not implement a second role authority');
+assert.doesNotMatch(legacyRoleRoute, /runTransaction/, 'legacy role route must not retain independent mutation logic');
+
+const activeRoute = await read('src/app/api/admin/set-user-active/route.ts');
+assert.match(activeRoute, /requireAdminMutationSession/, 'active-state mutation must require trusted origin');
+assert.match(activeRoute, /Only an owner can change another owner or admin account/, 'admin role hierarchy must be enforced');
+assert.match(activeRoute, /auth\.revokeRefreshTokens\(payload\.uid\)/, 'active-state changes must revoke sessions');
+assert.match(activeRoute, /auth\.setCustomUserClaims\(payload\.uid, previousClaims\)/, 'active-state failures must restore claims');
+assert.match(activeRoute, /Admin user changed during active-state update/, 'active-state writes must detect concurrent role/state changes');
+assert.match(activeRoute, /sessionsRevoked:\s*true/, 'active-state audit/result must expose revocation');
+
+const firebaseAdmin = await read('src/lib/firebase/admin.ts');
+for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCookie', 'setCustomUserClaims', 'revokeRefreshTokens', 'getUser']) {
+  assert.ok(firebaseAdmin.includes(method), `build Firebase Admin stub missing ${method}`);
+}
+assert.match(firebaseAdmin, /runTransaction/, 'build Firestore stub must expose transaction surface');
 
 const firestoreRules = await readRoot('firestore.rules');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
-assert.match(firestoreRules, /request\.auth\.token\.admin\s*==\s*true/, 'Firestore admin access must require the admin custom claim');
-assert.match(firestoreRules, /get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data\.isActive\s*==\s*true/, 'Firestore admin access must require active adminUsers record');
+assert.match(firestoreRules, /function\s+adminRecord\(\)\s*\{\s*return get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data;\s*\}/s, 'Firestore rules must resolve the canonical adminUsers record');
+assert.match(firestoreRules, /function\s+hasActiveAdminRecord\(\)\s*\{[\s\S]*exists\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)[\s\S]*adminRecord\(\)\.isActive\s*==\s*true;\s*\}/, 'Firestore admin access must require an existing active adminUsers record');
+assert.match(firestoreRules, /function\s+tokenRoleMatchesRecord\(\)\s*\{[\s\S]*request\.auth\.token\.admin\s*==\s*true[\s\S]*request\.auth\.token\.role\s*==\s*adminRecord\(\)\.role;\s*\}/, 'Firestore admin access must require the admin claim and canonical role parity');
 assert.match(firestoreRules, /allow write: if false;/, 'client-side Firestore writes to protected admin collections must remain disabled');
 assert.doesNotMatch(firestoreRules, /allow\s+(read|write|create|update|delete)(,\s*(read|write|create|update|delete))*:\s*if\s*true/, 'Firestore rules must not allow unconditional access');
 
