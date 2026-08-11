@@ -16,6 +16,19 @@ dist/
 firebaserc
 *.log
 
+# local environment and secret material
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.p8
+*serviceAccount*.json
+*service-account*.json
+**/serviceAccountKey.json
+firebase-service-account*.json
+gcp-service-account*.json
+
 # local backups + temp
 .bak/
 tmp/
