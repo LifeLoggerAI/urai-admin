@@ -102,7 +102,7 @@ export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
 pnpm seed:system-registry
 ```
 
-Both flows require approved ADC or managed identity credentials.
+Both registry mutation flows require a short-lived WIF external-account ADC file whose impersonated service-account identity is bound to the exact target project. Raw service-account JSON, private keys, authorized-user refresh credentials, and inline credential material are rejected.
 
 Evidence to record:
 
