@@ -25,32 +25,36 @@ function parseCredentialJson(raw, label) {
   return value;
 }
 
-function requireUsableServiceAccountCredential(credential) {
-  if (
-    credential.type !== 'service_account'
-    || typeof credential.client_email !== 'string'
-    || !credential.client_email
-    || typeof credential.private_key !== 'string'
-    || !credential.private_key
-  ) {
-    fail('Cloud registry apply requires complete service_account JSON with client_email and private_key; external-account and impersonation-only files are not accepted by this seed path.');
-  }
-}
-
 function projectFromServiceAccountEmail(value) {
   if (typeof value !== 'string') return '';
   const match = value.match(/@([a-z][a-z0-9-]{4,28}[a-z0-9])\.iam\.gserviceaccount\.com$/);
   return match?.[1] || '';
 }
 
-function credentialProjectId(credential) {
-  requireUsableServiceAccountCredential(credential);
-  const identityProject = projectFromServiceAccountEmail(credential.client_email);
-  if (!identityProject) {
-    fail('Cloud service-account client_email does not expose a valid project-bound identity.');
+function impersonatedServiceAccountEmail(value) {
+  if (typeof value !== 'string' || !value) return '';
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return '';
   }
-  if (typeof credential.project_id === 'string' && credential.project_id && credential.project_id !== identityProject) {
-    fail(`Cloud credential project_id ${credential.project_id} conflicts with service-account identity project ${identityProject}.`);
+  if (parsed.protocol !== 'https:' || parsed.hostname !== 'iamcredentials.googleapis.com') return '';
+  const match = decodeURIComponent(parsed.pathname).match(/\/serviceAccounts\/([^/]+):generateAccessToken$/);
+  return match?.[1] || '';
+}
+
+function credentialProjectId(credential) {
+  if (credential.type !== 'external_account') {
+    fail('Cloud registry apply requires WIF external_account ADC; service_account and authorized_user credentials are forbidden.');
+  }
+  if ('private_key' in credential || 'client_email' in credential) {
+    fail('Cloud registry apply forbids raw service-account key material.');
+  }
+  const serviceAccountEmail = impersonatedServiceAccountEmail(credential.service_account_impersonation_url);
+  const identityProject = projectFromServiceAccountEmail(serviceAccountEmail);
+  if (!identityProject) {
+    fail('WIF ADC must impersonate a project-bound service account through iamcredentials.googleapis.com.');
   }
   return identityProject;
 }
@@ -179,41 +183,22 @@ export function validateRegistryCloudAuthority({
   }
 
   const inline = env.FIREBASE_SERVICE_ACCOUNT_KEY || '';
-  const credentialPath = env.GOOGLE_APPLICATION_CREDENTIALS || '';
-  if (inline && credentialPath) {
-    fail('Cloud apply must use exactly one credential source, not both FIREBASE_SERVICE_ACCOUNT_KEY and GOOGLE_APPLICATION_CREDENTIALS.');
-  }
-  if (!inline && !credentialPath) {
-    fail('Cloud apply requires an explicit project-bound credential source.');
-  }
-
-  let credential;
-  let credentialSource;
   if (inline) {
-    credential = parseCredentialJson(inline, 'FIREBASE_SERVICE_ACCOUNT_KEY');
-    credentialSource = 'inline-service-account-json';
-  } else {
-    let raw;
-    try {
-      raw = readFileSyncFn(credentialPath, 'utf8');
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      fail(`GOOGLE_APPLICATION_CREDENTIALS could not be read: ${reason}`);
-    }
-    credential = parseCredentialJson(raw, 'GOOGLE_APPLICATION_CREDENTIALS');
-    credentialSource = 'credential-file';
+    fail('FIREBASE_SERVICE_ACCOUNT_KEY is forbidden; cloud registry apply requires short-lived WIF/ADC.');
+  }
+  const credentialPath = env.GOOGLE_APPLICATION_CREDENTIALS || '';
+  if (!credentialPath) {
+    fail('Cloud apply requires an explicit WIF/ADC credential file.');
   }
 
-  if (
-  credential.type !== 'service_account'
-  || typeof credential.client_email !== 'string'
-  || !credential.client_email
-  || typeof credential.private_key !== 'string'
-  || !credential.private_key
-) {
-  fail('Cloud apply requires complete private-key service_account JSON with client_email and private_key.');
-}
-
+  let raw;
+  try {
+    raw = readFileSyncFn(credentialPath, 'utf8');
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`GOOGLE_APPLICATION_CREDENTIALS could not be read: ${reason}`);
+  }
+  const credential = parseCredentialJson(raw, 'GOOGLE_APPLICATION_CREDENTIALS');
   const boundProjectId = credentialProjectId(credential);
   if (boundProjectId !== projectId) {
     fail(`Cloud credential project ${boundProjectId} does not match target ${projectId}.`);
@@ -221,7 +206,7 @@ export function validateRegistryCloudAuthority({
 
   return {
     credential,
-    credentialSource,
+    credentialSource: 'wif-external-account-adc',
     credentialProjectId: boundProjectId,
     receiptPath: confinedReceiptPath(env.URAI_ADMIN_SEED_RECEIPT_PATH || ''),
   };
