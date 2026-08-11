@@ -49,6 +49,8 @@ jobs:
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
       URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_PRODUCTION_URL: ${{ vars.URAI_ADMIN_PRODUCTION_URL || inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_ALLOWED_ORIGINS: ${{ vars.URAI_ADMIN_ALLOWED_ORIGINS || vars.URAI_ADMIN_PRODUCTION_URL || inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
       URAI_ADMIN_TARGET_SHA: ${{ inputs.target_sha }}
       URAI_ADMIN_ROLLBACK_SHA: ${{ inputs.rollback_sha }}
@@ -76,6 +78,15 @@ jobs:
           [[ "${URAI_ADMIN_ROLLBACK_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "rollback_sha must be a full lowercase commit SHA." >&2; exit 1; }
           [[ "${URAI_ADMIN_TARGET_SHA}" != "${URAI_ADMIN_ROLLBACK_SHA}" ]] || { echo "rollback_sha must differ from target_sha." >&2; exit 1; }
           [[ "$(git rev-parse HEAD)" == "${URAI_ADMIN_TARGET_SHA}" ]] || { echo "Checked-out SHA does not match target_sha." >&2; exit 1; }
+          [[ -n "${URAI_ADMIN_ALLOWED_ORIGINS:-}" ]] || { echo "Protected admin origin allowlist is empty." >&2; exit 1; }
+          node - <<'NODE'
+          const baseUrl = new URL(process.env.URAI_ADMIN_BASE_URL);
+          const productionUrl = new URL(process.env.URAI_ADMIN_PRODUCTION_URL);
+          const allowed = new Set(process.env.URAI_ADMIN_ALLOWED_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean).map((value) => new URL(value).origin));
+          if (baseUrl.protocol !== 'https:' || productionUrl.protocol !== 'https:') throw new Error('Production admin origins must use HTTPS.');
+          if (!allowed.has(baseUrl.origin)) throw new Error(`base_url origin ${baseUrl.origin} is not in the protected admin origin allowlist.`);
+          if (!allowed.has(productionUrl.origin)) throw new Error(`production origin ${productionUrl.origin} is not in the protected admin origin allowlist.`);
+          NODE
 
           git fetch origin main --no-tags --prune
           git cat-file -e "${URAI_ADMIN_ROLLBACK_SHA}^{commit}"
