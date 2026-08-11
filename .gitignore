@@ -28,6 +28,7 @@ firebaserc
 **/serviceAccountKey.json
 firebase-service-account*.json
 gcp-service-account*.json
+gha-creds-*.json
 
 # local backups + temp
 .bak/
