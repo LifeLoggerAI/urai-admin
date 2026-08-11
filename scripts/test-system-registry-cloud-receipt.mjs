@@ -18,12 +18,12 @@ import {
 } from './system-registry-cloud-policy.mjs';
 
 const PROJECT = 'urai-admin-staging';
-const credential = JSON.stringify({
-  type: 'service_account',
-  project_id: PROJECT,
-  client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
-  private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
-});
+function externalAccountCredential(projectId) {
+  return JSON.stringify({
+    type: 'external_account',
+    service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/registry-deployer@${projectId}.iam.gserviceaccount.com:generateAccessToken`,
+  });
+}
 const roots = [];
 
 function createRoot() {
@@ -32,14 +32,21 @@ function createRoot() {
   return root;
 }
 
-function authority(receiptPath) {
+function authorityFromCredential(receiptPath, credential, projectId = PROJECT) {
+  const credentialRoot = createRoot();
+  const credentialPath = path.join(credentialRoot, 'gha-creds-test.json');
+  writeFileSync(credentialPath, credential);
   return validateRegistryCloudAuthority({
     env: {
-      FIREBASE_SERVICE_ACCOUNT_KEY: credential,
+      GOOGLE_APPLICATION_CREDENTIALS: credentialPath,
       URAI_ADMIN_SEED_RECEIPT_PATH: receiptPath,
     },
-    projectId: PROJECT,
+    projectId,
   });
+}
+
+function authority(receiptPath) {
+  return authorityFromCredential(receiptPath, externalAccountCredential(PROJECT));
 }
 
 try {
@@ -64,45 +71,39 @@ try {
   {
     const policy = authority('docs/release-evidence/cloud/identity.json');
     assert.equal(policy.credentialProjectId, PROJECT);
+    assert.equal(policy.credentialSource, 'wif-external-account-adc');
     assert.throws(
       () => validateRegistryCloudAuthority({
         env: {
-          FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({ project_id: PROJECT }),
-          URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/project-only.json',
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{"type":"service_account"}',
+          URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/legacy-inline.json',
         },
         projectId: PROJECT,
       }),
-      /complete private-key service_account JSON/,
+      /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/,
     );
     assert.throws(
-      () => validateRegistryCloudAuthority({
-        env: {
-          FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
-            type: 'service_account',
-            project_id: 'different-project',
-            client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
-            private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
-          }),
-          URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/conflict.json',
-        },
-        projectId: PROJECT,
-      }),
-      /project_id different-project conflicts with service-account identity project/,
+      () => authorityFromCredential(
+        'docs/release-evidence/cloud/mismatch.json',
+        externalAccountCredential('different-project'),
+        PROJECT,
+      ),
+      /does not match target/,
     );
     assert.throws(
-    () => validateRegistryCloudAuthority({
-      env: {
-        FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
-          type: 'external_account',
-          service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/registry-deployer@${PROJECT}.iam.gserviceaccount.com:generateAccessToken`,
+      () => authorityFromCredential(
+        'docs/release-evidence/cloud/service-account.json',
+        JSON.stringify({
+          type: 'service_account',
+          project_id: PROJECT,
+          client_email: `registry-deployer@${PROJECT}.iam.gserviceaccount.com`,
+          private_key: 'TEST',
         }),
-        URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/cloud/external-account.json',
-      },
-      projectId: PROJECT,
-    }),
-    /complete private-key service_account JSON/,
-  );
-    console.log('OK: cloud apply requires a service-account identity and treats project_id only as a consistency check');
+        PROJECT,
+      ),
+      /requires WIF external_account ADC/,
+    );
+    console.log('OK: cloud apply accepts project-bound WIF ADC and rejects long-lived service-account credentials');
   }
 
   {
