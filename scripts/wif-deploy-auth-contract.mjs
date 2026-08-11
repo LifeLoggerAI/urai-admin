@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
 const preflight = readFileSync('scripts/preflight-production.sh', 'utf8');
@@ -34,8 +35,16 @@ requireMatch(workflow, /workflow_dispatch:/, 'manual deployment dispatch');
 requireMatch(gitignore, /^gha-creds-\*\.json$/m, 'generated WIF ADC credential ignore');
 requireMatch(gitignore, /^\.env\.\*$/m, 'local env wildcard ignore');
 
-for (const path of forbiddenTrackedEnvPaths) {
-  if (existsSync(path)) failures.push(`forbidden tracked local env file: ${path}`);
+const trackedForbiddenEnvPaths = execFileSync(
+  'git',
+  ['ls-files', '--', ...forbiddenTrackedEnvPaths],
+  { encoding: 'utf8' },
+)
+  .split(/\r?\n/)
+  .map((value) => value.trim())
+  .filter(Boolean);
+for (const path of trackedForbiddenEnvPaths) {
+  failures.push(`forbidden tracked local env file: ${path}`);
 }
 
 forbidMatch(workflow, /\$\{\{\s*secrets\.FIREBASE_TOKEN\s*\}\}/, 'FIREBASE_TOKEN secret interpolation');
