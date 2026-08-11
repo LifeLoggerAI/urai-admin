@@ -257,7 +257,7 @@ expectFailure(
     URAI_ADMIN_SEED_SHA: SHA,
     URAI_ADMIN_SEED_RECEIPT_PATH: 'docs/release-evidence/staging.json',
   }),
-  /explicit project-bound credential source/,
+  /explicit WIF\/ADC credential file/,
 );
 
 expectFailure(
