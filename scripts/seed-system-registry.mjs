@@ -144,23 +144,17 @@ if (admin.apps.length) fail('Registry seed requires a fresh process with no prei
 if (emulatorMode) {
   admin.initializeApp({ projectId });
 } else {
-  if (
-    validatedCloudCredential?.type !== 'service_account'
-    || typeof validatedCloudCredential.client_email !== 'string'
-    || !validatedCloudCredential.client_email
-    || typeof validatedCloudCredential.private_key !== 'string'
-    || !validatedCloudCredential.private_key
-  ) {
-    fail('Cloud registry seed requires complete validated service_account JSON with client_email and private_key so Firebase Admin cannot re-read mutable credential-path contents.');
+  if (validatedCloudCredential?.type !== 'external_account') {
+    fail('Cloud registry seed requires validated WIF external_account ADC.');
   }
   try {
     admin.initializeApp({
-      credential: admin.credential.cert(validatedCloudCredential),
+      credential: admin.credential.applicationDefault(),
       projectId,
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    fail(`Validated cloud credential could not initialize Firebase Admin: ${reason}`);
+    fail(`Validated WIF/ADC identity could not initialize Firebase Admin: ${reason}`);
   }
 }
 
@@ -277,7 +271,7 @@ if (cloudAuthority) {
     credentialProjectId: cloudAuthority.credentialProjectId,
     credentialMaterialDigest: validatedCloudCredentialDigest,
     credentialProjectVerified: true,
-    credentialMaterialBoundBeforeInitialization: true,
+    credentialConfigurationVerifiedBeforeInitialization: true,
     atomicPreflightAndMutationVerified: true,
     postCommitReadbackVerified: true,
     unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
