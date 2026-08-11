@@ -25,14 +25,13 @@ The app runs on port `3010` by default.
 
 ```bash
 FIREBASE_PROJECT_ID=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_PRIVATE_KEY=
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/approved-adc.json
 URAI_ANALYTICS_API_KEY_SALT=
 URAI_ANALYTICS_IP_HASH_SALT=
 URAI_ANALYTICS_INGEST_RATE_LIMIT_PER_MINUTE=600
 ```
 
-Use application default credentials for local emulator/admin development when service-account variables are not present.
+Firebase Admin uses Application Default Credentials only. In managed Google runtimes, use the runtime service identity and omit `GOOGLE_APPLICATION_CREDENTIALS`. For local development, point ADC at an approved external credential file or use the emulator. Do not place service-account JSON or private-key values in repository environment files.
 
 ## V1 ingestion endpoint
 
