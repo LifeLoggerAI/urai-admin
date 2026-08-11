@@ -117,6 +117,8 @@ for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCook
   assert.ok(firebaseAdmin.includes(method), `build Firebase Admin stub missing ${method}`);
 }
 assert.match(firebaseAdmin, /runTransaction/, 'build Firestore stub must expose transaction surface');
+assert.match(firebaseAdmin, /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/, 'runtime must explicitly reject the retired raw service-account input');
+assert.doesNotMatch(firebaseAdmin, /credential\.cert|private_key|client_email/, 'runtime must remain ADC-only');
 
 const firestoreRules = await readRoot('firestore.rules');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
