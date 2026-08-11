@@ -15,22 +15,31 @@ Related recovery runbook: `docs/ROLLBACK_AND_INCIDENTS.md`.
 
 ## Required GitHub configuration
 
-Set these repository or environment secrets before running the deploy workflow:
+Set these protected production environment values before running the deploy workflow.
 
-- `FIREBASE_TOKEN`: Firebase CLI token or deploy credential with access to project `urai-4dc1d`.
+Public Firebase configuration:
+
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `FIREBASE_SERVICE_ACCOUNT_KEY` if Application Default Credentials are not sufficient.
+
+Non-secret WIF variables:
+
+- `GCP_WIF_PROVIDER`
+- `GCP_DEPLOY_SERVICE_ACCOUNT`
+
+The deploy workflow uses GitHub OIDC + Google Workload Identity Federation to obtain temporary Application Default Credentials. Do not configure `FIREBASE_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_KEY`, or `credentials_json` as a production deploy fallback.
 
 Recommended production environment protection:
 
 - Require manual approval for the `production` GitHub environment.
 - Restrict deploy workflow access to repository admins/maintainers.
 - Require CI to pass before deployment.
+- Restrict the WIF provider trust condition to the intended repository/environment/ref.
+- Grant the deploy service account only the permissions required by the reviewed Firebase deploy and rollback path.
 
 ## Required Firebase / application environment
 
@@ -43,19 +52,16 @@ Configure the production app with these public Firebase values:
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 
-Configure server-side Firebase Admin credentials if Application Default Credentials are not available in the hosting/functions runtime:
-
-- `FIREBASE_SERVICE_ACCOUNT_KEY`
+Server-side Firebase Admin uses the managed runtime identity / Application Default Credentials. Do not install a service-account JSON application secret as a fallback.
 
 ## Required Firestore bootstrap
 
 Create at least one active owner before launch.
 
-Preferred scripted path:
+Preferred scripted path uses approved ADC with narrowly scoped Firebase Admin permission:
 
 ```bash
 export NEXT_PUBLIC_FIREBASE_PROJECT_ID=urai-4dc1d
-export FIREBASE_SERVICE_ACCOUNT_KEY='<service account json>'
 export URAI_ADMIN_OWNER_EMAIL='owner@example.com'
 pnpm bootstrap:owner
 ```
@@ -103,30 +109,31 @@ From the repository root:
 
 ```bash
 pnpm install --frozen-lockfile=false
-pnpm preflight:production
 pnpm security:gate
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-pnpm verify:production
-pnpm test:smoke
 ```
+
+`pnpm preflight:production` requires the temporary WIF/ADC credential file when running inside GitHub Actions. A local privileged operator must authenticate with approved ADC before production preflight/deploy commands.
 
 ## Deployment
 
 Preferred path:
 
 1. Go to GitHub Actions.
-2. Run `Deploy URAI Admin`.
-3. Confirm production preflight passes.
-4. Confirm security gate passes.
-5. Confirm validation passes.
+2. Run `Deploy URAI Admin` from `main`.
+3. Provide the exact approved target SHA, exact known-good rollback SHA, and confirmation phrase.
+4. Confirm the WIF identity gate and Google authentication pass.
+5. Confirm production preflight and security gate pass.
 6. Confirm Firebase deploy succeeds.
 7. Confirm production live verification succeeds.
-8. Download the `urai-admin-launch-evidence` workflow artifact.
+8. Download the retained deployment evidence artifact.
 
-Local evidence-producing fallback:
+The workflow fails closed if WIF provider/service-account variables are missing or provider-side trust/IAM is not valid.
+
+Local evidence-producing fallback requires approved ADC:
 
 ```bash
 bash scripts/launch-lock.sh
@@ -142,16 +149,6 @@ The launch runner writes evidence to:
 
 ```text
 tmp/urai-admin-launch-evidence.md
-```
-
-Manual fallback without evidence bundling:
-
-```bash
-pnpm preflight:production
-pnpm security:gate
-pnpm run deploy:production
-URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm verify:production
-URAI_ADMIN_BASE_URL=https://www.uraiadmin.com pnpm test:smoke
 ```
 
 ## Production verification expectations
@@ -171,8 +168,8 @@ The verifier must confirm:
 
 Before launch, confirm `docs/ROLLBACK_AND_INCIDENTS.md` is understood by the launch owner and that the team can recover through at least one of these paths:
 
-- Git revert and redeploy.
-- Firebase Hosting release rollback.
+- Git revert and redeploy using the approved WIF/ADC identity.
+- Firebase Hosting release rollback using the approved WIF/ADC identity.
 - Functions-only redeploy from a known good SHA.
 - Rules-only rollback for Firestore or Storage.
 
@@ -180,7 +177,8 @@ Before launch, confirm `docs/ROLLBACK_AND_INCIDENTS.md` is understood by the lau
 
 URAI Admin is launch-ready only when all of these are true:
 
-- GitHub CI is green on `main`.
+- GitHub CI is green on the exact release SHA.
+- WIF provider trust and deploy-service-account IAM are verified for the protected production path.
 - Production preflight is green.
 - Security gate is green.
 - Deploy workflow is green.
@@ -191,15 +189,16 @@ URAI Admin is launch-ready only when all of these are true:
 - Logout clears the session and returns the user to `/login`.
 - Firestore audit logs are written for bootstrap, login, and admin API access.
 - No production secrets are committed to the repository.
-- Firebase Hosting, Functions, Firestore rules, and Storage rules are deployed from the repo.
+- No Firebase CLI token or service-account JSON deploy/runtime fallback is enabled.
+- Firebase Hosting, Functions, Firestore rules, and Storage rules are deployed from the reviewed exact SHA.
 - Rollback path is documented and understood.
-- Launch evidence exists as either the GitHub Actions artifact or `tmp/urai-admin-launch-evidence.md` from `scripts/launch-lock.sh`.
+- Launch evidence exists as the GitHub Actions artifact or `tmp/urai-admin-launch-evidence.md` from `scripts/launch-lock.sh`.
 
 ## Do not claim custom-domain launch complete if
 
 - DNS is pending.
 - SSL is pending.
-- `FIREBASE_TOKEN` is missing.
+- WIF provider trust / deploy service-account IAM is unverified.
 - Firebase project permissions are unknown.
 - No active `owner` admin user exists.
 - CI or deploy workflow has not run.
