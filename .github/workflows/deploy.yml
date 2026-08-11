@@ -142,7 +142,9 @@ jobs:
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
           corepack pnpm install --frozen-lockfile
-          URAI_ADMIN_DEPLOY_MARKER="${RUNNER_TEMP}/urai-admin-rollback-deployed.json" pnpm run deploy:production
+          corepack pnpm build
+          firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d
+          URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL}" bash "${GITHUB_WORKSPACE}/scripts/verify-production-live.sh"
           echo "result=success" >> "${GITHUB_OUTPUT}"
 
       - name: Write deployment receipt
