@@ -9,14 +9,17 @@ const PRODUCTION_PROJECT = 'urai-4dc1d';
 const STAGING_PROJECT = 'urai-admin-staging';
 const EMULATOR_PROJECT = 'urai-admin-emulator';
 
+function externalAccountCredential(projectId) {
+  return {
+    type: 'external_account',
+    service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/registry-deployer@${projectId}.iam.gserviceaccount.com:generateAccessToken`,
+  };
+}
+
 function cloudAuthority(projectId) {
   return {
-    FIREBASE_SERVICE_ACCOUNT_KEY: JSON.stringify({
-      type: 'service_account',
-      project_id: projectId,
-      client_email: `registry-deployer@${projectId}.iam.gserviceaccount.com`,
-      private_key: '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n',
-    }),
+    GOOGLE_APPLICATION_CREDENTIALS: `/tmp/gha-creds-${projectId}.json`,
+    URAI_TEST_WIF_PROJECT: projectId,
     URAI_ADMIN_SEED_RECEIPT_PATH: `docs/release-evidence/test-${projectId}.json`,
   };
 }
@@ -40,6 +43,9 @@ function createHarness({
     if (target.includes('seed-system-registry.mjs')) return "batch.set(ref, data, { merge: false });";
     if (target.includes('system-registry-data.mjs')) return dataSource;
     if (target in credentialFiles) return credentialFiles[target];
+    if (target === env.GOOGLE_APPLICATION_CREDENTIALS && env.URAI_TEST_WIF_PROJECT) {
+      return JSON.stringify(externalAccountCredential(env.URAI_TEST_WIF_PROJECT));
+    }
     throw new Error(`Unexpected read: ${target}`);
   };
 
@@ -279,7 +285,8 @@ expectFailure(
     URAI_ADMIN_STAGING_APPROVAL: 'APPROVE_URAI_ADMIN_STAGING',
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
-    FIREBASE_SERVICE_ACCOUNT_KEY: cloudAuthority(STAGING_PROJECT).FIREBASE_SERVICE_ACCOUNT_KEY,
+    GOOGLE_APPLICATION_CREDENTIALS: cloudAuthority(STAGING_PROJECT).GOOGLE_APPLICATION_CREDENTIALS,
+    URAI_TEST_WIF_PROJECT: STAGING_PROJECT,
   }),
   /URAI_ADMIN_SEED_RECEIPT_PATH/,
 );
@@ -295,9 +302,9 @@ expectFailure(
     URAI_ADMIN_SEED_CONFIRM: 'SEED_SYSTEM_REGISTRY',
     URAI_ADMIN_SEED_SHA: SHA,
     ...cloudAuthority(STAGING_PROJECT),
-    GOOGLE_APPLICATION_CREDENTIALS: '/tmp/credential.json',
+    FIREBASE_SERVICE_ACCOUNT_KEY: '{"type":"service_account"}',
   }),
-  /exactly one credential source/,
+  /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/,
 );
 
 {
