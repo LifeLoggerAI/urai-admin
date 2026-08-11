@@ -1,10 +1,14 @@
 import * as admin from 'firebase-admin';
 
+const CENTRAL_PROJECT_ID = 'urai-4dc1d';
+const CENTRAL_APP_NAME = 'urai-admin-governance';
+
 let centralFirestoreInstance: admin.firestore.Firestore;
 
 /**
  * Initializes the connection to the central urai-admin Firestore database
- * using the runtime's approved Application Default Credentials.
+ * using approved Application Default Credentials while pinning the central
+ * project independently from any satellite runtime's default Firebase app.
  */
 export function initializeCentralDatabase() {
   if (centralFirestoreInstance) {
@@ -12,11 +16,20 @@ export function initializeCentralDatabase() {
     return;
   }
 
-  if (!admin.apps.length) {
-    admin.initializeApp();
+  let centralApp: admin.app.App;
+  try {
+    centralApp = admin.app(CENTRAL_APP_NAME);
+  } catch {
+    centralApp = admin.initializeApp(
+      {
+        credential: admin.credential.applicationDefault(),
+        projectId: CENTRAL_PROJECT_ID,
+      },
+      CENTRAL_APP_NAME
+    );
   }
 
-  centralFirestoreInstance = admin.firestore();
+  centralFirestoreInstance = centralApp.firestore();
   console.log('Connection to central governance database established.');
 }
 
