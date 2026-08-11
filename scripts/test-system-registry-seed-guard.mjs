@@ -33,6 +33,7 @@ function createHarness({
   readError = null,
   dataSource = "repo: 'LifeLoggerAI/urai-spatial'; status: 'blocked';",
   credentialFiles = {},
+  env = {},
 } = {}) {
   const calls = { spawn: [], exec: [], read: [] };
 
@@ -67,7 +68,7 @@ function createHarness({
 }
 
 function invoke(env, options = {}) {
-  const harness = createHarness(options);
+  const harness = createHarness({ ...options, env });
   const result = runSystemRegistrySeed({
     env,
     readFileSyncFn: harness.readFileSyncFn,
