@@ -32,8 +32,7 @@ requireMatch(workflow, /create_credentials_file:\s*true/, 'temporary ADC credent
 requireMatch(workflow, /persist-credentials:\s*false/, 'GitHub checkout credential isolation');
 requireMatch(workflow, /workflow_dispatch:/, 'manual deployment dispatch');
 requireMatch(gitignore, /^gha-creds-\*\.json$/m, 'generated WIF ADC credential ignore');
-requireMatch(gitignore, /^\.env\.local$/m, 'root local env ignore');
-requireMatch(gitignore, /^\.env\.\*$/m, 'nested local env ignore');
+requireMatch(gitignore, /^\.env\.\*$/m, 'local env wildcard ignore');
 
 for (const path of forbiddenTrackedEnvPaths) {
   if (existsSync(path)) failures.push(`forbidden tracked local env file: ${path}`);
