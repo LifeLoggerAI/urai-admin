@@ -143,7 +143,7 @@ jobs:
           cd "${rollback_dir}"
           corepack pnpm install --frozen-lockfile
           corepack pnpm build
-          firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d
+          corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d
           URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL}" bash "${GITHUB_WORKSPACE}/scripts/verify-production-live.sh"
           echo "result=success" >> "${GITHUB_OUTPUT}"
 
