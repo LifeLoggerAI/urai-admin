@@ -114,6 +114,7 @@ jobs:
         run: |
           set -euo pipefail
           pnpm test | tee /tmp/urai-admin-test.log
+          pnpm test:e2e | tee /tmp/urai-admin-route-contract.log
 
       - name: Build
         shell: bash
