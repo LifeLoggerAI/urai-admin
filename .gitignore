@@ -10,6 +10,9 @@ out/
 dist/
 **/dist/
 
+# generated Firebase Functions output
+functions/lib/
+
 # firebase / local
 .firebase/
 **/.firebase/
