@@ -33,12 +33,21 @@ firebase-service-account*.json
 gcp-service-account*.json
 gha-creds-*.json
 
+# local auth exports / credential material
+/users.json
+/firebase-auth-export*.json
+/auth-export*.json
+
 # local backups + temp
 .bak/
 tmp/
 urai_backups/
 **/urai_backups/
 *.bak*
+.backup_*/
+urai_backup_*/
+.tmp_cache/
+/$ADMIN_DIR/
 
 # stale local Functions sources removed from the active deploy path
 functions/src/admin/
