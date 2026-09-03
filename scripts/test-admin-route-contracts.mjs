@@ -99,6 +99,8 @@ requireTokens('.github/workflows/deploy.yml', [
   'URAI_ADMIN_PRODUCTION_URL',
   'URAI_ADMIN_ALLOWED_ORIGINS',
   'Protected admin origin allowlist is empty.',
+  'Every protected admin allowlist origin must use HTTPS.',
+  "configuredOrigins.some((origin) => origin.protocol !== 'https:')",
   'base_url origin',
   'not in the protected admin origin allowlist',
   "fs.writeFileSync('functions/.env.urai-4dc1d'",
