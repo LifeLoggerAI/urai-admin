@@ -81,16 +81,17 @@ export async function POST(request: NextRequest) {
       return { targetRole, previousActive };
     });
 
-    const userRecord = await auth.getUser(payload.uid);
-    const previousClaims = userRecord.customClaims ?? {};
-    const nextClaims = {
-      ...previousClaims,
-      admin: payload.isActive,
-      role: reservation.targetRole,
-    };
-
+    let previousClaims: Record<string, unknown> = {};
     let claimsMutationAttempted = false;
     try {
+      const userRecord = await auth.getUser(payload.uid);
+      previousClaims = userRecord.customClaims ?? {};
+      const nextClaims = {
+        ...previousClaims,
+        admin: payload.isActive,
+        role: reservation.targetRole,
+      };
+
       claimsMutationAttempted = true;
       await auth.setCustomUserClaims(payload.uid, nextClaims);
       await auth.revokeRefreshTokens(payload.uid);
