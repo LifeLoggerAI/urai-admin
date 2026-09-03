@@ -5,8 +5,6 @@ import type { AdminRole, AdminSession } from '@/lib/admin/require-admin-session'
 import { AdminAuthError } from '@/lib/admin/require-admin-session';
 import { auth, firestore } from '@/lib/firebase/admin';
 
-const STALE_MUTATION_MS = 15 * 60 * 1000;
-
 function isAdminRole(value: unknown): value is AdminRole {
   return value === 'owner' || value === 'admin' || value === 'viewer';
 }
@@ -45,19 +43,15 @@ export async function recoverAdminMutation(input: {
     const marker = roleMutation ?? activeMutation;
     if (!marker) throw new AdminAuthError('Admin user has no recoverable mutation reservation', 409);
     if (marker.id !== mutationId) throw new AdminAuthError('Mutation recovery identifier does not match', 409);
+    // Never race or reclaim a live/stalled mutation worker. Recovery is allowed
+    // only after the original mutation has completed its compensated failure path
+    // and marked the reservation rollback-required. An existing recovery claim is
+    // deliberately terminal for automation and requires manual security review.
     if (marker.recoveryToken) {
-      const recoveryStartedAt = mutationMillis(marker.recoveryStartedAt);
-      const recoveryClaimIsStale = recoveryStartedAt > 0
-        && Date.now() - recoveryStartedAt >= STALE_MUTATION_MS;
-      if (!recoveryClaimIsStale) {
-        throw new AdminAuthError('Admin mutation recovery is already in progress', 409);
-      }
+      throw new AdminAuthError('Admin mutation recovery is already in progress; manual security review required', 409);
     }
-
-    const startedAt = mutationMillis(marker.startedAt);
-    const stale = startedAt > 0 && Date.now() - startedAt >= STALE_MUTATION_MS;
-    if (marker.status !== 'rollback-required' && !stale) {
-      throw new AdminAuthError('Admin mutation is still within its active reservation window', 409);
+    if (marker.status !== 'rollback-required') {
+      throw new AdminAuthError('Only a completed rollback-required mutation can be recovered', 409);
     }
 
     const desiredRole = roleMutation ? roleMutation.previousRole : current.role;
