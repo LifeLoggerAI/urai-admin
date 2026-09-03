@@ -82,8 +82,10 @@ jobs:
           node - <<'NODE'
           const baseUrl = new URL(process.env.URAI_ADMIN_BASE_URL);
           const productionUrl = new URL(process.env.URAI_ADMIN_PRODUCTION_URL);
-          const allowed = new Set(process.env.URAI_ADMIN_ALLOWED_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean).map((value) => new URL(value).origin));
+          const configuredOrigins = process.env.URAI_ADMIN_ALLOWED_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean).map((value) => new URL(value));
           if (baseUrl.protocol !== 'https:' || productionUrl.protocol !== 'https:') throw new Error('Production admin origins must use HTTPS.');
+          if (configuredOrigins.some((origin) => origin.protocol !== 'https:')) throw new Error('Every protected admin allowlist origin must use HTTPS.');
+          const allowed = new Set(configuredOrigins.map((origin) => origin.origin));
           if (!allowed.has(baseUrl.origin)) throw new Error(`base_url origin ${baseUrl.origin} is not in the protected admin origin allowlist.`);
           if (!allowed.has(productionUrl.origin)) throw new Error(`production origin ${productionUrl.origin} is not in the protected admin origin allowlist.`);
           NODE
