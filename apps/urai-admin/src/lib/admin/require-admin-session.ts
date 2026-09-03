@@ -184,12 +184,13 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
   }
 
   const now = new Date();
-  await adminUserRef.set({
+  const sessionEvidence = {
     email: decodedToken.email ?? adminUser.email ?? null,
-    lastLoginAt: now,
     lastSessionAt: now,
     updatedAt: now,
-  }, { merge: true });
+    ...(auditAction === 'auth.login' ? { lastLoginAt: now } : {}),
+  };
+  await adminUserRef.set(sessionEvidence, { merge: true });
 
   const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: SESSION_MAX_AGE_MS });
   const response = NextResponse.json(
