@@ -100,6 +100,8 @@ requireTokens('.github/workflows/deploy.yml', [
   'Protected admin origin allowlist is empty.',
   'base_url origin',
   'not in the protected admin origin allowlist',
+]);
+requireTokens('functions/src/index.ts', [
   "defineString('URAI_ADMIN_PRODUCTION_URL')",
   "defineString('URAI_ADMIN_ALLOWED_ORIGINS')",
   'bindAdminOriginEnvironment()',
