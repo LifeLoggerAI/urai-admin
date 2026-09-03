@@ -100,7 +100,8 @@ export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-stagi
 # Set only when this reviewed candidate intentionally supersedes an older dated
 # registry snapshot after preserving the previous evidence date/digest in the
 # immutable operational event and receipt:
-# Leave URAI_ADMIN_REGISTRY_REPLACE_CONFIRM unset for the normal seed path.
+# Clear any inherited destructive authorization for the normal seed path.
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
 pnpm seed:system-registry
 ```
 
@@ -119,7 +120,8 @@ export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-produ
 # Set only when this reviewed candidate intentionally supersedes an older dated
 # registry snapshot after preserving the previous evidence date/digest in the
 # immutable operational event and receipt:
-# Leave URAI_ADMIN_REGISTRY_REPLACE_CONFIRM unset for the normal seed path.
+# Clear any inherited destructive authorization for the normal seed path.
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
 pnpm seed:system-registry
 ```
 
