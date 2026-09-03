@@ -66,7 +66,12 @@ export async function updateAdminRole(input: {
   try {
     const userRecord = await auth.getUser(uid);
     previousClaims = userRecord.customClaims ?? {};
-    const nextClaims = { ...previousClaims, admin: true, role, roleVersion: reservation.nextRoleVersion };
+    const nextClaims = {
+      ...previousClaims,
+      admin: reservation.previousIsActive,
+      role,
+      roleVersion: reservation.nextRoleVersion,
+    };
 
     claimsMutationAttempted = true;
     await auth.setCustomUserClaims(uid, nextClaims);
