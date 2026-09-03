@@ -124,7 +124,22 @@ Evidence to record:
 - timestamp;
 - `/admin/system` screenshot or route smoke result.
 
-## 6. Staging deploy
+## 6. Recover an abandoned Admin mutation reservation
+
+Recovery is owner-only and must use the exact target UID and exact reservation mutation ID shown in the protected `adminUsers` record. A pending reservation is not eligible until its 15-minute lease is stale; a `rollback-required` reservation is eligible immediately. The recovery route restores the marker's pre-mutation role/active state in Firebase Auth and Firestore, revokes sessions, clears the reservation, and writes the audit record atomically. Do not guess either identifier or manually delete reservation fields.
+
+Send an authenticated same-origin POST to `/api/admin/recover-user-mutation` with:
+
+```json
+{
+  "uid": "<exact-target-firebase-auth-uid>",
+  "mutationId": "<exact-roleMutation-or-activeMutation-id>"
+}
+```
+
+Preserve the response, resulting audit-log ID, target record read-back, and session-denial/re-authentication check as recovery evidence.
+
+## 7. Staging deploy
 
 Use an approved short-lived ADC identity or a governed WIF-backed staging workflow. Never restore Firebase CLI token or raw JSON-key authentication.
 
@@ -138,7 +153,7 @@ pnpm test:smoke
 
 Record the identity method, preview URL, and smoke output in `docs/EVIDENCE_LOG.md`.
 
-## 7. Production deploy
+## 8. Production deploy
 
 Production deployment is governed through GitHub Actions, not an ad hoc terminal deploy:
 
@@ -159,7 +174,7 @@ curl -I https://www.uraiadmin.com/terms
 
 Do not substitute a local Firebase CLI token deployment for the governed WIF workflow.
 
-## 8. DNS and SSL evidence
+## 9. DNS and SSL evidence
 
 Confirm in Firebase Hosting or with shell checks:
 
@@ -169,7 +184,7 @@ curl -Iv https://www.uraiadmin.com 2>&1 | tee /tmp/urai-admin-ssl.txt
 
 Record the SSL issuer/validity summary in `docs/EVIDENCE_LOG.md`.
 
-## 9. Rollback evidence
+## 10. Rollback evidence
 
 List releases and pick the previous known-good release using approved ADC or the governed WIF identity path.
 
@@ -182,7 +197,7 @@ pnpm rollback:production
 
 The rollback script must execute without `--token`. If you are only proving rollback readiness, record the exact known-good release ID and do not perform a destructive rollback unless needed.
 
-## 10. Final lock update
+## 11. Final lock update
 
 After all gates pass and evidence is recorded, update `FINAL_LOCK.md`:
 

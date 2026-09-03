@@ -50,7 +50,7 @@ export async function updateAdminRole(input: {
 
     transaction.set(userRef, {
       isActive: false,
-      roleMutation: { id: mutationId, status: 'pending', actorUid: actor.uid, previousRole: before.role, previousRoleVersion, requestedRole: role, nextRoleVersion, startedAt: new Date() },
+      roleMutation: { id: mutationId, status: 'pending', actorUid: actor.uid, previousRole: before.role, previousRoleVersion, previousIsActive, requestedRole: role, nextRoleVersion, startedAt: new Date() },
       updatedAt: new Date(),
       updatedBy: actor.uid,
     }, { merge: true });

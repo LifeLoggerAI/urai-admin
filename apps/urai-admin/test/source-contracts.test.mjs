@@ -96,6 +96,19 @@ assert.match(roleService, /transaction\.set\(failureAuditRef/, 'failed role muta
 assert.match(roleService, /status:\s*'rollback-required'/, 'incomplete compensation must leave explicit rollback-required evidence');
 assert.doesNotMatch(roleService, /await\s+writeAuditLog\s*\(/, 'role mutation audit must not be detached from the canonical transaction');
 
+const recoveryService = await read('src/lib/admin/recover-admin-mutation.ts');
+assert.match(recoveryService, /Only an owner can recover admin mutations/, 'mutation recovery must require owner authority');
+assert.match(recoveryService, /mutationId/, 'mutation recovery must bind the exact reservation identifier');
+assert.match(recoveryService, /STALE_MUTATION_MS/, 'pending reservations must not be recoverable before a bounded stale window');
+assert.match(recoveryService, /rollback-required/, 'failed compensation must be explicitly recoverable');
+assert.match(recoveryService, /setCustomUserClaims/, 'recovery must restore canonical Auth claims');
+assert.match(recoveryService, /revokeRefreshTokens/, 'recovery must revoke existing sessions');
+assert.match(recoveryService, /transaction\.set\(auditRef/, 'recovery must atomically audit the cleared reservation');
+
+const recoveryRoute = await read('src/app/api/admin/recover-user-mutation/route.ts');
+assert.match(recoveryRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'mutation recovery route must require owner session and trusted origin');
+assert.match(recoveryRoute, /recoverAdminMutation/, 'mutation recovery route must use the guarded recovery service');
+
 const roleRoute = await read('src/app/api/admin/users/[uid]/role/route.ts');
 assert.match(roleRoute, /requireAdminMutationSession\(req, \['owner'\]\)/, 'role mutation must require owner role and trusted origin');
 assert.match(roleRoute, /updateAdminRole/, 'canonical role route must use the shared mutation service');

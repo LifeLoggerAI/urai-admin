@@ -29,6 +29,7 @@ const expectedRoutes = [
   'api/admin/users/[uid]/role/route.ts',
   'api/admin/set-flag/route.ts',
   'api/admin/set-user-active/route.ts',
+  'api/admin/recover-user-mutation/route.ts',
   'api/qa/logs/route.ts',
 ];
 
@@ -108,6 +109,8 @@ requireTokens('functions/src/index.ts', [
 ]);
 requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', ['writeRequiredAuditLog']);
 requireTokens('apps/urai-admin/src/app/api/admin/set-user-active/route.ts', ['activeMutation', 'roleMutation', 'rollback-required']);
+requireTokens('apps/urai-admin/src/app/api/admin/recover-user-mutation/route.ts', ["requireAdminMutationSession(request, ['owner'])", 'recoverAdminMutation']);
+requireTokens('apps/urai-admin/src/lib/admin/recover-admin-mutation.ts', ['STALE_MUTATION_MS', 'mutationId', 'rollback-required', 'setCustomUserClaims', 'revokeRefreshTokens', 'transaction.set(auditRef']);
 requireTokens('scripts/seed-system-registry.mjs', ['conflictingRegistryRecords', 'Refusing to replace live registry evidence']);
 
 if (failures.length) {
