@@ -9,14 +9,6 @@ function isAdminRole(value: unknown): value is AdminRole {
   return value === 'owner' || value === 'admin' || value === 'viewer';
 }
 
-function mutationMillis(value: unknown): number {
-  if (value && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
-    return (value as { toMillis: () => number }).toMillis();
-  }
-  const millis = new Date(value as string | number | Date).getTime();
-  return Number.isFinite(millis) ? millis : 0;
-}
-
 export async function recoverAdminMutation(input: {
   actor: AdminSession;
   uid: string;
