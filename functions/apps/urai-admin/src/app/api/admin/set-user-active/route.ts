@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     let previousClaims: Record<string, unknown> = {};
     let claimsMutationAttempted = false;
+    let finalizationAttempted = false;
     const auditLogRef = firestore.collection('auditLogs').doc(mutationId);
     try {
       const userRecord = await auth.getUser(payload.uid);
@@ -98,6 +99,7 @@ export async function POST(request: NextRequest) {
       await auth.revokeRefreshTokens(payload.uid);
 
       const now = new Date();
+      finalizationAttempted = true;
       await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
         const currentDoc = await transaction.get(userRef);
         const current = currentDoc.data();
@@ -160,6 +162,9 @@ export async function POST(request: NextRequest) {
         }
       } catch (readbackError) {
         console.error('Failed to read back ambiguous active-state finalization:', readbackError);
+        if (finalizationAttempted) {
+          throw new AdminAuthError('Admin active-state finalization is inconclusive; preserve the current claims and reservation for controlled recovery', 500);
+        }
       }
 
       let claimsRestored = !claimsMutationAttempted;
