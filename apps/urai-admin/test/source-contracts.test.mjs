@@ -99,7 +99,7 @@ assert.doesNotMatch(roleService, /await\s+writeAuditLog\s*\(/, 'role mutation au
 const recoveryService = await read('src/lib/admin/recover-admin-mutation.ts');
 assert.match(recoveryService, /Only an owner can recover admin mutations/, 'mutation recovery must require owner authority');
 assert.match(recoveryService, /mutationId/, 'mutation recovery must bind the exact reservation identifier');
-assert.match(recoveryService, /STALE_MUTATION_MS/, 'pending reservations must not be recoverable before a bounded stale window');
+assert.doesNotMatch(recoveryService, /STALE_MUTATION_MS/, 'abandoned pending reservations must not become automatically recoverable by age');
 assert.match(recoveryService, /rollback-required/, 'failed compensation must be explicitly recoverable');
 assert.match(recoveryService, /setCustomUserClaims/, 'recovery must restore canonical Auth claims');
 assert.match(recoveryService, /revokeRefreshTokens/, 'recovery must revoke existing sessions');
