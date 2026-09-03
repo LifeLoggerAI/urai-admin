@@ -113,6 +113,9 @@ export async function updateAdminRole(input: {
       ) {
         return { success: true as const, uid, role, roleVersion: reservation.nextRoleVersion, sessionsRevoked: true as const };
       }
+      if (finalizationAttempted && current.roleMutation?.id !== mutationId) {
+        throw new AdminAuthError('Admin role finalization is inconclusive; preserve the current claims and reservation for controlled recovery', 500);
+      }
     } catch (readbackError) {
       console.error('Failed to read back ambiguous admin role mutation finalization', readbackError);
       if (finalizationAttempted) {
