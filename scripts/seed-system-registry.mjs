@@ -17,6 +17,7 @@ const SEED_CONFIRMATION = 'SEED_SYSTEM_REGISTRY';
 const PRODUCTION_APPROVAL = 'APPROVE_URAI_ADMIN_PRODUCTION';
 const STAGING_APPROVAL = 'APPROVE_URAI_ADMIN_STAGING';
 const EMULATOR_APPROVAL = 'APPROVE_URAI_ADMIN_EMULATOR';
+const REGISTRY_REPLACEMENT_CONFIRMATION = 'REPLACE_OLDER_REGISTRY_SNAPSHOT';
 const CLOUD_RECEIPT_SCHEMA = 'urai-admin-system-registry-cloud-receipt-1';
 const explicitProjectId = process.env.URAI_ADMIN_FIREBASE_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '';
 const projectId = explicitProjectId || PRODUCTION_PROJECT_ID;
@@ -170,9 +171,11 @@ const registryDigest = crypto
 let preflightExistingCount = 0;
 let unexpectedRegistryIds = [];
 let conflictingRegistryRecords = [];
+let replacedOlderRegistryRecords = [];
 const expectedRegistryById = new Map(SYSTEM_REGISTRY_RECORDS.map((record) => [record.id, record]));
 try {
   await firestore.runTransaction(async (transaction) => {
+    replacedOlderRegistryRecords = [];
     const existingRegistry = await transaction.get(registryCollection);
     preflightExistingCount = existingRegistry.size;
     unexpectedRegistryIds = existingRegistry.docs
@@ -190,7 +193,22 @@ try {
       const observed = doc.data();
       const observedEvidenceDate = typeof observed.registryEvidenceDate === 'string' ? observed.registryEvidenceDate : '';
       const candidateIsNewer = Boolean(observedEvidenceDate) && observedEvidenceDate < REGISTRY_EVIDENCE_DATE;
-      if (candidateIsNewer) return [];
+
+      if (candidateIsNewer) {
+        const changedFields = requiredFields.filter((field) => !sameValue(observed[field], expected[field]));
+        if (observed.registryDigest && observed.registryDigest !== registryDigest) changedFields.push('registryDigest');
+        if (!changedFields.length) return [];
+        if (process.env.URAI_ADMIN_REGISTRY_REPLACE_CONFIRM !== REGISTRY_REPLACEMENT_CONFIRMATION) {
+          return [{ id: doc.id, fields: [...new Set(changedFields)].sort() }];
+        }
+        replacedOlderRegistryRecords.push({
+          id: doc.id,
+          previousEvidenceDate: observedEvidenceDate,
+          previousRegistryDigest: typeof observed.registryDigest === 'string' ? observed.registryDigest : null,
+          changedFields: [...new Set(changedFields)].sort(),
+        });
+        return [];
+      }
 
       const changedFields = requiredFields.filter((field) => !sameValue(observed[field], expected[field]));
       if (observedEvidenceDate > REGISTRY_EVIDENCE_DATE) changedFields.push('registryEvidenceDate');
@@ -199,7 +217,7 @@ try {
     });
     if (conflictingRegistryRecords.length) {
       const detail = conflictingRegistryRecords.map(({ id, fields }) => `${id}(${fields.join(',')})`).join('; ');
-      throw new Error(`Refusing to replace live registry evidence that differs from the candidate snapshot: ${detail}.`);
+      throw new Error(`Refusing to replace live registry evidence that differs from the candidate snapshot: ${detail}. A newer candidate may replace an older dated snapshot only with URAI_ADMIN_REGISTRY_REPLACE_CONFIRM=${REGISTRY_REPLACEMENT_CONFIRMATION}.`);
     }
 
     for (const system of SYSTEM_REGISTRY_RECORDS) {
@@ -228,6 +246,7 @@ try {
         allowNonProduction,
         emulatorMode,
         preflightExistingCount,
+        replacedOlderRegistryRecords,
       },
       createdAt: now,
     });
@@ -274,6 +293,7 @@ if (event?.metadata?.projectId !== projectId) fail('Post-commit operational even
 if (event?.metadata?.registryDigest !== registryDigest) fail('Post-commit operational event digest mismatch.');
 if (event?.metadata?.sourceSha !== expectedSha) fail('Post-commit operational event source SHA mismatch.');
 if (event?.metadata?.count !== SYSTEM_REGISTRY_RECORDS.length) fail('Post-commit operational event count mismatch.');
+if (!sameValue(event?.metadata?.replacedOlderRegistryRecords, replacedOlderRegistryRecords)) fail('Post-commit replacement evidence mismatch.');
 
 if (cloudAuthority) {
   const receipt = {
@@ -296,6 +316,7 @@ if (cloudAuthority) {
     postCommitReadbackVerified: true,
     unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
     conflictingRegistryRecordsBeforeMutation: conflictingRegistryRecords,
+    replacedOlderRegistryRecords,
     productionMutationPerformed: projectId === PRODUCTION_PROJECT_ID,
     stagingMutationPerformed: projectId !== PRODUCTION_PROJECT_ID,
     emulatorMode: false,

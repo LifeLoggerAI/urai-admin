@@ -113,6 +113,23 @@ jobs:
           create_credentials_file: true
           export_environment_variables: true
 
+      - name: Materialize validated Firebase runtime parameters
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const values = {
+            URAI_ADMIN_PRODUCTION_URL: process.env.URAI_ADMIN_PRODUCTION_URL,
+            URAI_ADMIN_ALLOWED_ORIGINS: process.env.URAI_ADMIN_ALLOWED_ORIGINS,
+          };
+          for (const [name, value] of Object.entries(values)) {
+            if (!value) throw new Error(`${name} is required for deployed Admin runtime configuration.`);
+            if (/\r|\n/.test(value)) throw new Error(`${name} must be a single-line value.`);
+          }
+          fs.writeFileSync('functions/.env.urai-4dc1d', `${Object.entries(values).map(([name, value]) => `${name}=${JSON.stringify(value)}`).join('\n')}\n`, { mode: 0o600 });
+          NODE
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -152,6 +169,14 @@ jobs:
           rm -rf "${rollback_dir}"
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const values = {
+            URAI_ADMIN_PRODUCTION_URL: process.env.URAI_ADMIN_PRODUCTION_URL,
+            URAI_ADMIN_ALLOWED_ORIGINS: process.env.URAI_ADMIN_ALLOWED_ORIGINS,
+          };
+          fs.writeFileSync('functions/.env.urai-4dc1d', `${Object.entries(values).map(([name, value]) => `${name}=${JSON.stringify(value)}`).join('\n')}\n`, { mode: 0o600 });
+          NODE
           corepack pnpm install --frozen-lockfile
           corepack pnpm build
           corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d

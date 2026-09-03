@@ -101,6 +101,7 @@ requireTokens('.github/workflows/deploy.yml', [
   'Protected admin origin allowlist is empty.',
   'base_url origin',
   'not in the protected admin origin allowlist',
+  "fs.writeFileSync('functions/.env.urai-4dc1d'",
 ]);
 requireTokens('functions/src/index.ts', [
   "defineString('URAI_ADMIN_PRODUCTION_URL')",
@@ -111,7 +112,12 @@ requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', ['writeR
 requireTokens('apps/urai-admin/src/app/api/admin/set-user-active/route.ts', ['activeMutation', 'roleMutation', 'rollback-required']);
 requireTokens('apps/urai-admin/src/app/api/admin/recover-user-mutation/route.ts', ["requireAdminMutationSession(request, ['owner'])", 'recoverAdminMutation']);
 requireTokens('apps/urai-admin/src/lib/admin/recover-admin-mutation.ts', ['STALE_MUTATION_MS', 'mutationId', 'rollback-required', 'setCustomUserClaims', 'revokeRefreshTokens', 'transaction.set(auditRef']);
-requireTokens('scripts/seed-system-registry.mjs', ['conflictingRegistryRecords', 'Refusing to replace live registry evidence']);
+requireTokens('scripts/seed-system-registry.mjs', [
+  'conflictingRegistryRecords',
+  'Refusing to replace live registry evidence',
+  'URAI_ADMIN_REGISTRY_REPLACE_CONFIRM',
+  'replacedOlderRegistryRecords',
+]);
 
 if (failures.length) {
   console.error('Admin route contract failed:');

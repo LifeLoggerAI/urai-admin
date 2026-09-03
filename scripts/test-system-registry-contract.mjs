@@ -95,6 +95,8 @@ if (!seed.includes('conflictingRegistryRecords')) failures.push('seed child must
 if (!seed.includes('Refusing to replace live registry evidence that differs from the candidate snapshot')) failures.push('seed child must fail closed on stale candidate snapshots');
 if (!seed.includes('conflictingRegistryRecordsBeforeMutation')) failures.push('cloud receipt must preserve the conflict preflight result');
 if (!seed.includes('candidateIsNewer')) failures.push('registry seed must allow a newer canonical evidence snapshot to replace older canonical records');
+if (!seed.includes('URAI_ADMIN_REGISTRY_REPLACE_CONFIRM')) failures.push('newer candidate replacement must require an explicit operator confirmation');
+if (!seed.includes('replacedOlderRegistryRecords')) failures.push('registry seed must preserve superseded evidence metadata');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
 if (!seed.includes('transaction.set(registryCollection.doc')) failures.push('canonical registry writes must occur inside the transaction');
@@ -144,7 +146,7 @@ if (!emulatorReceipt.includes('productionMutationPerformed: false')) failures.pu
 if (!emulatorReceipt.includes('stagingAuthorityAsserted: false')) failures.push('emulator receipt must not assert staging authority');
 if (!packageJson.scripts?.['test:registry']?.includes('test-system-registry-seed-guard.mjs')) failures.push('test:registry must execute behavioral seed guard tests');
 if (!packageJson.scripts?.['receipt:system-registry:emulator']?.includes('run-system-registry-emulator-receipt.mjs')) failures.push('package scripts must expose the guarded emulator receipt command');
-for (const token of ['URAI_ADMIN_SEED_APPLY=1', 'URAI_ADMIN_SEED_CONFIRM', 'URAI_ADMIN_SEED_SHA', 'URAI_ADMIN_STAGING_APPROVAL', 'URAI_ADMIN_PRODUCTION_APPROVAL', 'GOOGLE_APPLICATION_CREDENTIALS', 'URAI_ADMIN_SEED_RECEIPT_PATH']) {
+for (const token of ['URAI_ADMIN_SEED_APPLY=1', 'URAI_ADMIN_SEED_CONFIRM', 'URAI_ADMIN_SEED_SHA', 'URAI_ADMIN_STAGING_APPROVAL', 'URAI_ADMIN_PRODUCTION_APPROVAL', 'GOOGLE_APPLICATION_CREDENTIALS', 'URAI_ADMIN_SEED_RECEIPT_PATH', 'URAI_ADMIN_REGISTRY_REPLACE_CONFIRM']) {
   if (!terminalCommands.includes(token)) failures.push(`production terminal commands missing guarded seed input: ${token}`);
 }
 if (!String(packageJson.packageManager || '').endsWith('e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c')) failures.push('packageManager must retain the full pnpm integrity hash');

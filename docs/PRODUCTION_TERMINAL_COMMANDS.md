@@ -97,6 +97,10 @@ export URAI_ADMIN_STAGING_APPROVAL='APPROVE_URAI_ADMIN_STAGING'
 export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
 export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
 export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-staging-${URAI_ADMIN_SEED_SHA}.json"
+# Set only when this reviewed candidate intentionally supersedes an older dated
+# registry snapshot after preserving the previous evidence date/digest in the
+# immutable operational event and receipt:
+export URAI_ADMIN_REGISTRY_REPLACE_CONFIRM='REPLACE_OLDER_REGISTRY_SNAPSHOT'
 pnpm seed:system-registry
 ```
 
@@ -112,10 +116,14 @@ export URAI_ADMIN_PRODUCTION_APPROVAL='APPROVE_URAI_ADMIN_PRODUCTION'
 export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
 export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
 export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-production-${URAI_ADMIN_SEED_SHA}.json"
+# Set only when this reviewed candidate intentionally supersedes an older dated
+# registry snapshot after preserving the previous evidence date/digest in the
+# immutable operational event and receipt:
+export URAI_ADMIN_REGISTRY_REPLACE_CONFIRM='REPLACE_OLDER_REGISTRY_SNAPSHOT'
 pnpm seed:system-registry
 ```
 
-Both registry mutation flows require a short-lived WIF external-account ADC file whose impersonated service-account identity is bound to the exact target project. Raw service-account JSON, private keys, authorized-user refresh credentials, and inline credential material are rejected.
+Both registry mutation flows require a short-lived WIF external-account ADC file whose impersonated service-account identity is bound to the exact target project. Raw service-account JSON, private keys, authorized-user refresh credentials, and inline credential material are rejected. Omit `URAI_ADMIN_REGISTRY_REPLACE_CONFIRM` for an initial seed or an idempotent reseed; it is a deliberate, exact-phrase authorization only for replacing records whose `registryEvidenceDate` is older than the candidate. Equal/newer or undated conflicting live evidence remains fail-closed.
 
 Evidence to record:
 

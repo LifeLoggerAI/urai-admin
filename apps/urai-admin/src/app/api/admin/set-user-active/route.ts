@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     let previousClaims: Record<string, unknown> = {};
     let claimsMutationAttempted = false;
+    const auditLogRef = firestore.collection('auditLogs').doc(mutationId);
     try {
       const userRecord = await auth.getUser(payload.uid);
       previousClaims = userRecord.customClaims ?? {};
@@ -97,7 +98,6 @@ export async function POST(request: NextRequest) {
       await auth.revokeRefreshTokens(payload.uid);
 
       const now = new Date();
-      const auditLogRef = firestore.collection('auditLogs').doc(mutationId);
       await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
         const currentDoc = await transaction.get(userRef);
         const current = currentDoc.data();
@@ -134,6 +134,34 @@ export async function POST(request: NextRequest) {
         });
       });
     } catch (error) {
+      // The terminal transaction may have committed even when its response was
+      // lost. Only an exact canonical state plus its atomic audit record is
+      // sufficient to treat that ambiguous acknowledgement as success.
+      try {
+        const [currentDoc, auditDoc] = await Promise.all([userRef.get(), auditLogRef.get()]);
+        const current = currentDoc.data();
+        const audit = auditDoc.data();
+        if (
+          currentDoc.exists &&
+          auditDoc.exists &&
+          !current?.activeMutation?.id &&
+          !current?.roleMutation?.id &&
+          targetRoleFrom(current) === reservation.targetRole &&
+          (current?.isActive === true) === payload.isActive &&
+          audit?.metadata?.mutationId === mutationId &&
+          audit?.action === (payload.isActive ? 'adminUsers.activate' : 'adminUsers.deactivate')
+        ) {
+          return NextResponse.json({
+            success: true,
+            uid: payload.uid,
+            isActive: payload.isActive,
+            sessionsRevoked: true,
+          }, { headers: noStoreHeaders });
+        }
+      } catch (readbackError) {
+        console.error('Failed to read back ambiguous active-state finalization:', readbackError);
+      }
+
       let claimsRestored = !claimsMutationAttempted;
       if (claimsMutationAttempted) {
         try {

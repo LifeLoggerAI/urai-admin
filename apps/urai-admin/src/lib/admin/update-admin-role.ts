@@ -60,6 +60,7 @@ export async function updateAdminRole(input: {
 
   let previousClaims: Record<string, unknown> | null = null;
   let claimsMutationAttempted = false;
+  const auditRef = firestore.collection('auditLogs').doc(mutationId) as DocumentReference<DocumentData>;
 
   try {
     const userRecord = await auth.getUser(uid);
@@ -70,7 +71,6 @@ export async function updateAdminRole(input: {
     await auth.setCustomUserClaims(uid, nextClaims);
     await auth.revokeRefreshTokens(uid);
 
-    const auditRef = firestore.collection('auditLogs').doc(mutationId) as DocumentReference<DocumentData>;
     await firestore.runTransaction(async (transaction: Transaction) => {
       const currentDoc = await transaction.get(userRef);
       const current = currentDoc.data() ?? {};
@@ -91,6 +91,30 @@ export async function updateAdminRole(input: {
 
     return { success: true as const, uid, role, roleVersion: reservation.nextRoleVersion, sessionsRevoked: true as const };
   } catch (error) {
+    // A Firestore transaction can commit while its acknowledgement is lost. In
+    // that case Auth already contains the requested claims and rolling them back
+    // would split Auth from the canonical record. Recognize only the complete,
+    // atomically-audited terminal state before attempting compensation.
+    try {
+      const [currentDoc, auditDoc] = await Promise.all([userRef.get(), auditRef.get()]);
+      const current = currentDoc.data() ?? {};
+      const audit = auditDoc.data() ?? {};
+      if (
+        currentDoc.exists &&
+        auditDoc.exists &&
+        !current.roleMutation?.id &&
+        current.role === role &&
+        current.roleVersion === reservation.nextRoleVersion &&
+        current.isActive === reservation.previousIsActive &&
+        audit.action === 'adminUsers.role.update' &&
+        audit.metadata?.mutationId === mutationId
+      ) {
+        return { success: true as const, uid, role, roleVersion: reservation.nextRoleVersion, sessionsRevoked: true as const };
+      }
+    } catch (readbackError) {
+      console.error('Failed to read back ambiguous admin role mutation finalization', readbackError);
+    }
+
     let authRestored = !claimsMutationAttempted;
     if (claimsMutationAttempted && previousClaims) {
       try {
