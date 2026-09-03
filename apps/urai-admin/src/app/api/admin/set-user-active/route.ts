@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
       role: reservation.targetRole,
     };
 
-    let claimsChanged = false;
+    let claimsMutationAttempted = false;
     try {
+      claimsMutationAttempted = true;
       await auth.setCustomUserClaims(payload.uid, nextClaims);
-      claimsChanged = true;
       await auth.revokeRefreshTokens(payload.uid);
 
       const now = new Date();
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
         });
       });
     } catch (error) {
-      let claimsRestored = !claimsChanged;
-      if (claimsChanged) {
+      let claimsRestored = !claimsMutationAttempted;
+      if (claimsMutationAttempted) {
         try {
           await auth.setCustomUserClaims(payload.uid, previousClaims);
           await auth.revokeRefreshTokens(payload.uid);

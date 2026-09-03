@@ -188,8 +188,11 @@ try {
       const expected = expectedRegistryById.get(doc.id);
       if (!expected) return [];
       const observed = doc.data();
-      const changedFields = requiredFields.filter((field) => !sameValue(observed[field], expected[field]));
       const observedEvidenceDate = typeof observed.registryEvidenceDate === 'string' ? observed.registryEvidenceDate : '';
+      const candidateIsNewer = Boolean(observedEvidenceDate) && observedEvidenceDate < REGISTRY_EVIDENCE_DATE;
+      if (candidateIsNewer) return [];
+
+      const changedFields = requiredFields.filter((field) => !sameValue(observed[field], expected[field]));
       if (observedEvidenceDate > REGISTRY_EVIDENCE_DATE) changedFields.push('registryEvidenceDate');
       if (observed.registryDigest && observed.registryDigest !== registryDigest) changedFields.push('registryDigest');
       return changedFields.length ? [{ id: doc.id, fields: [...new Set(changedFields)].sort() }] : [];

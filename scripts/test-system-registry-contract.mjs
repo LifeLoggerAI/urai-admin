@@ -94,6 +94,7 @@ if (!seed.includes('unexpectedRegistryIds')) failures.push('seed child must reje
 if (!seed.includes('conflictingRegistryRecords')) failures.push('seed child must reject conflicting live canonical records before replacement');
 if (!seed.includes('Refusing to replace live registry evidence that differs from the candidate snapshot')) failures.push('seed child must fail closed on stale candidate snapshots');
 if (!seed.includes('conflictingRegistryRecordsBeforeMutation')) failures.push('cloud receipt must preserve the conflict preflight result');
+if (!seed.includes('candidateIsNewer')) failures.push('registry seed must allow a newer canonical evidence snapshot to replace older canonical records');
 if (!seed.includes('await firestore.runTransaction')) failures.push('stale-record inspection and canonical mutation must share one Firestore transaction');
 if (!seed.includes('await transaction.get(registryCollection)')) failures.push('transaction must inspect the live registry before writing');
 if (!seed.includes('transaction.set(registryCollection.doc')) failures.push('canonical registry writes must occur inside the transaction');

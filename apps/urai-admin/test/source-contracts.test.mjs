@@ -111,6 +111,7 @@ assert.match(activeRoute, /requireAdminMutationSession/, 'active-state mutation 
 assert.match(activeRoute, /Only an owner can change another owner or admin account/, 'admin role hierarchy must be enforced');
 assert.match(activeRoute, /auth\.revokeRefreshTokens\(payload\.uid\)/, 'active-state changes must revoke sessions');
 assert.match(activeRoute, /auth\.setCustomUserClaims\(payload\.uid, previousClaims\)/, 'active-state failures must restore claims');
+assert.match(activeRoute, /claimsMutationAttempted\s*=\s*true;\s*await auth\.setCustomUserClaims/s, 'active-state mutation must treat a rejected claims RPC as ambiguously committed');
 assert.match(activeRoute, /Admin user changed during active-state update/, 'active-state writes must detect concurrent role/state changes');
 assert.match(activeRoute, /sessionsRevoked:\s*true/, 'active-state audit/result must expose revocation');
 assert.match(activeRoute, /activeMutation:\s*\{/, 'active-state mutation must reserve the target before changing claims');
