@@ -144,7 +144,7 @@ Evidence to record:
 
 ## 6. Recover an abandoned Admin mutation reservation
 
-Recovery is owner-only and must use the exact target UID and exact reservation mutation ID shown in the protected `adminUsers` record. A pending reservation is not eligible until its 15-minute lease is stale; a `rollback-required` reservation is eligible immediately. The recovery route restores the marker's pre-mutation role/active state in Firebase Auth and Firestore, revokes sessions, clears the reservation, and writes the audit record atomically. Do not guess either identifier or manually delete reservation fields.
+Recovery is owner-only and must use the exact target UID and exact reservation mutation ID shown in the protected `adminUsers` record. Only a `rollback-required` reservation is eligible for automated recovery. A `pending` reservation never becomes recoverable merely because time elapsed: quarantine the account, preserve the marker and audit evidence, investigate the worker outcome and Auth/Firestore state, and obtain an independently reviewed security decision before converting it through a governed repair. The recovery route restores the marker's pre-mutation role/active state in Firebase Auth and Firestore, revokes sessions, clears the reservation, and writes the audit record atomically. Do not guess either identifier, infer abandonment from age, or manually delete reservation fields.
 
 Send an authenticated same-origin POST to `/api/admin/recover-user-mutation` with:
 
