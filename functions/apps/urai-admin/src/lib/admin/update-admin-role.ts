@@ -60,6 +60,7 @@ export async function updateAdminRole(input: {
 
   let previousClaims: Record<string, unknown> | null = null;
   let claimsMutationAttempted = false;
+  let finalizationAttempted = false;
   const auditRef = firestore.collection('auditLogs').doc(mutationId) as DocumentReference<DocumentData>;
 
   try {
@@ -71,6 +72,7 @@ export async function updateAdminRole(input: {
     await auth.setCustomUserClaims(uid, nextClaims);
     await auth.revokeRefreshTokens(uid);
 
+    finalizationAttempted = true;
     await firestore.runTransaction(async (transaction: Transaction) => {
       const currentDoc = await transaction.get(userRef);
       const current = currentDoc.data() ?? {};
@@ -113,6 +115,9 @@ export async function updateAdminRole(input: {
       }
     } catch (readbackError) {
       console.error('Failed to read back ambiguous admin role mutation finalization', readbackError);
+      if (finalizationAttempted) {
+        throw new AdminAuthError('Admin role finalization is inconclusive; preserve the current claims and reservation for controlled recovery', 500);
+      }
     }
 
     let authRestored = !claimsMutationAttempted;
