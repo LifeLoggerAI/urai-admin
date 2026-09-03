@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, firestore, writeAuditLog } from '@/lib/firebase/admin';
+import { auth, firestore, writeRequiredAuditLog } from '@/lib/firebase/admin';
 
 export type AdminRole = 'owner' | 'admin' | 'viewer';
 
@@ -156,7 +156,7 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
   }
 
   if (!tokenClaimsMatch) {
-    await writeAuditLog({
+    await writeRequiredAuditLog({
       actorUid: decodedToken.uid,
       actorEmail: decodedToken.email ?? adminUser.email ?? 'unknown-admin@urai.local',
       action: 'auth.claims.refreshRequired',
@@ -191,7 +191,7 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
     path: '/',
   });
 
-  await writeAuditLog({
+  await writeRequiredAuditLog({
     actorUid: decodedToken.uid,
     actorEmail: decodedToken.email ?? adminUser.email ?? 'unknown-admin@urai.local',
     action: auditAction,

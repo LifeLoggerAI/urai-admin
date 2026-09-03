@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -20,7 +22,7 @@ const setUserActiveSchema = z.object({
 
 type FirestoreDoc = {
   exists: boolean;
-  data: () => Record<string, unknown> | undefined;
+  data: () => Record<string, any> | undefined;
 };
 
 type FirestoreTransaction = {
@@ -45,26 +47,46 @@ export async function POST(request: NextRequest) {
       throw new AdminAuthError('You cannot deactivate your own admin account', 400);
     }
 
+    const mutationId = randomUUID();
     const userRef = firestore.collection('adminUsers').doc(payload.uid);
-    const initialDoc = await userRef.get();
-    if (!initialDoc.exists) {
-      throw new AdminAuthError('Admin user not found', 404);
-    }
+    const reservation = await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+      const currentDoc = await transaction.get(userRef);
+      if (!currentDoc.exists) throw new AdminAuthError('Admin user not found', 404);
 
-    const before = initialDoc.data();
-    const targetRole = targetRoleFrom(before);
-    const previousActive = before?.isActive === true;
+      const before = currentDoc.data();
+      const targetRole = targetRoleFrom(before);
+      const previousActive = before?.isActive === true;
+      if (before?.roleMutation?.id) {
+        throw new AdminAuthError('Admin role update already in progress', 409);
+      }
+      if (before?.activeMutation?.id) {
+        throw new AdminAuthError('Admin active-state update already in progress', 409);
+      }
+      if (actor.role !== 'owner' && (targetRole === 'owner' || targetRole === 'admin')) {
+        throw new AdminAuthError('Only an owner can change another owner or admin account', 403);
+      }
 
-    if (actor.role !== 'owner' && (targetRole === 'owner' || targetRole === 'admin')) {
-      throw new AdminAuthError('Only an owner can change another owner or admin account', 403);
-    }
+      transaction.set(userRef, {
+        activeMutation: {
+          id: mutationId,
+          status: 'pending',
+          actorUid: actor.uid,
+          previousActive,
+          requestedActive: payload.isActive,
+          startedAt: new Date(),
+        },
+        updatedAt: new Date(),
+        updatedBy: actor.uid,
+      }, { merge: true });
+      return { targetRole, previousActive };
+    });
 
     const userRecord = await auth.getUser(payload.uid);
     const previousClaims = userRecord.customClaims ?? {};
     const nextClaims = {
       ...previousClaims,
       admin: payload.isActive,
-      role: targetRole,
+      role: reservation.targetRole,
     };
 
     let claimsChanged = false;
@@ -74,27 +96,26 @@ export async function POST(request: NextRequest) {
       await auth.revokeRefreshTokens(payload.uid);
 
       const now = new Date();
-      const auditLogRef = firestore.collection('auditLogs').doc();
-
+      const auditLogRef = firestore.collection('auditLogs').doc(mutationId);
       await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
         const currentDoc = await transaction.get(userRef);
-        if (!currentDoc.exists) {
-          throw new AdminAuthError('Admin user not found', 404);
-        }
-
         const current = currentDoc.data();
-        const currentRole = targetRoleFrom(current);
-        const currentActive = current?.isActive === true;
-        if (currentRole !== targetRole || currentActive !== previousActive) {
+        if (
+          !currentDoc.exists ||
+          current?.activeMutation?.id !== mutationId ||
+          current?.roleMutation?.id ||
+          targetRoleFrom(current) !== reservation.targetRole ||
+          (current?.isActive === true) !== reservation.previousActive
+        ) {
           throw new AdminAuthError('Admin user changed during active-state update', 409);
         }
 
         transaction.set(userRef, {
           isActive: payload.isActive,
+          activeMutation: null,
           updatedAt: now,
           updatedBy: actor.uid,
         }, { merge: true });
-
         transaction.set(auditLogRef, {
           actorUid: actor.uid,
           actorEmail: actor.email ?? null,
@@ -102,8 +123,9 @@ export async function POST(request: NextRequest) {
           action: payload.isActive ? 'adminUsers.activate' : 'adminUsers.deactivate',
           target: { type: 'adminUser', id: payload.uid },
           metadata: {
-            previousRole: targetRole,
-            previousActive,
+            mutationId,
+            previousRole: reservation.targetRole,
+            previousActive: reservation.previousActive,
             nextActive: payload.isActive,
             sessionsRevoked: true,
           },
@@ -111,14 +133,37 @@ export async function POST(request: NextRequest) {
         });
       });
     } catch (error) {
+      let claimsRestored = !claimsChanged;
       if (claimsChanged) {
         try {
           await auth.setCustomUserClaims(payload.uid, previousClaims);
           await auth.revokeRefreshTokens(payload.uid);
+          claimsRestored = true;
         } catch (rollbackError) {
           console.error('Failed to restore admin claims after active-state update failure:', rollbackError);
-          throw new AdminAuthError('Admin active-state update failed and claim rollback failed', 500);
         }
+      }
+
+      try {
+        await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+          const currentDoc = await transaction.get(userRef);
+          const current = currentDoc.data();
+          if (!currentDoc.exists || current?.activeMutation?.id !== mutationId) return;
+          transaction.set(userRef, {
+            activeMutation: claimsRestored
+              ? null
+              : { ...current.activeMutation, status: 'rollback-required', failedAt: new Date() },
+            updatedAt: new Date(),
+            updatedBy: actor.uid,
+          }, { merge: true });
+        });
+      } catch (rollbackError) {
+        console.error('Failed to clear active-state reservation after mutation failure:', rollbackError);
+        throw new AdminAuthError('Admin active-state update failed and compensation was incomplete', 500);
+      }
+
+      if (!claimsRestored) {
+        throw new AdminAuthError('Admin active-state update failed and claim rollback is required', 500);
       }
       throw error;
     }
@@ -137,9 +182,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error instanceof AdminAuthError) {
-      return adminAuthErrorResponse(error);
-    }
+    if (error instanceof AdminAuthError) return adminAuthErrorResponse(error);
 
     console.error('Failed to update admin user active state:', error);
     return NextResponse.json(

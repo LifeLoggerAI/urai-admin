@@ -57,6 +57,7 @@ assert.match(requireAdminSession, /ageSeconds >= -MAX_CLOCK_SKEW_SECONDS/, 'futu
 assert.match(requireAdminSession, /refreshRequired:\s*true/, 'stale claims must require a refreshed ID token');
 assert.match(requireAdminSession, /tokenClaimsMatch/, 'a stale token must not mint an admin cookie');
 assert.match(requireAdminSession, /sameSite:\s*'strict'/, 'admin cookies must use strict same-site policy');
+assert.match(requireAdminSession, /writeRequiredAuditLog/, 'session exchange must use a non-swallowing audit write');
 
 const loginRoute = await read('src/app/api/auth/login/route.ts');
 assert.match(loginRoute, /exchangeAdminIdToken/, 'login must use the canonical two-pass exchange');
@@ -89,6 +90,7 @@ assert.match(roleService, /auth\.revokeRefreshTokens\(uid\)/, 'role mutation mus
 assert.match(roleService, /auth\.setCustomUserClaims\(uid, previousClaims\)/, 'role mutation must compensate after a Firestore failure');
 assert.match(roleService, /roleMutation:\s*\{\s*id:\s*mutationId,\s*status:\s*'pending'/s, 'role mutation must reserve the target before changing claims');
 assert.match(roleService, /Admin role update already in progress/, 'concurrent role mutations must fail closed');
+assert.match(roleService, /before\.activeMutation\?\.id/, 'role mutations must reject a reserved active-state mutation');
 assert.match(roleService, /transaction\.set\(auditRef/, 'successful role mutation must commit its audit record atomically');
 assert.match(roleService, /transaction\.set\(failureAuditRef/, 'failed role mutation must commit a durable failure audit');
 assert.match(roleService, /status:\s*'rollback-required'/, 'incomplete compensation must leave explicit rollback-required evidence');
@@ -111,6 +113,9 @@ assert.match(activeRoute, /auth\.revokeRefreshTokens\(payload\.uid\)/, 'active-s
 assert.match(activeRoute, /auth\.setCustomUserClaims\(payload\.uid, previousClaims\)/, 'active-state failures must restore claims');
 assert.match(activeRoute, /Admin user changed during active-state update/, 'active-state writes must detect concurrent role/state changes');
 assert.match(activeRoute, /sessionsRevoked:\s*true/, 'active-state audit/result must expose revocation');
+assert.match(activeRoute, /activeMutation:\s*\{/, 'active-state mutation must reserve the target before changing claims');
+assert.match(activeRoute, /current\?\.roleMutation\?\.id/, 'active-state finalization must reject concurrent role mutation');
+assert.match(activeRoute, /status:\s*'rollback-required'/, 'incomplete active-state compensation must remain explicitly blocked');
 
 const firebaseAdmin = await read('src/lib/firebase/admin.ts');
 for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCookie', 'setCustomUserClaims', 'revokeRefreshTokens', 'getUser']) {
@@ -119,6 +124,7 @@ for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCook
 assert.match(firebaseAdmin, /runTransaction/, 'build Firestore stub must expose transaction surface');
 assert.match(firebaseAdmin, /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/, 'runtime must explicitly reject the retired raw service-account input');
 assert.doesNotMatch(firebaseAdmin, /credential\.cert|private_key|client_email/, 'runtime must remain ADC-only');
+assert.match(firebaseAdmin, /writeRequiredAuditLog/, 'authentication-sensitive audit writes must have a non-swallowing path');
 
 const firestoreRules = await readRoot('firestore.rules');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');

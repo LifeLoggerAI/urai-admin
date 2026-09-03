@@ -53,7 +53,7 @@ function fakeRequire(specifier) {
   }
   if (specifier === 'zod') return { z: fakeZ };
   if (specifier === '@/lib/firebase/admin') {
-    return { auth: {}, firestore: {}, writeAuditLog: async () => {} };
+    return { auth: {}, firestore: {}, writeRequiredAuditLog: async () => {} };
   }
   throw new Error(`Unexpected dependency while loading admin origin policy: ${specifier}`);
 }

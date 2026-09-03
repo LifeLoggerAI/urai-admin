@@ -100,7 +100,13 @@ requireTokens('.github/workflows/deploy.yml', [
   'Protected admin origin allowlist is empty.',
   'base_url origin',
   'not in the protected admin origin allowlist',
+  "defineString('URAI_ADMIN_PRODUCTION_URL')",
+  "defineString('URAI_ADMIN_ALLOWED_ORIGINS')",
+  'bindAdminOriginEnvironment()',
 ]);
+requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', ['writeRequiredAuditLog']);
+requireTokens('apps/urai-admin/src/app/api/admin/set-user-active/route.ts', ['activeMutation', 'roleMutation', 'rollback-required']);
+requireTokens('scripts/seed-system-registry.mjs', ['conflictingRegistryRecords', 'Refusing to replace live registry evidence']);
 
 if (failures.length) {
   console.error('Admin route contract failed:');

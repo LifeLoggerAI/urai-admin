@@ -169,6 +169,8 @@ const registryDigest = crypto
 
 let preflightExistingCount = 0;
 let unexpectedRegistryIds = [];
+let conflictingRegistryRecords = [];
+const expectedRegistryById = new Map(SYSTEM_REGISTRY_RECORDS.map((record) => [record.id, record]));
 try {
   await firestore.runTransaction(async (transaction) => {
     const existingRegistry = await transaction.get(registryCollection);
@@ -180,6 +182,21 @@ try {
 
     if (unexpectedRegistryIds.length) {
       throw new Error(`Refusing to seed while unexpected systemRegistry documents exist: ${unexpectedRegistryIds.join(', ')}.`);
+    }
+
+    conflictingRegistryRecords = existingRegistry.docs.flatMap((doc) => {
+      const expected = expectedRegistryById.get(doc.id);
+      if (!expected) return [];
+      const observed = doc.data();
+      const changedFields = requiredFields.filter((field) => !sameValue(observed[field], expected[field]));
+      const observedEvidenceDate = typeof observed.registryEvidenceDate === 'string' ? observed.registryEvidenceDate : '';
+      if (observedEvidenceDate > REGISTRY_EVIDENCE_DATE) changedFields.push('registryEvidenceDate');
+      if (observed.registryDigest && observed.registryDigest !== registryDigest) changedFields.push('registryDigest');
+      return changedFields.length ? [{ id: doc.id, fields: [...new Set(changedFields)].sort() }] : [];
+    });
+    if (conflictingRegistryRecords.length) {
+      const detail = conflictingRegistryRecords.map(({ id, fields }) => `${id}(${fields.join(',')})`).join('; ');
+      throw new Error(`Refusing to replace live registry evidence that differs from the candidate snapshot: ${detail}.`);
     }
 
     for (const system of SYSTEM_REGISTRY_RECORDS) {
@@ -275,6 +292,7 @@ if (cloudAuthority) {
     atomicPreflightAndMutationVerified: true,
     postCommitReadbackVerified: true,
     unexpectedRegistryIdsBeforeMutation: unexpectedRegistryIds,
+    conflictingRegistryRecordsBeforeMutation: conflictingRegistryRecords,
     productionMutationPerformed: projectId === PRODUCTION_PROJECT_ID,
     stagingMutationPerformed: projectId !== PRODUCTION_PROJECT_ID,
     emulatorMode: false,

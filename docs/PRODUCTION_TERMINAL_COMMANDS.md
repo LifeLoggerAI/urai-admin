@@ -84,21 +84,34 @@ Evidence to record:
 
 ## 5. Seed system-of-systems registry
 
-For staging:
+For staging (from the exact clean reviewed checkout, with a fresh immutable receipt filename):
 
 ```bash
-export URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_FIREBASE_PROJECT='<staging-project-id>'
-export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+export URAI_ADMIN_STAGING_FIREBASE_PROJECT='<staging-project-id>'
+export URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1
+export URAI_ADMIN_STAGING_APPROVAL='APPROVE_URAI_ADMIN_STAGING'
+export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
+export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
+export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-staging-${URAI_ADMIN_SEED_SHA}.json"
 pnpm seed:system-registry
 ```
 
-For production:
+For production (from the exact clean reviewed `main` checkout, with a fresh immutable receipt filename):
 
 ```bash
-unset URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_FIREBASE_PROJECT='urai-4dc1d'
-export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+unset URAI_ADMIN_STAGING_FIREBASE_PROJECT URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED URAI_ADMIN_STAGING_APPROVAL
+export URAI_ADMIN_PRODUCTION_APPROVAL='APPROVE_URAI_ADMIN_PRODUCTION'
+export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
+export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
+export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-production-${URAI_ADMIN_SEED_SHA}.json"
 pnpm seed:system-registry
 ```
 

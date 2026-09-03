@@ -41,6 +41,7 @@ export async function updateAdminRole(input: {
 
     const before = userDoc.data() ?? {};
     if (before.roleMutation?.id) throw new AdminAuthError('Admin role update already in progress', 409);
+    if (before.activeMutation?.id) throw new AdminAuthError('Admin active-state update already in progress', 409);
     if (!isAdminRole(before.role)) throw new AdminAuthError('Admin user has an invalid canonical role', 409);
 
     const previousRoleVersion = readRoleVersion(before.roleVersion);

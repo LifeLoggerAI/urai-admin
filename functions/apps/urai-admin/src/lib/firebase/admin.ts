@@ -90,6 +90,17 @@ interface AuditLog {
   metadata?: Record<string, any>;
 }
 
+export const writeRequiredAuditLog = async (log: AuditLog) => {
+  if (shouldStubFirebaseAdmin) {
+    return;
+  }
+
+  await firestore.collection('auditLogs').add({
+    ...log,
+    createdAt: new Date(),
+  });
+};
+
 export const writeAuditLog = async (log: AuditLog) => {
   if (shouldStubFirebaseAdmin) {
     return;
