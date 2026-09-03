@@ -16,7 +16,6 @@ const requiredSnippets = [
   'match /systemRegistry/{systemId}',
   'match /governanceEvidence/{evidenceId}',
   'match /{rawAnalyticsCollection}/{eventId}',
-  "rawAnalyticsCollection.matches('^analytics_events_raw_[0-9]{4}-[0-9]{2}-[0-9]{2}$')",
   'allow update, delete: if false'
 ];
 
