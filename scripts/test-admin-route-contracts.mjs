@@ -86,6 +86,7 @@ requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
   'adminUsers.role.update',
   'rollback-required',
   'account remains disabled pending recovery',
+  'admin: reservation.previousIsActive',
 ]);
 requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'COLLECTIONS',
@@ -113,7 +114,22 @@ requireTokens('functions/src/index.ts', [
 requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', ['writeRequiredAuditLog']);
 requireTokens('apps/urai-admin/src/app/api/admin/set-user-active/route.ts', ['activeMutation', 'roleMutation', 'rollback-required']);
 requireTokens('apps/urai-admin/src/app/api/admin/recover-user-mutation/route.ts', ["requireAdminMutationSession(request, ['owner'])", 'recoverAdminMutation']);
-requireTokens('apps/urai-admin/src/lib/admin/recover-admin-mutation.ts', ['STALE_MUTATION_MS', 'mutationId', 'rollback-required', 'setCustomUserClaims', 'revokeRefreshTokens', 'transaction.set(auditRef']);
+requireTokens('apps/urai-admin/src/lib/admin/recover-admin-mutation.ts', [
+  'STALE_MUTATION_MS',
+  'mutationId',
+  'rollback-required',
+  'setCustomUserClaims',
+  'revokeRefreshTokens',
+  'lost its reservation before Auth reconciliation',
+  'lostOwnership',
+  'admin: canonical.isActive === true',
+  'transaction.set(auditRef',
+]);
+requireTokens('firestore.rules', [
+  'Raw passive telemetry remains server-only',
+  "match /{rawAnalyticsCollection}/{eventId}",
+  'allow read, write: if false',
+]);
 requireTokens('scripts/seed-system-registry.mjs', [
   'conflictingRegistryRecords',
   'Refusing to replace live registry evidence',
