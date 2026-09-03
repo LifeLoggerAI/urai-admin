@@ -133,10 +133,12 @@ assert.match(activeRoute, /activeMutation:\s*\{/, 'active-state mutation must re
 assert.match(activeRoute, /current\?\.roleMutation\?\.id/, 'active-state finalization must reject concurrent role mutation');
 assert.match(activeRoute, /status:\s*'rollback-required'/, 'incomplete active-state compensation must remain explicitly blocked');
 assert.match(activeRoute, /auditDoc\.exists[\s\S]*audit\?\.metadata\?\.mutationId === mutationId/, 'ambiguous active-state finalization must require its atomic audit record before returning success');
-assert.match(activeRoute, /Failed to read back ambiguous active-state finalization/, 'ambiguous active-state finalization readback must fail into compensation');
+assert.match(activeRoute, /finalizationAttempted/, 'active-state mutation must distinguish an attempted terminal commit from pre-finalization failures');
+assert.match(activeRoute, /Admin active-state finalization is inconclusive; preserve the current claims and reservation for controlled recovery/, 'inconclusive active-state finalization must not destructively roll Auth back');
 
 assert.match(roleService, /auditDoc\.exists[\s\S]*audit\.metadata\?\.mutationId === mutationId/, 'ambiguous role finalization must require its atomic audit record before returning success');
-assert.match(roleService, /Failed to read back ambiguous admin role mutation finalization/, 'ambiguous role finalization readback must fail into compensation');
+assert.match(roleService, /finalizationAttempted/, 'role mutation must distinguish an attempted terminal commit from pre-finalization failures');
+assert.match(roleService, /Admin role finalization is inconclusive; preserve the current claims and reservation for controlled recovery/, 'inconclusive role finalization must not destructively roll Auth back');
 
 const firebaseAdmin = await read('src/lib/firebase/admin.ts');
 for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCookie', 'setCustomUserClaims', 'revokeRefreshTokens', 'getUser']) {
