@@ -45,7 +45,14 @@ export async function recoverAdminMutation(input: {
     const marker = roleMutation ?? activeMutation;
     if (!marker) throw new AdminAuthError('Admin user has no recoverable mutation reservation', 409);
     if (marker.id !== mutationId) throw new AdminAuthError('Mutation recovery identifier does not match', 409);
-    if (marker.recoveryToken) throw new AdminAuthError('Admin mutation recovery is already in progress', 409);
+    if (marker.recoveryToken) {
+      const recoveryStartedAt = mutationMillis(marker.recoveryStartedAt);
+      const recoveryClaimIsStale = recoveryStartedAt > 0
+        && Date.now() - recoveryStartedAt >= STALE_MUTATION_MS;
+      if (!recoveryClaimIsStale) {
+        throw new AdminAuthError('Admin mutation recovery is already in progress', 409);
+      }
+    }
 
     const startedAt = mutationMillis(marker.startedAt);
     const stale = startedAt > 0 && Date.now() - startedAt >= STALE_MUTATION_MS;
