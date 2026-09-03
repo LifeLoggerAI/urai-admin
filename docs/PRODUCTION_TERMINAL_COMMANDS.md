@@ -100,7 +100,7 @@ export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-stagi
 # Set only when this reviewed candidate intentionally supersedes an older dated
 # registry snapshot after preserving the previous evidence date/digest in the
 # immutable operational event and receipt:
-export URAI_ADMIN_REGISTRY_REPLACE_CONFIRM='REPLACE_OLDER_REGISTRY_SNAPSHOT'
+# Leave URAI_ADMIN_REGISTRY_REPLACE_CONFIRM unset for the normal seed path.
 pnpm seed:system-registry
 ```
 
@@ -119,8 +119,16 @@ export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-produ
 # Set only when this reviewed candidate intentionally supersedes an older dated
 # registry snapshot after preserving the previous evidence date/digest in the
 # immutable operational event and receipt:
+# Leave URAI_ADMIN_REGISTRY_REPLACE_CONFIRM unset for the normal seed path.
+pnpm seed:system-registry
+```
+
+If—and only if—an independently reviewed operation intentionally replaces an older dated registry snapshot, run a separate invocation after preserving the prior evidence date and digest:
+
+```bash
 export URAI_ADMIN_REGISTRY_REPLACE_CONFIRM='REPLACE_OLDER_REGISTRY_SNAPSHOT'
 pnpm seed:system-registry
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
 ```
 
 Both registry mutation flows require a short-lived WIF external-account ADC file whose impersonated service-account identity is bound to the exact target project. Raw service-account JSON, private keys, authorized-user refresh credentials, and inline credential material are rejected. Omit `URAI_ADMIN_REGISTRY_REPLACE_CONFIRM` for an initial seed or an idempotent reseed; it is a deliberate, exact-phrase authorization only for replacing records whose `registryEvidenceDate` is older than the candidate. Equal/newer or undated conflicting live evidence remains fail-closed.
