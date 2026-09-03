@@ -151,10 +151,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Raw passive telemetry remains server-only until a separately governed
+    // privacy review explicitly authorizes an administrative access path.
     match /{rawAnalyticsCollection}/{eventId} {
-      allow read: if rawAnalyticsCollection.matches('^analytics_events_raw_[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && isOwnerOrAdmin();
-      allow write: if false;
+      allow read, write: if false;
     }
 
     match /analytics_aggregates/{aggregateId} {
