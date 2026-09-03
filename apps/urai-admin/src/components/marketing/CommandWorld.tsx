@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 
 const nodes = [
-  { label: 'Auth', value: 'locked', x: 14, y: 26, z: 0 },
-  { label: 'Audit', value: '47 events', x: 69, y: 21, z: 2 },
-  { label: 'Jobs', value: '184 runs', x: 77, y: 60, z: 1 },
-  { label: 'Flags', value: '12 active', x: 22, y: 68, z: 3 },
+  { label: 'Auth', value: 'access-gated', x: 14, y: 26, z: 0 },
+  { label: 'Audit', value: 'evidence-gated', x: 69, y: 21, z: 2 },
+  { label: 'Jobs', value: 'runtime-gated', x: 77, y: 60, z: 1 },
+  { label: 'Flags', value: 'source-defined', x: 22, y: 68, z: 3 },
   { label: 'Registry', value: 'systems', x: 47, y: 43, z: 4 },
 ];
 
@@ -54,13 +54,13 @@ export function CommandWorld({ compact = false }: { compact?: boolean }) {
           </div>
         ))}
         <div className="command-panel command-panel-left">
-          <span>Live posture</span>
+          <span>Release posture</span>
           <strong>Protected</strong>
           <small>Roles · evidence · system checks</small>
         </div>
         <div className="command-panel command-panel-right">
           <span>System mesh</span>
-          <strong>13 nodes</strong>
+          <strong>Documented</strong>
           <small>Admin · Analytics · Comms · Privacy · Studio</small>
         </div>
       </div>
