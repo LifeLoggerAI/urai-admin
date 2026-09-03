@@ -115,7 +115,8 @@ requireTokens('apps/urai-admin/src/lib/admin/require-admin-session.ts', ['writeR
 requireTokens('apps/urai-admin/src/app/api/admin/set-user-active/route.ts', ['activeMutation', 'roleMutation', 'rollback-required']);
 requireTokens('apps/urai-admin/src/app/api/admin/recover-user-mutation/route.ts', ["requireAdminMutationSession(request, ['owner'])", 'recoverAdminMutation']);
 requireTokens('apps/urai-admin/src/lib/admin/recover-admin-mutation.ts', [
-  'STALE_MUTATION_MS',
+  'Only a completed rollback-required mutation can be recovered',
+  'manual security review required',
   'mutationId',
   'rollback-required',
   'setCustomUserClaims',
