@@ -139,6 +139,8 @@ assert.match(activeRoute, /Admin active-state finalization is inconclusive; pres
 assert.match(roleService, /auditDoc\.exists[\s\S]*audit\.metadata\?\.mutationId === mutationId/, 'ambiguous role finalization must require its atomic audit record before returning success');
 assert.match(roleService, /finalizationAttempted/, 'role mutation must distinguish an attempted terminal commit from pre-finalization failures');
 assert.match(roleService, /Admin role finalization is inconclusive; preserve the current claims and reservation for controlled recovery/, 'inconclusive role finalization must not destructively roll Auth back');
+assert.match(roleService, /finalizationAttempted && current\.roleMutation\?\.id !== mutationId/, 'superseded role finalization must preserve newer Auth claims');
+assert.match(activeRoute, /finalizationAttempted && current\?\.activeMutation\?\.id !== mutationId/, 'superseded active-state finalization must preserve newer Auth claims');
 
 const firebaseAdmin = await read('src/lib/firebase/admin.ts');
 for (const method of ['verifySessionCookie', 'verifyIdToken', 'createSessionCookie', 'setCustomUserClaims', 'revokeRefreshTokens', 'getUser']) {
