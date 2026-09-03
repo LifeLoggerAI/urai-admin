@@ -107,7 +107,7 @@ assert.match(recoveryService, /transaction\.set\(auditRef/, 'recovery must atomi
 assert.match(recoveryService, /const recoveryToken = randomUUID\\(\\);/, 'recovery must use a unique ownership token');
 assert.match(recoveryService, /transaction\\.set\\(userRef,[\\s\\S]*recoveryToken/, 'recovery must claim the mutation transactionally before changing Auth');
 assert.match(recoveryService, /freshMarker\\?\\.recoveryToken !== recoveryToken/, 'recovery finalization must retain exact reservation ownership');
-assert.match(recoveryService, /Number\.isInteger\(desiredRoleVersion\)\s*\?\s*\{ roleVersion:/, 'active recovery must omit an absent role version from Firestore writes');
+assert.match(recoveryService, /Number\.isInteger\((?:recovery\.)?desiredRoleVersion\)\s*\?\s*\{ roleVersion:/, 'active recovery must omit an absent role version from Firestore writes');
 
 const recoveryRoute = await read('src/app/api/admin/recover-user-mutation/route.ts');
 assert.match(recoveryRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'mutation recovery route must require owner session and trusted origin');
