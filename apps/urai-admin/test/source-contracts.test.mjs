@@ -104,6 +104,7 @@ assert.match(recoveryService, /rollback-required/, 'failed compensation must be 
 assert.match(recoveryService, /setCustomUserClaims/, 'recovery must restore canonical Auth claims');
 assert.match(recoveryService, /revokeRefreshTokens/, 'recovery must revoke existing sessions');
 assert.match(recoveryService, /transaction\.set\(auditRef/, 'recovery must atomically audit the cleared reservation');
+assert.match(recoveryService, /Number\.isInteger\(desiredRoleVersion\)\s*\?\s*\{ roleVersion:/, 'active recovery must omit an absent role version from Firestore writes');
 
 const recoveryRoute = await read('src/app/api/admin/recover-user-mutation/route.ts');
 assert.match(recoveryRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'mutation recovery route must require owner session and trusted origin');

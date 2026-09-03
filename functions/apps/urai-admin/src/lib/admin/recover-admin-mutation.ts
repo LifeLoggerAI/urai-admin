@@ -77,7 +77,7 @@ export async function recoverAdminMutation(input: {
 
     transaction.set(userRef, {
       role: desiredRole,
-      roleVersion: desiredRoleVersion,
+      ...(Number.isInteger(desiredRoleVersion) ? { roleVersion: desiredRoleVersion } : {}),
       isActive: desiredActive,
       roleMutation: null,
       activeMutation: null,
