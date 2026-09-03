@@ -86,6 +86,21 @@ export async function recoverAdminMutation(input: {
     };
   });
 
+  // Fence stale recovery workers immediately before touching Auth. A reclaimed
+  // reservation must never be allowed to apply its obsolete recovery state.
+  const ownershipSnapshot = await userRef.get();
+  const ownershipState = ownershipSnapshot.data() ?? {};
+  const ownershipMarker = recovery.mutationType === 'role'
+    ? ownershipState.roleMutation
+    : ownershipState.activeMutation;
+  if (
+    !ownershipSnapshot.exists ||
+    ownershipMarker?.id !== mutationId ||
+    ownershipMarker?.recoveryToken !== recoveryToken
+  ) {
+    throw new AdminAuthError('Admin mutation recovery lost its reservation before Auth reconciliation', 409);
+  }
+
   const userRecord = await auth.getUser(uid);
   const previousClaims = userRecord.customClaims ?? {};
   await auth.setCustomUserClaims(uid, {
@@ -98,39 +113,64 @@ export async function recoverAdminMutation(input: {
 
   const recoveredAt = new Date();
   const auditRef = firestore.collection('auditLogs').doc(`${mutationId}-recovered`) as DocumentReference<DocumentData>;
-  await firestore.runTransaction(async (transaction: Transaction) => {
-    const freshDoc = await transaction.get(userRef);
-    const fresh = freshDoc.data() ?? {};
-    const freshMarker = recovery.mutationType === 'role' ? fresh.roleMutation : fresh.activeMutation;
-    if (!freshDoc.exists || freshMarker?.id !== mutationId || freshMarker?.recoveryToken !== recoveryToken) {
-      throw new AdminAuthError('Admin mutation recovery lost its reservation', 409);
-    }
+  try {
+    await firestore.runTransaction(async (transaction: Transaction) => {
+      const freshDoc = await transaction.get(userRef);
+      const fresh = freshDoc.data() ?? {};
+      const freshMarker = recovery.mutationType === 'role' ? fresh.roleMutation : fresh.activeMutation;
+      if (!freshDoc.exists || freshMarker?.id !== mutationId || freshMarker?.recoveryToken !== recoveryToken) {
+        throw new AdminAuthError('Admin mutation recovery lost its reservation', 409);
+      }
 
-    transaction.set(userRef, {
-      role: recovery.desiredRole,
-      ...(Number.isInteger(recovery.desiredRoleVersion) ? { roleVersion: recovery.desiredRoleVersion } : {}),
-      isActive: recovery.desiredActive,
-      roleMutation: null,
-      activeMutation: null,
-      updatedAt: recoveredAt,
-      updatedBy: actor.uid,
-    }, { merge: true });
-    transaction.set(auditRef, {
-      actorUid: actor.uid,
-      actorEmail: actor.email ?? 'unknown-admin@urai.local',
-      action: 'adminUsers.mutation.recover',
-      target: { type: 'adminUser', id: uid },
-      metadata: {
-        mutationId,
-        mutationType: recovery.mutationType,
-        previousStatus: recovery.previousStatus,
-        restoredRole: recovery.desiredRole,
-        restoredActive: recovery.desiredActive,
-        sessionsRevoked: true,
-      },
-      createdAt: recoveredAt,
+      transaction.set(userRef, {
+        role: recovery.desiredRole,
+        ...(Number.isInteger(recovery.desiredRoleVersion) ? { roleVersion: recovery.desiredRoleVersion } : {}),
+        isActive: recovery.desiredActive,
+        roleMutation: null,
+        activeMutation: null,
+        updatedAt: recoveredAt,
+        updatedBy: actor.uid,
+      }, { merge: true });
+      transaction.set(auditRef, {
+        actorUid: actor.uid,
+        actorEmail: actor.email ?? 'unknown-admin@urai.local',
+        action: 'adminUsers.mutation.recover',
+        target: { type: 'adminUser', id: uid },
+        metadata: {
+          mutationId,
+          mutationType: recovery.mutationType,
+          previousStatus: recovery.previousStatus,
+          restoredRole: recovery.desiredRole,
+          restoredActive: recovery.desiredActive,
+          sessionsRevoked: true,
+        },
+        createdAt: recoveredAt,
+      });
     });
-  });
+  } catch (error) {
+    // If another worker reclaimed this lease while Auth was being updated,
+    // restore Auth from the newest canonical Firestore state before returning.
+    const canonicalSnapshot = await userRef.get();
+    const canonical = canonicalSnapshot.data() ?? {};
+    const currentMarker = recovery.mutationType === 'role'
+      ? canonical.roleMutation
+      : canonical.activeMutation;
+    const lostOwnership = !canonicalSnapshot.exists ||
+      currentMarker?.id !== mutationId ||
+      currentMarker?.recoveryToken !== recoveryToken;
+
+    if (lostOwnership && canonicalSnapshot.exists && isAdminRole(canonical.role)) {
+      const currentUser = await auth.getUser(uid);
+      await auth.setCustomUserClaims(uid, {
+        ...(currentUser.customClaims ?? {}),
+        admin: canonical.isActive === true,
+        role: canonical.role,
+        ...(Number.isInteger(canonical.roleVersion) ? { roleVersion: canonical.roleVersion } : {}),
+      });
+      await auth.revokeRefreshTokens(uid);
+    }
+    throw error;
+  }
 
   return {
     success: true as const,
