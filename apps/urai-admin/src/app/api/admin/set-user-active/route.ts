@@ -160,6 +160,9 @@ export async function POST(request: NextRequest) {
             sessionsRevoked: true,
           }, { headers: noStoreHeaders });
         }
+        if (finalizationAttempted && current?.activeMutation?.id !== mutationId) {
+          throw new AdminAuthError('Admin active-state finalization is inconclusive; preserve the current claims and reservation for controlled recovery', 500);
+        }
       } catch (readbackError) {
         console.error('Failed to read back ambiguous active-state finalization:', readbackError);
         if (finalizationAttempted) {
