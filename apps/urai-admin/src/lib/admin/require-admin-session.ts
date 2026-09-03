@@ -152,7 +152,21 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
   const tokenClaimsMatch = decodedToken.admin === true && decodedToken.role === role;
 
   if (!storedClaimsMatch) {
-    await auth.setCustomUserClaims(decodedToken.uid, { ...existingClaims, admin: true, role });
+    // Session exchange must never repair authorization claims: doing so would
+    // race role/active-state mutations across the Firestore/Auth boundary.
+    // Keep the account fail-closed and require the governed mutation path to
+    // reconcile claims before a new session can be issued.
+    await writeRequiredAuditLog({
+      actorUid: decodedToken.uid,
+      actorEmail: decodedToken.email ?? adminUser.email ?? 'unknown-admin@urai.local',
+      action: 'auth.claims.repairRequired',
+      target: { type: 'adminUser', id: decodedToken.uid },
+      metadata: { canonicalRole: role },
+    });
+    return NextResponse.json(
+      { success: false, claimRepairRequired: true, error: 'Admin claims require governed repair' },
+      { status: 409, headers: noStoreHeaders },
+    );
   }
 
   if (!tokenClaimsMatch) {
