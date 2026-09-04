@@ -134,8 +134,11 @@ export async function recoverAdminMutation(input: {
       });
     });
   } catch (error) {
-    // If another worker reclaimed this lease while Auth was being updated,
-    // restore Auth from the newest canonical Firestore state before returning.
+    // Reconcile Auth before returning any failed recovery. If ownership was lost,
+    // mirror the newest canonical Firestore state. If this worker still owns the
+    // recovery marker, the terminal Firestore write did not complete, so restore
+    // the exact pre-recovery claims captured before Auth was touched. This keeps a
+    // disabled canonical record from being paired with newly enabled Auth claims.
     const canonicalSnapshot = await userRef.get();
     const canonical = canonicalSnapshot.data() ?? {};
     const currentMarker = recovery.mutationType === 'role'
@@ -153,6 +156,9 @@ export async function recoverAdminMutation(input: {
         role: canonical.role,
         ...(Number.isInteger(canonical.roleVersion) ? { roleVersion: canonical.roleVersion } : {}),
       });
+      await auth.revokeRefreshTokens(uid);
+    } else if (!lostOwnership) {
+      await auth.setCustomUserClaims(uid, previousClaims);
       await auth.revokeRefreshTokens(uid);
     }
     throw error;
