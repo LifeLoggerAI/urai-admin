@@ -84,25 +84,56 @@ Evidence to record:
 
 ## 5. Seed system-of-systems registry
 
-For staging:
+For staging (from the exact clean reviewed checkout, with a fresh immutable receipt filename):
 
 ```bash
-export URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_FIREBASE_PROJECT='<staging-project-id>'
-export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+export URAI_ADMIN_STAGING_FIREBASE_PROJECT='<staging-project-id>'
+export URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED=1
+export URAI_ADMIN_STAGING_APPROVAL='APPROVE_URAI_ADMIN_STAGING'
+export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
+export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
+export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-staging-${URAI_ADMIN_SEED_SHA}.json"
+# Set only when this reviewed candidate intentionally supersedes an older dated
+# registry snapshot after preserving the previous evidence date/digest in the
+# immutable operational event and receipt:
+# Clear any inherited destructive authorization for the normal seed path.
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
 pnpm seed:system-registry
 ```
 
-For production:
+For production (from the exact clean reviewed `main` checkout, with a fresh immutable receipt filename):
 
 ```bash
-unset URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED
+export URAI_ADMIN_SEED_APPLY=1
+export URAI_ADMIN_SEED_CONFIRM='SEED_SYSTEM_REGISTRY'
+export URAI_ADMIN_SEED_SHA="$(git rev-parse HEAD)"
 export URAI_ADMIN_FIREBASE_PROJECT='urai-4dc1d'
-export URAI_ADMIN_SEED_ACTOR='lifeloggerai@gmail.com'
+unset URAI_ADMIN_STAGING_FIREBASE_PROJECT URAI_ADMIN_ALLOW_NON_PRODUCTION_SEED URAI_ADMIN_STAGING_APPROVAL
+export URAI_ADMIN_PRODUCTION_APPROVAL='APPROVE_URAI_ADMIN_PRODUCTION'
+export URAI_ADMIN_SEED_ACTOR='<approved-operator-email>'
+export GOOGLE_APPLICATION_CREDENTIALS='<ephemeral-wif-external-account-adc-file>'
+export URAI_ADMIN_SEED_RECEIPT_PATH="docs/release-evidence/system-registry-production-${URAI_ADMIN_SEED_SHA}.json"
+# Set only when this reviewed candidate intentionally supersedes an older dated
+# registry snapshot after preserving the previous evidence date/digest in the
+# immutable operational event and receipt:
+# Clear any inherited destructive authorization for the normal seed path.
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
 pnpm seed:system-registry
 ```
 
-Both flows require approved ADC or managed identity credentials.
+If—and only if—an independently reviewed operation intentionally replaces an older dated registry snapshot, run a separate invocation after preserving the prior evidence date and digest:
+
+```bash
+export URAI_ADMIN_REGISTRY_REPLACE_CONFIRM='REPLACE_OLDER_REGISTRY_SNAPSHOT'
+pnpm seed:system-registry
+unset URAI_ADMIN_REGISTRY_REPLACE_CONFIRM
+```
+
+Both registry mutation flows require a short-lived WIF external-account ADC file whose impersonated service-account identity is bound to the exact target project. Raw service-account JSON, private keys, authorized-user refresh credentials, and inline credential material are rejected. Omit `URAI_ADMIN_REGISTRY_REPLACE_CONFIRM` for an initial seed or an idempotent reseed; it is a deliberate, exact-phrase authorization only for replacing records whose `registryEvidenceDate` is older than the candidate. Equal/newer or undated conflicting live evidence remains fail-closed.
 
 Evidence to record:
 
@@ -111,7 +142,22 @@ Evidence to record:
 - timestamp;
 - `/admin/system` screenshot or route smoke result.
 
-## 6. Staging deploy
+## 6. Recover an abandoned Admin mutation reservation
+
+Recovery is owner-only and must use the exact target UID and exact reservation mutation ID shown in the protected `adminUsers` record. Only a `rollback-required` reservation is eligible for automated recovery. A `pending` reservation never becomes recoverable merely because time elapsed: quarantine the account, preserve the marker and audit evidence, investigate the worker outcome and Auth/Firestore state, and obtain an independently reviewed security decision before converting it through a governed repair. The recovery route restores the marker's pre-mutation role/active state in Firebase Auth and Firestore, revokes sessions, clears the reservation, and writes the audit record atomically. Do not guess either identifier, infer abandonment from age, or manually delete reservation fields.
+
+Send an authenticated same-origin POST to `/api/admin/recover-user-mutation` with:
+
+```json
+{
+  "uid": "<exact-target-firebase-auth-uid>",
+  "mutationId": "<exact-roleMutation-or-activeMutation-id>"
+}
+```
+
+Preserve the response, resulting audit-log ID, target record read-back, and session-denial/re-authentication check as recovery evidence.
+
+## 7. Staging deploy
 
 Use an approved short-lived ADC identity or a governed WIF-backed staging workflow. Never restore Firebase CLI token or raw JSON-key authentication.
 
@@ -125,7 +171,7 @@ pnpm test:smoke
 
 Record the identity method, preview URL, and smoke output in `docs/EVIDENCE_LOG.md`.
 
-## 7. Production deploy
+## 8. Production deploy
 
 Production deployment is governed through GitHub Actions, not an ad hoc terminal deploy:
 
@@ -146,7 +192,7 @@ curl -I https://www.uraiadmin.com/terms
 
 Do not substitute a local Firebase CLI token deployment for the governed WIF workflow.
 
-## 8. DNS and SSL evidence
+## 9. DNS and SSL evidence
 
 Confirm in Firebase Hosting or with shell checks:
 
@@ -156,7 +202,7 @@ curl -Iv https://www.uraiadmin.com 2>&1 | tee /tmp/urai-admin-ssl.txt
 
 Record the SSL issuer/validity summary in `docs/EVIDENCE_LOG.md`.
 
-## 9. Rollback evidence
+## 10. Rollback evidence
 
 List releases and pick the previous known-good release using approved ADC or the governed WIF identity path.
 
@@ -169,7 +215,7 @@ pnpm rollback:production
 
 The rollback script must execute without `--token`. If you are only proving rollback readiness, record the exact known-good release ID and do not perform a destructive rollback unless needed.
 
-## 10. Final lock update
+## 11. Final lock update
 
 After all gates pass and evidence is recorded, update `FINAL_LOCK.md`:
 

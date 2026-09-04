@@ -11,14 +11,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: urai-admin-ci-${{ github.ref }}
+  group: urai-admin-ci-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
+
+env:
+  TARGET_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   verify:
     name: Verify URAI Admin
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    runs-on: macos-latest
+    timeout-minutes: 45
     env:
       NEXT_PUBLIC_FIREBASE_API_KEY: dummy
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -28,28 +31,72 @@ jobs:
       NEXT_PUBLIC_FIREBASE_APP_ID: dummy
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout exact reviewed head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Prove exact clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
+      - name: Setup Java for Firestore emulator
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: 21
+
       - name: Setup pnpm
+        shell: bash
         run: |
+          set -euo pipefail
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
-          pnpm --version
+          test "$(pnpm --version)" = "9.15.0"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
+
+      - name: Prove install preserved exact clean head
+        shell: bash
+        run: test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Registry contract and isolated emulator receipt
+        shell: bash
+        env:
+          URAI_ADMIN_EMULATOR_RECEIPT_PATH: /tmp/urai-admin-system-registry-emulator-receipt.json
+          URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH: /tmp/urai-admin-system-registry-emulator-diagnostic.log
+        run: |
+          set -euo pipefail
+          pnpm test:registry | tee /tmp/urai-admin-registry-contract.log
+          set +e
+          pnpm receipt:system-registry:emulator 2>&1 | tee /tmp/urai-admin-registry-emulator.log
+          emulator_status=${PIPESTATUS[0]}
+          set -e
+          if [[ -f "$URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH" ]]; then
+            cat "$URAI_ADMIN_EMULATOR_DIAGNOSTIC_PATH"
+          fi
+          test "$emulator_status" -eq 0
+          test -s "$URAI_ADMIN_EMULATOR_RECEIPT_PATH"
 
       - name: Security gate
         run: pnpm security:gate
 
       - name: Verify active Functions entrypoint
+        shell: bash
         run: |
+          set -euo pipefail
           pnpm functions:typecheck:active
           pnpm functions:build:active
 
@@ -57,19 +104,32 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm typecheck | tee /tmp/urai-admin-typecheck.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm typecheck | tee /tmp/urai-admin-typecheck.log
 
       - name: Unit tests
-        run: pnpm test | tee /tmp/urai-admin-test.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm test | tee /tmp/urai-admin-test.log
+          pnpm test:e2e | tee /tmp/urai-admin-route-contract.log
 
       - name: Build
-        run: pnpm build | tee /tmp/urai-admin-build.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm build | tee /tmp/urai-admin-build.log
 
       - name: Verify production preflight script fails closed without env
+        shell: bash
         run: |
+          set -uo pipefail
           set +e
-          pnpm preflight:production > /tmp/urai-admin-preflight.log
+          pnpm preflight:production > /tmp/urai-admin-preflight.log 2>&1
           status=$?
+          set -e
           cat /tmp/urai-admin-preflight.log
           if [[ "$status" -eq 0 ]]; then
             echo "ERROR: production preflight unexpectedly passed in CI without production secrets"
@@ -77,17 +137,40 @@ jobs:
           fi
           echo "OK: production preflight failed closed without production secrets"
 
+      - name: Prove final clean exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          git status --porcelain=v1 --untracked-files=all | tee /tmp/urai-admin-final-source-status.log
+          test ! -s /tmp/urai-admin-final-source-status.log
+
+      - name: Upload immutable registry emulator receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: urai-admin-registry-emulator-${{ env.TARGET_SHA }}
+          path: |
+            /tmp/urai-admin-system-registry-emulator-receipt.json
+            /tmp/urai-admin-system-registry-emulator-diagnostic.log
+            /tmp/urai-admin-registry-contract.log
+            /tmp/urai-admin-registry-emulator.log
+          if-no-files-found: warn
+          retention-days: 365
+
       - name: Upload CI evidence logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: urai-admin-ci-evidence
+          name: urai-admin-ci-evidence-${{ env.TARGET_SHA }}
           path: |
             /tmp/urai-admin-typecheck.log
             /tmp/urai-admin-test.log
             /tmp/urai-admin-build.log
             /tmp/urai-admin-preflight.log
+            /tmp/urai-admin-final-source-status.log
             docs/EVIDENCE_LOG.md
             docs/DEPLOYMENT_RUNBOOK.md
             docs/URAI_ADMIN_STANDALONE_READINESS.md
           if-no-files-found: warn
+          retention-days: 365

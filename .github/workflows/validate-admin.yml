@@ -9,32 +9,67 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: urai-admin-validate-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+env:
+  TARGET_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout exact reviewed head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Prove exact clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
       - name: Setup pnpm
+        shell: bash
         run: |
+          set -euo pipefail
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
-          pnpm --version
+          test "$(pnpm --version)" = "9.15.0"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: Prove install preserved exact clean head
+        shell: bash
+        run: test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Typecheck admin app
-        run: pnpm --filter urai-admin typecheck | tee /tmp/urai-admin-app-typecheck.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm --filter urai-admin typecheck | tee "$RUNNER_TEMP/urai-admin-app-typecheck.log"
 
       - name: Build admin app
-        run: pnpm --filter urai-admin build | tee /tmp/urai-admin-app-build.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm --filter urai-admin build | tee "$RUNNER_TEMP/urai-admin-app-build.log"
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -43,12 +78,22 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy
           NEXT_PUBLIC_FIREBASE_APP_ID: dummy
 
+      - name: Prove final clean exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          git status --porcelain=v1 --untracked-files=all | tee "$RUNNER_TEMP/urai-admin-final-source-status.log"
+          test ! -s "$RUNNER_TEMP/urai-admin-final-source-status.log"
+
       - name: Upload validate evidence logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: urai-admin-validate-evidence
+          name: urai-admin-validate-evidence-${{ env.TARGET_SHA }}
           path: |
-            /tmp/urai-admin-app-typecheck.log
-            /tmp/urai-admin-app-build.log
-          if-no-files-found: warn
+            ${{ runner.temp }}/urai-admin-app-typecheck.log
+            ${{ runner.temp }}/urai-admin-app-build.log
+            ${{ runner.temp }}/urai-admin-final-source-status.log
+          if-no-files-found: error
+          retention-days: 365

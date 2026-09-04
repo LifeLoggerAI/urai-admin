@@ -49,6 +49,8 @@ jobs:
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
       URAI_ADMIN_BASE_URL: ${{ inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_PRODUCTION_URL: ${{ vars.URAI_ADMIN_PRODUCTION_URL || inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app' }}
+      URAI_ADMIN_ALLOWED_ORIGINS: ${{ vars.URAI_ADMIN_ALLOWED_ORIGINS || format('{0},{1}', vars.URAI_ADMIN_PRODUCTION_URL || inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app', inputs.base_url || vars.URAI_ADMIN_BASE_URL || 'https://urai-admin.web.app') }}
       URAI_ADMIN_FUNCTIONS_BASE_URL: ${{ inputs.functions_base_url || vars.URAI_ADMIN_FUNCTIONS_BASE_URL || 'https://us-central1-urai-4dc1d.cloudfunctions.net' }}
       URAI_ADMIN_TARGET_SHA: ${{ inputs.target_sha }}
       URAI_ADMIN_ROLLBACK_SHA: ${{ inputs.rollback_sha }}
@@ -76,6 +78,17 @@ jobs:
           [[ "${URAI_ADMIN_ROLLBACK_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "rollback_sha must be a full lowercase commit SHA." >&2; exit 1; }
           [[ "${URAI_ADMIN_TARGET_SHA}" != "${URAI_ADMIN_ROLLBACK_SHA}" ]] || { echo "rollback_sha must differ from target_sha." >&2; exit 1; }
           [[ "$(git rev-parse HEAD)" == "${URAI_ADMIN_TARGET_SHA}" ]] || { echo "Checked-out SHA does not match target_sha." >&2; exit 1; }
+          [[ -n "${URAI_ADMIN_ALLOWED_ORIGINS:-}" ]] || { echo "Protected admin origin allowlist is empty." >&2; exit 1; }
+          node - <<'NODE'
+          const baseUrl = new URL(process.env.URAI_ADMIN_BASE_URL);
+          const productionUrl = new URL(process.env.URAI_ADMIN_PRODUCTION_URL);
+          const configuredOrigins = process.env.URAI_ADMIN_ALLOWED_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean).map((value) => new URL(value));
+          if (baseUrl.protocol !== 'https:' || productionUrl.protocol !== 'https:') throw new Error('Production admin origins must use HTTPS.');
+          if (configuredOrigins.some((origin) => origin.protocol !== 'https:')) throw new Error('Every protected admin allowlist origin must use HTTPS.');
+          const allowed = new Set(configuredOrigins.map((origin) => origin.origin));
+          if (!allowed.has(baseUrl.origin)) throw new Error(`base_url origin ${baseUrl.origin} is not in the protected admin origin allowlist.`);
+          if (!allowed.has(productionUrl.origin)) throw new Error(`production origin ${productionUrl.origin} is not in the protected admin origin allowlist.`);
+          NODE
 
           git fetch origin main --no-tags --prune
           git cat-file -e "${URAI_ADMIN_ROLLBACK_SHA}^{commit}"
@@ -101,6 +114,23 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
           create_credentials_file: true
           export_environment_variables: true
+
+      - name: Materialize validated Firebase runtime parameters
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const values = {
+            URAI_ADMIN_PRODUCTION_URL: process.env.URAI_ADMIN_PRODUCTION_URL,
+            URAI_ADMIN_ALLOWED_ORIGINS: process.env.URAI_ADMIN_ALLOWED_ORIGINS,
+          };
+          for (const [name, value] of Object.entries(values)) {
+            if (!value) throw new Error(`${name} is required for deployed Admin runtime configuration.`);
+            if (/\r|\n/.test(value)) throw new Error(`${name} must be a single-line value.`);
+          }
+          fs.writeFileSync('functions/.env.urai-4dc1d', `${Object.entries(values).map(([name, value]) => `${name}=${JSON.stringify(value)}`).join('\n')}\n`, { mode: 0o600 });
+          NODE
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -141,6 +171,14 @@ jobs:
           rm -rf "${rollback_dir}"
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const values = {
+            URAI_ADMIN_PRODUCTION_URL: process.env.URAI_ADMIN_PRODUCTION_URL,
+            URAI_ADMIN_ALLOWED_ORIGINS: process.env.URAI_ADMIN_ALLOWED_ORIGINS,
+          };
+          fs.writeFileSync('functions/.env.urai-4dc1d', `${Object.entries(values).map(([name, value]) => `${name}=${JSON.stringify(value)}`).join('\n')}\n`, { mode: 0o600 });
+          NODE
           corepack pnpm install --frozen-lockfile
           corepack pnpm build
           corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d

@@ -23,6 +23,16 @@ for path in package.json next.config.js next.config.mjs public src app pages sty
   fi
 done
 
+# The packaged mirror consumes an already-built .next tree. Keep its build command
+# self-contained and do not copy source-only helper scripts into the runtime mirror.
+node - "${FUNCTIONS_APP_DIR}/package.json" <<'NODE'
+const fs = require('node:fs')
+const packagePath = process.argv[2]
+const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
+packageJson.scripts = { ...packageJson.scripts, build: 'next build' }
+fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`)
+NODE
+
 # Keep packaged runtime small and deterministic. Dependencies are supplied by functions/package.json.
 rm -rf "${FUNCTIONS_APP_DIR}/node_modules"
 rm -rf "${FUNCTIONS_APP_DIR}/.next/cache"
