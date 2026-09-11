@@ -1,28 +1,32 @@
 import { NextResponse } from 'next/server';
 import { AnalyticsEventSchemaV1 } from '@/lib/analytics/schema';
 
-// Initialize Firebase Admin SDK
-// Firebase Admin is intentionally not initialized at module load.
-  // Next.js evaluates route modules during production build/page-data collection.
-  // Runtime Firebase Admin clients must be loaded lazily inside handlers.
+// Firebase Admin is intentionally initialized lazily inside the handler because
+// Next.js evaluates route modules during production build/page-data collection.
+// Runtime identity must come from provider Application Default Credentials.
 
-
-// Block known sensitive keys
 const BLOCKED_KEYS = ['email', 'password', 'token', 'secret', 'address', 'phone', 'ssn'];
 const redact = (obj: any): any => {
-    if (!obj) return obj;
-    const newObj: any = {};
-    for (const key in obj) {
-        if (BLOCKED_KEYS.includes(key.toLowerCase())) {
-            newObj[key] = '[REDACTED]';
-        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-            newObj[key] = redact(obj[key]);
-        } else {
-            newObj[key] = obj[key];
-        }
+  if (!obj) return obj;
+  const newObj: any = {};
+  for (const key in obj) {
+    if (BLOCKED_KEYS.includes(key.toLowerCase())) {
+      newObj[key] = '[REDACTED]';
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      newObj[key] = redact(obj[key]);
+    } else {
+      newObj[key] = obj[key];
     }
-    return newObj;
-}
+  }
+  return newObj;
+};
+
+const FORBIDDEN_LONG_LIVED_FIREBASE_ENV = [
+  'FIREBASE_ADMIN_SDK_JSON',
+  'FIREBASE_SERVICE_ACCOUNT_KEY',
+  'FIREBASE_PRIVATE_KEY',
+  'FIREBASE_CLIENT_EMAIL',
+] as const;
 
 export async function POST(request: Request) {
   try {
@@ -30,53 +34,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, buildStub: true }, { status: 202 });
     }
 
+    const configuredLegacyCredentials = FORBIDDEN_LONG_LIVED_FIREBASE_ENV.filter(
+      (name) => Boolean(process.env[name]?.trim()),
+    );
+    if (configuredLegacyCredentials.length) {
+      throw new Error(
+        `URAI Admin ingest rejects long-lived Firebase credential variables: ${configuredLegacyCredentials.join(', ')}. Provider ADC/WIF is required.`,
+      );
+    }
+
     const { getFirestore } = await import('firebase-admin/firestore');
-    const { initializeApp, getApps, cert } = await import('firebase-admin/app');
+    const { initializeApp, getApps } = await import('firebase-admin/app');
 
     if (!getApps().length) {
-      if (!process.env.FIREBASE_ADMIN_SDK_JSON) {
-        throw new Error('The FIREBASE_ADMIN_SDK_JSON environment variable is not set.');
-      }
-
-      initializeApp({
-        credential: cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK_JSON))
-      });
+      initializeApp();
     }
 
     const db = getFirestore();
     const body = await request.json();
-    
-    // 1. Schema Validation
+
     const validationResult = AnalyticsEventSchemaV1.safeParse(body);
     if (!validationResult.success) {
       console.warn('Invalid analytics event schema', validationResult.error.flatten());
-      return NextResponse.json({ error: "Invalid event schema", details: validationResult.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid event schema', details: validationResult.error.flatten() },
+        { status: 400 },
+      );
     }
-    
+
     const event = validationResult.data;
 
-    // 2. Consent Check (server-side enforcement)
     if (!event.consent.granted) {
-      return NextResponse.json({ error: "Consent not granted for analytics." }, { status: 403 });
-    }
-    
-    // 3. Redact sensitive properties
-    if (event.properties) {
-        event.properties = redact(event.properties);
+      return NextResponse.json({ error: 'Consent not granted for analytics.' }, { status: 403 });
     }
 
-    // 4. Write to Firestore with idempotency
+    if (event.properties) {
+      event.properties = redact(event.properties);
+    }
+
     const { eventId, timestamp } = event;
     const date = new Date(timestamp);
     const collectionName = `analytics_events_raw_${date.toISOString().split('T')[0]}`;
-    
     const eventRef = db.collection(collectionName).doc(eventId);
-    
+
     await eventRef.set(event);
 
     return NextResponse.json({ success: true, eventId }, { status: 202 });
   } catch (error) {
-    console.error("INGESTION_ERROR:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('INGESTION_ERROR:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
