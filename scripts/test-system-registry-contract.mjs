@@ -176,7 +176,8 @@ for (const [name, workflow] of [
 }
 if (!adminCi.includes('pnpm receipt:system-registry:emulator')) failures.push('URAI Admin CI must generate the isolated emulator receipt');
 if (!adminCi.includes('admin-system-registry-emulator-receipt.json')) failures.push('URAI Admin CI must upload the emulator receipt JSON');
-if (!adminCi.includes('retention-days: 365')) failures.push('URAI Admin CI must retain emulator evidence for 365 days');
+if (!adminCi.includes('retention-days: 90')) failures.push('URAI Admin CI must retain public-repository emulator evidence for the supported 90-day GitHub maximum');
+if (adminCi.includes('retention-days: 365')) failures.push('URAI Admin CI must not request unsupported 365-day public-repository artifact retention');
 
 if (failures.length) {
   console.error('System registry contract failed:');
