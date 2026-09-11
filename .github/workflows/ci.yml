@@ -156,7 +156,7 @@ jobs:
             /tmp/urai-admin-registry-contract.log
             /tmp/urai-admin-registry-emulator.log
           if-no-files-found: warn
-          retention-days: 365
+          retention-days: 90
 
       - name: Upload CI evidence logs
         if: always()
@@ -173,4 +173,4 @@ jobs:
             docs/DEPLOYMENT_RUNBOOK.md
             docs/URAI_ADMIN_STANDALONE_READINESS.md
           if-no-files-found: warn
-          retention-days: 365
+          retention-days: 90
