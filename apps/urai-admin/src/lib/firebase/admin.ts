@@ -46,6 +46,12 @@ function createBuildFirestoreStub(): any {
       delete: () => undefined,
       commit: async () => undefined,
     }),
+    runTransaction: async (callback: (transaction: any) => unknown) => callback({
+      get: async () => createEmptyDocument(),
+      set: () => undefined,
+      update: () => undefined,
+      delete: () => undefined,
+    }),
   };
 }
 
@@ -57,12 +63,19 @@ function createBuildAuthStub(): any {
     verifyIdToken: async () => {
       throw Object.assign(new Error('Admin auth is unavailable during build'), { status: 401 });
     },
+    createSessionCookie: async () => {
+      throw Object.assign(new Error('Admin auth is unavailable during build'), { status: 503 });
+    },
     setCustomUserClaims: async () => undefined,
-    getUser: async () => ({ uid: 'build-stub', email: null }),
+    revokeRefreshTokens: async () => undefined,
+    getUser: async () => ({ uid: 'build-stub', email: null, customClaims: {} }),
   };
 }
 
 if (!shouldStubFirebaseAdmin && !admin.apps.length) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is forbidden; URAI Admin runtime requires provider ADC.');
+  }
   admin.initializeApp();
 }
 
@@ -76,6 +89,17 @@ interface AuditLog {
   target: { id: string; type: string };
   metadata?: Record<string, any>;
 }
+
+export const writeRequiredAuditLog = async (log: AuditLog) => {
+  if (shouldStubFirebaseAdmin) {
+    return;
+  }
+
+  await firestore.collection('auditLogs').add({
+    ...log,
+    createdAt: new Date(),
+  });
+};
 
 export const writeAuditLog = async (log: AuditLog) => {
   if (shouldStubFirebaseAdmin) {

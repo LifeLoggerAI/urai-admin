@@ -15,17 +15,20 @@ This README is intentionally conservative: do not treat the admin system as prod
 
 ## Source-of-truth warning
 
-The repo currently references `urai-4dc1d` as the intended admin project in release scripts and readiness docs. `.firebaserc` also contains a separate `default` project value. Before any production deployment, an authorized operator must verify the active Firebase project, hosting site, DNS, Auth domains, and secrets.
+The repo currently references `urai-4dc1d` as the intended admin project in release scripts and readiness docs. `.firebaserc` also contains a separate `default` project value. Before any production deployment, an authorized operator must verify the active Firebase project, hosting site, DNS, Auth domains, and protected environment configuration.
 
-Do not deploy from a shell where the active Firebase project is uncertain.
+Do not deploy from a shell where the active Firebase project or identity is uncertain.
 
 ## Prerequisites
 
 - Node.js 20 or later
 - pnpm 9.15.0 or compatible with the root `packageManager`
 - Firebase CLI with access to the intended Firebase project
-- Access to required admin environment variables and service account credentials
+- Application Default Credentials for local/server operator flows where authenticated provider access is required
+- GitHub OIDC + Workload Identity Federation for governed CI/provider deployment paths
 - Approval to run deploy commands against the selected environment
+
+Do not provision `FIREBASE_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_KEY`, raw service-account JSON, or `credentials_json` as a replacement for ADC/WIF.
 
 ## Local setup
 
@@ -41,7 +44,7 @@ Copy and fill the admin app environment file:
 cp apps/urai-admin/.env.example apps/urai-admin/.env.local
 ```
 
-The standalone readiness doc lists the expected production values:
+The standalone readiness doc lists the expected application values:
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
@@ -51,17 +54,18 @@ The standalone readiness doc lists the expected production values:
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `URAI_ADMIN_BASE_URL`
 - `URAI_ADMIN_FUNCTIONS_BASE_URL`
-- `FIREBASE_SERVICE_ACCOUNT_KEY` for local/server admin flows where required
+
+Provider identity is supplied separately through ADC for authorized local/server operations and through protected WIF variables for governed GitHub workflows. Do not put credential JSON in application env files.
 
 ## Bootstrap first admin
 
-Use the repo bootstrap command after the target Firebase project and credentials are verified:
+Use the repo bootstrap command only after the target Firebase project and active ADC identity are verified:
 
 ```bash
 pnpm bootstrap:owner
 ```
 
-Do not bootstrap against production unless the UID/email and project ID have been independently checked.
+Do not bootstrap against production unless the UID/email, project ID, active identity, and authority have been independently checked.
 
 ## Required release gates
 
@@ -85,38 +89,36 @@ Use the documented deployment runbook, not ad hoc shell commands:
 - `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/URAI_ADMIN_STANDALONE_READINESS.md`
 
-After all gates are GREEN and deployment is authorized:
-
-```bash
-pnpm deploy
-```
+Production deployment remains a protected governed action. Do not substitute a local `pnpm deploy` command for the repository's WIF-based release authority.
 
 Do not run production deployment if any of these are unresolved:
 
 - Firebase project is uncertain
 - Hosting target/site is uncertain
-- Required env/secrets are missing or unverified
+- Protected environment configuration or WIF identity is missing or unverified
 - CI/build/test gates fail without explicit documented override
 - Firestore or Storage rules are untested
 - Admin auth/session enforcement is unverified
+- Independent/release approval required by policy is absent
 - Rollback path is missing
 
 ## Post-deploy smoke checks
 
-Verify the public and protected surfaces documented in `docs/URAI_ADMIN_STANDALONE_READINESS.md`, including that unauthenticated access to `/api/admin/users` returns `401`.
+After an authorized deployment, verify the public and protected surfaces documented in `docs/URAI_ADMIN_STANDALONE_READINESS.md`, including that unauthenticated access to `/api/admin/users` returns `401`.
 
 ## Unsafe legacy paths
 
 Do not use legacy references to `apps/admin-web/public`. The canonical app source is `apps/urai-admin`.
 
-Do not use `urai_admin_finish.sh` as a production deployment path. It is not a safe admin release gate and must not replace the documented release process.
+Do not use `urai_admin_finish.sh` or tracked backup source files as a production deployment/authentication path. They are not release authority and must not replace the documented WIF/ADC process.
 
 ## Verification checklist
 
 - [ ] Correct GitHub repo and branch verified
 - [ ] Correct Firebase project verified
 - [ ] Correct hosting site/target verified
-- [ ] Env/secrets verified
+- [ ] ADC/WIF identity and protected environment configuration verified
+- [ ] No long-lived Firebase/service-account credential path introduced
 - [ ] First admin bootstrap target verified
 - [ ] Lint passing
 - [ ] Typecheck passing
