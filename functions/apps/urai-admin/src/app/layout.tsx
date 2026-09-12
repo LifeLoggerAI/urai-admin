@@ -8,6 +8,16 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 export const metadata: Metadata = {
   title: 'URAI Admin | Secure admin OS for AI products',
   description: 'URAI Admin is a standalone operations console for AI apps, Firebase products, feature flags, jobs, audit logs, and internal teams.',
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({
