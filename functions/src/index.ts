@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { defineString } from 'firebase-functions/params';
 import next from 'next';
 import { join } from 'node:path';
 
@@ -84,11 +85,25 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 // --- Next.js Hosting ---
 // The production build step packages apps/urai-admin into functions/apps/urai-admin
 // so Firebase Functions deploys a self-contained server-rendered Next app.
+const adminProductionUrl = defineString('URAI_ADMIN_PRODUCTION_URL');
+const adminAllowedOrigins = defineString('URAI_ADMIN_ALLOWED_ORIGINS');
+
+function bindAdminOriginEnvironment() {
+  const productionUrl = adminProductionUrl.value().trim();
+  const allowedOrigins = adminAllowedOrigins.value().trim();
+  if (!productionUrl || !allowedOrigins) {
+    throw new Error('Deployed Admin origin parameters are not configured.');
+  }
+  process.env.URAI_ADMIN_PRODUCTION_URL = productionUrl;
+  process.env.URAI_ADMIN_ALLOWED_ORIGINS = allowedOrigins;
+}
+
 const packagedNextAppDir = join(__dirname, '..', 'apps', 'urai-admin');
 const isDev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev: isDev, dir: packagedNextAppDir });
 const handle = nextApp.getRequestHandler();
 
 export const nextServer = functions.https.onRequest((req, res) => {
+  bindAdminOriginEnvironment();
   return nextApp.prepare().then(() => handle(req, res));
 });

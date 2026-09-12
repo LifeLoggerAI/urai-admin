@@ -17,6 +17,10 @@ assert.match(source, /from\s+['"]next['"]/, 'nextServer requires the Next runtim
 assert.match(source, /packagedNextAppDir/, 'nextServer must resolve the packaged Next app directory');
 assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]apps['"],\s*['"]urai-admin['"]\)/, 'nextServer must point at functions/apps/urai-admin after build');
 assert.match(source, /dir:\s*packagedNextAppDir/, 'nextServer must run from the packaged app directory');
+assert.match(source, /defineString\(['"]URAI_ADMIN_PRODUCTION_URL['"]\)/, 'Functions must declare the production-origin runtime parameter');
+assert.match(source, /defineString\(['"]URAI_ADMIN_ALLOWED_ORIGINS['"]\)/, 'Functions must declare the origin-allowlist runtime parameter');
+assert.match(source, /bindAdminOriginEnvironment\(\)/, 'nextServer must bind deployed origin parameters before handling requests');
+assert.match(source, /Deployed Admin origin parameters are not configured/, 'deployed Admin must fail closed when origin parameters are absent');
 
 assert.match(rootPkg.scripts?.build ?? '', /package-next-for-functions\.sh/, 'root build must package Next before building Functions');
 assert.match(packager, /APP_DIR=.*apps\/urai-admin/, 'packager must define the app source directory');

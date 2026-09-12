@@ -11,6 +11,7 @@ export type CollectionKey =
   | 'deadLetters'
   | 'roles'
   | 'systemConfig'
+  | 'systemRegistry'
   | 'privacyRequests'
   | 'auditLogs';
 
@@ -40,6 +41,9 @@ function formatValue(value: RecordValue | undefined) {
   }
 
   if (typeof value === 'string') {
+    if (value === 'not_connected') return 'Not connected';
+    if (value === 'staging_ready') return 'Staging ready';
+    if (value === 'production_ready') return 'Production ready';
     return value;
   }
 

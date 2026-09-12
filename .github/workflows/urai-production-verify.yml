@@ -4,9 +4,19 @@ on:
   workflow_dispatch:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: urai-admin-production-verify-${{ github.event.pull_request.number || github.ref }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+env:
+  TARGET_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       NEXT_PUBLIC_FIREBASE_API_KEY: dummy
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -15,32 +25,61 @@ jobs:
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy
       NEXT_PUBLIC_FIREBASE_APP_ID: dummy
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout exact reviewed head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Prove exact clean head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
+
       - name: Setup pnpm
+        shell: bash
         run: |
+          set -euo pipefail
           corepack enable
           corepack prepare pnpm@9.15.0 --activate
-          pnpm --version
+          test "$(pnpm --version)" = "9.15.0"
+
       - name: Install dependencies
-        run: |
-          if [ -f pnpm-lock.yaml ]; then
-            pnpm install --frozen-lockfile=false
-          elif [ -f package-lock.json ]; then
-            npm ci
-          elif [ -f package.json ]; then
-            npm install
-          else
-            echo "No package.json found; skipping install."
-          fi
+        run: pnpm install --frozen-lockfile
+
+      - name: Prove install preserved exact clean head
+        shell: bash
+        run: test -z "$(git status --porcelain --untracked-files=all)"
+
       - name: Verify
-        run: node scripts/urai-production-verify.mjs | tee /tmp/urai-admin-production-verify.log
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/urai-production-verify.mjs | tee /tmp/urai-admin-production-verify.log
+
+      - name: Prove final clean exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          git status --porcelain=v1 --untracked-files=all | tee /tmp/urai-admin-final-source-status.log
+          test ! -s /tmp/urai-admin-final-source-status.log
+
       - name: Upload production verifier evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: urai-admin-production-verify-evidence
-          path: /tmp/urai-admin-production-verify.log
-          if-no-files-found: warn
+          name: urai-admin-production-verify-evidence-${{ env.TARGET_SHA }}
+          path: |
+            /tmp/urai-admin-production-verify.log
+            /tmp/urai-admin-final-source-status.log
+          if-no-files-found: error
+          retention-days: 365
