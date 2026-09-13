@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bash ../../scripts/clean-app-generated.sh && tsc -p tsconfig.prod.json && node scripts/run-next-build.mjs",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm typecheck && node test/source-contracts.test.mjs && node test/admin-origin-policy.behavior.test.mjs"
+    "test": "pnpm typecheck && node test/source-contracts.test.mjs && node test/admin-origin-policy.behavior.test.mjs && node test/institutional-feature-flag-workflow-source.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
