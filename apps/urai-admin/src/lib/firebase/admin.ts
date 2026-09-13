@@ -79,7 +79,7 @@ if (!shouldStubFirebaseAdmin && !admin.apps.length) {
   admin.initializeApp();
 }
 
-const firestore = (shouldStubFirebaseAdmin ? createBuildFirestoreStub() : getFirestore()) as ReturnType<typeof getFirestore>;
+const firestore = shouldStubFirebaseAdmin ? createBuildFirestoreStub() : getFirestore();
 const auth = shouldStubFirebaseAdmin ? createBuildAuthStub() : admin.auth();
 
 interface AuditLog {
