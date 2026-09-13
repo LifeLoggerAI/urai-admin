@@ -4,11 +4,16 @@ import { defineString } from 'firebase-functions/params';
 import next from 'next';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import {
+  createInstitutionalControlPlaneStore,
+  INSTITUTIONAL_RUNTIME_SCHEMA_VERSION,
+} from './institutionalControlPlane';
 
 export { aggregateUraiAnalyticsV1 } from './uraiAnalyticsV1';
 
 admin.initializeApp();
 const db = admin.firestore();
+const institutionalControlPlane = createInstitutionalControlPlaneStore(db);
 
 function errorMessage(error: unknown): string {
     if (error instanceof Error) {
@@ -175,6 +180,21 @@ export const readiness = functions.https.onRequest((_req, res) => {
     service: 'urai-admin',
     status: result.ready ? 'ready' : 'not_ready',
     checks: result.checks,
+  });
+});
+
+export const institutionalControlPlaneReadiness = functions.https.onRequest(async (_req, res) => {
+  const result = await institutionalControlPlane.readRuntimeReadiness({
+    projectIdentityPresent: Boolean(process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT),
+    revisionPresent: Boolean(process.env.K_REVISION),
+  });
+  res.set('Cache-Control', 'no-store');
+  res.status(result.ready ? 200 : 503).json({
+    service: 'urai-admin-control-plane',
+    schemaVersion: INSTITUTIONAL_RUNTIME_SCHEMA_VERSION,
+    status: result.ready ? 'ready' : 'not_ready',
+    checks: result.checks,
+    killSwitch: result.killSwitch,
   });
 });
 
