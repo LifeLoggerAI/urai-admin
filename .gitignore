@@ -44,6 +44,7 @@ tmp/
 urai_backups/
 **/urai_backups/
 *.bak*
+*.tmp
 .backup_*/
 urai_backup_*/
 .tmp_cache/

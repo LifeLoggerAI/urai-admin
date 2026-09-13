@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import type { Transaction } from 'firebase-admin/firestore';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -20,16 +21,6 @@ const setUserActiveSchema = z.object({
   isActive: z.boolean(),
 });
 
-type FirestoreDoc = {
-  exists: boolean;
-  data: () => Record<string, any> | undefined;
-};
-
-type FirestoreTransaction = {
-  get: (ref: unknown) => Promise<FirestoreDoc>;
-  set: (ref: unknown, data: unknown, options?: unknown) => void;
-};
-
 function targetRoleFrom(data: Record<string, unknown> | undefined): AdminRole {
   const parsed = adminRoleSchema.safeParse(data?.role);
   if (!parsed.success) {
@@ -49,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const mutationId = randomUUID();
     const userRef = firestore.collection('adminUsers').doc(payload.uid);
-    const reservation = await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+    const reservation = await firestore.runTransaction(async (transaction: Transaction) => {
       const currentDoc = await transaction.get(userRef);
       if (!currentDoc.exists) throw new AdminAuthError('Admin user not found', 404);
 
@@ -100,7 +91,7 @@ export async function POST(request: NextRequest) {
 
       const now = new Date();
       finalizationAttempted = true;
-      await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+      await firestore.runTransaction(async (transaction: Transaction) => {
         const currentDoc = await transaction.get(userRef);
         const current = currentDoc.data();
         if (
@@ -182,7 +173,7 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
+        await firestore.runTransaction(async (transaction: Transaction) => {
           const currentDoc = await transaction.get(userRef);
           const current = currentDoc.data();
           if (!currentDoc.exists || current?.activeMutation?.id !== mutationId) return;

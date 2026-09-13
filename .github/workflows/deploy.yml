@@ -59,7 +59,7 @@ jobs:
 
     steps:
       - name: Checkout approved commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ inputs.target_sha }}
           fetch-depth: 0
@@ -107,7 +107,7 @@ jobs:
           [[ -n "$DEPLOY_SERVICE_ACCOUNT" ]] || { echo "GCP_DEPLOY_SERVICE_ACCOUNT is required; long-lived Firebase deploy credentials are prohibited." >&2; exit 1; }
 
       - name: Authenticate to Google Cloud with WIF
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: urai-4dc1d
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
@@ -133,7 +133,7 @@ jobs:
           NODE
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
@@ -250,7 +250,7 @@ jobs:
 
       - name: Upload deployment evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: urai-admin-deployment-evidence-${{ inputs.target_sha }}
           path: |

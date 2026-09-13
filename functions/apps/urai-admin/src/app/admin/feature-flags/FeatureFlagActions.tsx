@@ -15,6 +15,7 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
   const [error, setError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
+  const [operationId, setOperationId] = useState<string | null>(null);
 
   const nextEnabled = !enabled;
   const confirmationPhrase = nextEnabled ? 'ENABLE FLAG' : 'DISABLE FLAG';
@@ -23,10 +24,11 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
     if (isPending) return;
     setIsConfirming(false);
     setConfirmationText('');
+    setOperationId(null);
   }
 
   async function updateFlag() {
-    if (confirmationText !== confirmationPhrase) return;
+    if (confirmationText !== confirmationPhrase || !operationId) return;
 
     setIsPending(true);
     setError(null);
@@ -36,6 +38,7 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          operationId,
           flagId,
           enabled: nextEnabled,
           rollout: rollout ?? undefined,
@@ -47,7 +50,9 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
         throw new Error(data?.error ?? data?.message ?? 'Failed to update feature flag');
       }
 
-      closeConfirmation();
+      setIsConfirming(false);
+      setConfirmationText('');
+      setOperationId(null);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update feature flag');
@@ -66,6 +71,7 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
         onClick={() => {
           setError(null);
           setConfirmationText('');
+          setOperationId(crypto.randomUUID());
           setIsConfirming(true);
         }}
         className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
@@ -76,7 +82,7 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
         <div className="max-w-md rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 shadow-sm" role="alertdialog" aria-modal="true">
           <div className="font-semibold">Confirm feature flag change</div>
           <p className="mt-1 leading-5">
-            This changes a runtime flag and may affect product access or operator behavior. The server requires an owner/admin session and records an audit log.
+            This changes a runtime flag and may affect product access or operator behavior. The server requires an owner/admin session, a trusted origin, an institutional decision, postcondition verification, and durable evidence.
           </p>
           <label className="mt-3 block font-medium" htmlFor={`confirm-flag-${flagId}`}>
             Type <span className="font-mono">{confirmationPhrase}</span> to continue.
@@ -91,7 +97,7 @@ export function FeatureFlagActions({ flagId, enabled, rollout }: FeatureFlagActi
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              disabled={!confirmationMatches || isPending}
+              disabled={!confirmationMatches || !operationId || isPending}
               onClick={updateFlag}
               className="rounded-md border border-amber-700 bg-amber-700 px-3 py-1 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
