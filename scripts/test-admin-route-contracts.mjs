@@ -76,6 +76,14 @@ requireTokens(join(appRoot, 'api/admin/users/[uid]/role/route.ts'), [
   'requireAdminMutationSession',
   'updateAdminRole',
 ]);
+requireTokens('apps/urai-admin/src/app/admin/users/AdminUserActions.tsx', [
+  '/api/admin/users/${encodeURIComponent(uid)}/role',
+  "method: 'PUT'",
+  'body: JSON.stringify({ role: nextRole })',
+]);
+forbidTokens('apps/urai-admin/src/app/admin/users/AdminUserActions.tsx', [
+  '/api/admin/update-user-role',
+]);
 requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
   'runTransaction',
   'roleMutation',
