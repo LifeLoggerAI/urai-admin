@@ -1,90 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { AdminAuthError, adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
-import { firestore } from '@/lib/firebase/admin';
+import {
+  executeInstitutionalFeatureFlag,
+  InstitutionalWorkflowError,
+} from '@/lib/admin/execute-institutional-feature-flag';
+import {
+  AdminAuthError,
+  adminAuthErrorResponse,
+  requireAdminMutationSession,
+} from '@/lib/admin/require-admin-session';
+
+export const dynamic = 'force-dynamic';
 
 const setFlagSchema = z.object({
+  operationId: z.string().uuid(),
   flagId: z.string().trim().min(1),
   enabled: z.boolean(),
   rollout: z.number().min(0).max(100).optional(),
 });
 
-type FirestoreDoc = {
-  exists: boolean;
-  data: () => Record<string, unknown> | undefined;
-};
-
-type FirestoreTransaction = {
-  get: (ref: unknown) => Promise<FirestoreDoc>;
-  set: (ref: unknown, data: unknown, options?: unknown) => void;
-};
-
-type FeatureFlagUpdate = {
-  enabled: boolean;
-  updatedAt: Date;
-  updatedBy: string;
-  rollout?: number;
-};
+function jsonNoStore(body: unknown, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: { 'Cache-Control': 'no-store' },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdminSession(request, ['owner', 'admin']);
+    const session = await requireAdminMutationSession(request, ['owner', 'admin']);
     const payload = setFlagSchema.parse(await request.json());
-
-    const now = new Date();
-    const flagRef = firestore.collection('featureFlags').doc(payload.flagId);
-    const auditLogRef = firestore.collection('auditLogs').doc();
-
-    const update: FeatureFlagUpdate = {
+    const result = await executeInstitutionalFeatureFlag({
+      actor: session,
+      operationId: payload.operationId,
+      flagId: payload.flagId,
       enabled: payload.enabled,
-      updatedAt: now,
-      updatedBy: session.uid,
-    };
-
-    if (payload.rollout !== undefined) {
-      update.rollout = payload.rollout;
-    }
-
-    await firestore.runTransaction(async (transaction: FirestoreTransaction) => {
-      const current = await transaction.get(flagRef);
-      const before = current.exists ? current.data() : null;
-
-      transaction.set(flagRef, update, { merge: true });
-      transaction.set(auditLogRef, {
-        actorUid: session.uid,
-        actorEmail: session.email ?? null,
-        actorRole: session.role,
-        action: 'featureFlags.set',
-        target: { type: 'featureFlag', id: payload.flagId },
-        metadata: {
-          before: {
-            enabled: before?.enabled ?? null,
-            rollout: before?.rollout ?? null,
-          },
-          after: {
-            enabled: payload.enabled,
-            rollout: payload.rollout ?? before?.rollout ?? null,
-          },
-        },
-        createdAt: now,
-      });
+      rollout: payload.rollout,
     });
-
-    return NextResponse.json({ success: true, flagId: payload.flagId, enabled: payload.enabled });
+    return jsonNoStore(result);
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthErrorResponse(error);
     }
 
+    if (error instanceof InstitutionalWorkflowError) {
+      return jsonNoStore({ success: false, error: error.message }, error.status);
+    }
+
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      return jsonNoStore(
         { success: false, error: 'Invalid feature flag payload', issues: error.issues },
-        { status: 400 },
+        400,
       );
     }
 
     console.error('Failed to update feature flag:', error);
-    return NextResponse.json({ success: false, error: 'Failed to update feature flag' }, { status: 500 });
+    return jsonNoStore({ success: false, error: 'Failed to update feature flag' }, 500);
   }
 }
