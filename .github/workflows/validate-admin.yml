@@ -6,8 +6,6 @@ on:
       - main
       - fix/admin-auth-api-hardening
   pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
