@@ -1,0 +1,145 @@
+name: Admin Analytics Visual Truth Proof
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-analytics-visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  visual-proof:
+    name: Retain exact-head Admin and Analytics pixels
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      EVIDENCE_DIR: /tmp/urai-admin-analytics-visual-${{ github.event.pull_request.head.sha }}
+      PLAYWRIGHT_VERSION: 1.55.0
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove exact clean candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD)" == "${{ github.event.pull_request.head.sha }}" ]]
+          test -z "$(git status --porcelain)"
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup pnpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+          pnpm --version
+
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build exact candidate surfaces
+        run: |
+          set -euo pipefail
+          pnpm --dir packages/analytics-core build
+          pnpm --dir apps/urai-admin build
+          pnpm --dir apps/urai-analytics build
+
+      - name: Start local exact-head surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          (pnpm --dir apps/urai-admin exec next start -p 3000 >"$EVIDENCE_DIR/admin-server.log" 2>&1 & echo $! >"$EVIDENCE_DIR/admin.pid")
+          (pnpm --dir apps/urai-analytics exec next start -p 3010 >"$EVIDENCE_DIR/analytics-server.log" 2>&1 & echo $! >"$EVIDENCE_DIR/analytics.pid")
+          for url in http://127.0.0.1:3000/ http://127.0.0.1:3000/login http://127.0.0.1:3010/app http://127.0.0.1:3010/app/api-keys http://127.0.0.1:3010/app/settings; do
+            ready=0
+            for attempt in $(seq 1 60); do
+              if curl -fsS "$url" >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            [[ "$ready" == "1" ]] || { echo "Surface failed to start: $url" >&2; exit 1; }
+          done
+
+      - name: Assert fixture truth labels in rendered HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:3010/app >"$EVIDENCE_DIR/analytics-app.html"
+          curl -fsS http://127.0.0.1:3010/app/api-keys >"$EVIDENCE_DIR/analytics-api-keys.html"
+          curl -fsS http://127.0.0.1:3010/app/settings >"$EVIDENCE_DIR/analytics-settings.html"
+          grep -Fq 'Fixture workspace' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'Demo · not production' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'Static sample data only' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'provider/runtime readback is not connected' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'Fixture API keys' "$EVIDENCE_DIR/analytics-api-keys.html"
+          grep -Fq 'not live credentials' "$EVIDENCE_DIR/analytics-api-keys.html"
+          grep -Fq 'Preview fixture' "$EVIDENCE_DIR/analytics-settings.html"
+          if grep -Eqi 'Demo Production|Production ingest key|key_live_demo|urai_live' "$EVIDENCE_DIR"/analytics-*.html; then
+            echo 'Production-looking fixture semantics regressed.' >&2
+            exit 1
+          fi
+
+      - name: Install pinned Chromium for screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm dlx playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium
+
+      - name: Capture desktop and mobile pixels
+        shell: bash
+        run: |
+          set -euo pipefail
+          capture() {
+            local device="$1"; local url="$2"; local out="$3"
+            pnpm dlx playwright@${PLAYWRIGHT_VERSION} screenshot --device="$device" --full-page "$url" "$EVIDENCE_DIR/$out"
+          }
+          capture 'Desktop Chrome' http://127.0.0.1:3000/ admin-home-desktop.png
+          capture 'Pixel 5' http://127.0.0.1:3000/ admin-home-mobile.png
+          capture 'Desktop Chrome' http://127.0.0.1:3000/login admin-login-desktop.png
+          capture 'Pixel 5' http://127.0.0.1:3000/login admin-login-mobile.png
+          capture 'Desktop Chrome' http://127.0.0.1:3010/app analytics-app-desktop.png
+          capture 'Pixel 5' http://127.0.0.1:3010/app analytics-app-mobile.png
+          capture 'Desktop Chrome' http://127.0.0.1:3010/app/api-keys analytics-api-keys-desktop.png
+          capture 'Pixel 5' http://127.0.0.1:3010/app/settings analytics-settings-mobile.png
+          find "$EVIDENCE_DIR" -name '*.png' -size 0 -print -quit | grep -q . && { echo 'Zero-byte screenshot produced.' >&2; exit 1; } || true
+          count=$(find "$EVIDENCE_DIR" -name '*.png' | wc -l)
+          [[ "$count" -eq 8 ]] || { echo "Expected 8 screenshots, found $count" >&2; exit 1; }
+
+      - name: Write exact-head manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          sha256sum "$EVIDENCE_DIR"/*.png >"$EVIDENCE_DIR/screenshot-sha256.txt"
+          cat >"$EVIDENCE_DIR/manifest.txt" <<EOF
+          repository=${GITHUB_REPOSITORY}
+          exactHead=${sha}
+          pullRequest=${{ github.event.pull_request.number }}
+          sourceClean=true
+          analyticsFixtureTruth=asserted
+          screenshots=8
+          playwright=${PLAYWRIGHT_VERSION}
+          EOF
+          test -z "$(git status --porcelain)"
+
+      - name: Upload retained visual truth evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: urai-admin-analytics-visual-${{ github.event.pull_request.head.sha }}
+          path: /tmp/urai-admin-analytics-visual-${{ github.event.pull_request.head.sha }}
+          if-no-files-found: error
+          retention-days: 90
