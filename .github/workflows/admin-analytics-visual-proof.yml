@@ -81,11 +81,13 @@ jobs:
           curl -fsS http://127.0.0.1:3010/app/settings >"$EVIDENCE_DIR/analytics-settings.html"
           grep -Fq 'Fixture workspace' "$EVIDENCE_DIR/analytics-app.html"
           grep -Fq 'Demo · not production' "$EVIDENCE_DIR/analytics-app.html"
-          grep -Fq 'Static sample data only' "$EVIDENCE_DIR/analytics-app.html"
-          grep -Fq 'provider/runtime readback is not connected' "$EVIDENCE_DIR/analytics-app.html"
-          grep -Fq 'Fixture API keys' "$EVIDENCE_DIR/analytics-api-keys.html"
-          grep -Fq 'not live credentials' "$EVIDENCE_DIR/analytics-api-keys.html"
-          grep -Fq 'Preview fixture' "$EVIDENCE_DIR/analytics-settings.html"
+          grep -Fq 'Demo fixture data — not production telemetry.' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'Provider/runtime readback is not connected on this surface.' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'static sample data for interface verification only.' "$EVIDENCE_DIR/analytics-app.html"
+          grep -Fq 'Fixture API key examples' "$EVIDENCE_DIR/analytics-api-keys.html"
+          grep -Fq 'not provisioned provider or production credentials' "$EVIDENCE_DIR/analytics-api-keys.html"
+          grep -Fq 'Environment: preview' "$EVIDENCE_DIR/analytics-settings.html"
+          grep -Fq 'Provider state: not connected on this fixture surface' "$EVIDENCE_DIR/analytics-settings.html"
           if grep -Eqi 'Demo Production|Production ingest key|key_live_demo|urai_live' "$EVIDENCE_DIR"/analytics-*.html; then
             echo 'Production-looking fixture semantics regressed.' >&2
             exit 1
