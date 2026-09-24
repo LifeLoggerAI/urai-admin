@@ -52,7 +52,7 @@ Recommended governed recovery steps:
 5. verify the exact deployed revision, protected auth boundary, monitoring, and provider readback;
 6. record the workflow run, principal, target/rollback identities, verification result, and audit evidence in docs/EVIDENCE_LOG.md.
 
-Direct local `pnpm deploy` is not production rollback authority.
+Direct local package-manager deployment is not production rollback authority.
 EOF
 fi
 
