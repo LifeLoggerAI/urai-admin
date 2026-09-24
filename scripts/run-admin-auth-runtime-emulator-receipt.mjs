@@ -39,7 +39,7 @@ function staleAuthTimeToken(token) {
   const parts = String(token).split('.');
   const payload = decodeJwt(token);
   payload.auth_time = Math.floor(Date.now() / 1000) - 900;
-  return parts[0] + '.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.';
+  return parts[0] + '.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.' + parts[2];
 }
 
 async function jsonFetch(url, init = {}) {
