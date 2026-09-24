@@ -2,9 +2,9 @@
 
 This file is the canonical human-readable registry mirror until the `systemRegistry` Firestore seed is verified in staging and production. Executable registry data is defined in `scripts/system-registry-data.mjs`.
 
-Estate snapshot evidence date: 2026-07-11.
+Evidence date: 2026-07-11.
 
-This registry intentionally preserves the July estate snapshot unless a system has separately verified current evidence. Individual source-compatibility facts may be corrected later without pretending the entire estate was re-proved. Provider/runtime status must remain fail-closed until current readback exists.
+This is the estate snapshot evidence date. This registry intentionally preserves the July estate snapshot unless a system has separately verified current evidence. Individual source-compatibility facts may be corrected later without pretending the entire estate was re-proved. Provider/runtime status must remain fail-closed until current readback exists.
 
 A repository, route, workflow, candidate SHA, or planned URL does not establish production health. Exact deployed SHA, distinct rollback SHA, current smoke, monitoring, authorization, privacy, and rollback evidence are required.
 
