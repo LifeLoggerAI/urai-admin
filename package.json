@@ -34,7 +34,8 @@
     "bootstrap:owner": "node scripts/bootstrap-owner.mjs",
     "smoke-test": "bash scripts/smoke-test.sh",
     "verify:production": "bash scripts/verify-production-live.sh",
-    "rollback:production": "bash scripts/rollback-production.sh"
+    "rollback:production": "bash scripts/rollback-production.sh",
+    "receipt:admin-auth-runtime:emulator": "firebase emulators:exec --only auth,firestore --config firebase.emulator.json --project urai-admin-emulator \"node scripts/run-admin-auth-runtime-emulator-receipt.mjs\""
   },
   "workspaces": [
     "apps/*",
