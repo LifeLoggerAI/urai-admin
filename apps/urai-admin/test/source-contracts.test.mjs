@@ -123,6 +123,9 @@ const legacyRoleRoute = await read('src/app/api/admin/update-user-role/route.ts'
 assert.match(legacyRoleRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'legacy role route must use the same origin and owner guard');
 assert.match(legacyRoleRoute, /updateAdminRole/, 'legacy role route must not implement a second role authority');
 assert.doesNotMatch(legacyRoleRoute, /runTransaction/, 'legacy role route must not retain independent mutation logic');
+assert.match(legacyRoleRoute, /Compatibility alias only/, 'legacy role route must be explicitly classified as compatibility-only');
+assert.match(legacyRoleRoute, /Deprecation/, 'legacy role route must advertise deprecation');
+assert.match(legacyRoleRoute, /successor-version/, 'legacy role route must point clients to the canonical role endpoint');
 
 const activeRoute = await read('src/app/api/admin/set-user-active/route.ts');
 assert.match(activeRoute, /requireAdminMutationSession/, 'active-state mutation must require trusted origin');
