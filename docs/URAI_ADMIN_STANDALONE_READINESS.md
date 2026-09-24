@@ -72,7 +72,7 @@ Do not provide `FIREBASE_SERVICE_ACCOUNT_KEY`, raw service-account JSON, `creden
 3. Server verifies the token.
 4. Server checks `adminUsers/{uid}`.
 5. Server requires `isActive === true` and a valid role.
-6. Server sets custom claims and creates the `__session` cookie.
+6. Server requires canonical Auth claims to already match Firestore; mismatches fail closed with governed repair/refresh states. Only after claims and token state agree does it create the `__session` cookie.
 7. Middleware allows `/admin/*` and `/api/admin/*` only under the governed session contract.
 8. Protected admin APIs verify the session cookie with `requireAdminSession`.
 
@@ -81,13 +81,14 @@ Do not provide `FIREBASE_SERVICE_ACCOUNT_KEY`, raw service-account JSON, `creden
 Protected routes currently include:
 
 - `/api/admin/set-flag`
-- `/api/admin/update-user-role`
+- canonical role mutation: `PUT /api/admin/users/[uid]/role`
+- deprecated compatibility alias only: `POST /api/admin/update-user-role`
 - `/api/admin/set-user-active`
 - `/api/admin/users`
 
 All sensitive admin mutations should:
 
-- call `requireAdminSession`
+- call `requireAdminMutationSession` when they mutate state and `requireAdminSession` for protected reads
 - validate request payloads with Zod
 - use Firebase Admin SDK server-side writes under ADC-managed runtime identity
 - write to `auditLogs`
