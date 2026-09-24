@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
 const preflight = readFileSync('scripts/preflight-production.sh', 'utf8');
+const deployScript = readFileSync('scripts/deploy-production.sh', 'utf8');
 const rollback = readFileSync('scripts/rollback-production.sh', 'utf8');
 const gitignore = readFileSync('.gitignore', 'utf8');
 const runtimeAuthPaths = [
@@ -54,6 +55,12 @@ forbidMatch(workflow, /--token(?:\s|=)/, 'Firebase CLI --token authentication');
 
 requireMatch(preflight, /GOOGLE_APPLICATION_CREDENTIALS/, 'WIF\/ADC preflight check');
 forbidMatch(preflight, /require_env\s+"FIREBASE_TOKEN"/, 'FIREBASE_TOKEN preflight requirement');
+
+requireMatch(deployScript, /Direct local production deploy is disabled/, 'local production deploy fail-closed guard');
+requireMatch(deployScript, /GITHUB_REF:-.*refs\/heads\/main/, 'production deploy main-context guard');
+requireMatch(deployScript, /GOOGLE_APPLICATION_CREDENTIALS/, 'production deploy temporary WIF\/ADC credential guard');
+requireMatch(deployScript, /URAI_ADMIN_TARGET_SHA/, 'production deploy exact-target guard');
+forbidMatch(rollback, /pnpm deploy/, 'rollback guidance local production deploy shortcut');
 
 requireMatch(rollback, /GOOGLE_APPLICATION_CREDENTIALS/, 'WIF\/ADC rollback check');
 forbidMatch(rollback, /--token(?:\s|=)/, 'rollback --token authentication');
