@@ -21,7 +21,7 @@ let server;
 let proofApp;
 
 function pass(name, details = {}) {
-  checks.push({ name, status: 'PASS', ...details });
+  checks.push({ name, ...details, status: 'PASS' });
 }
 
 function loopback(value, port, label) {
@@ -229,7 +229,7 @@ async function main() {
   // emulator-issued token.
   const staleTimeLogin = await login(staleAuthTimeToken(ownerAuth.idToken));
   assert.equal(staleTimeLogin.response.status, 401);
-  pass('tampered stale-auth token rejected fail-closed', { status: 401 });
+  pass('tampered stale-auth token rejected fail-closed', { httpStatus: 401 });
 
   const ownerLogin = await login(ownerAuth.idToken);
   const adminLogin = await login(adminAuth.idToken);
@@ -251,7 +251,7 @@ async function main() {
 
   assert.equal((await login(outsiderAuth.idToken)).response.status, 403);
   assert.equal((await login(inactiveAuth.idToken)).response.status, 403);
-  pass('non-admin and inactive login rejection', { status: 403 });
+  pass('non-admin and inactive login rejection', { rejectionStatus: 403 });
 
   const ownerSession = await appRequest('/api/auth/admin-session', { cookie: ownerCookie.header });
   const viewerSession = await appRequest('/api/auth/admin-session', { cookie: viewerCookie.header });
@@ -295,7 +295,7 @@ async function main() {
   assert.equal((await appRequest('/api/admin/users/' + users.owner.uid + '/role', {
     method: 'PUT', cookie: ownerCookie.header, body: { role: 'admin' },
   })).response.status, 400);
-  pass('self-role mutation prohibited', { status: 400 });
+  pass('self-role mutation prohibited', { selfRoleStatus: 400 });
 
   const targetViewerLogin = await login(targetOldAuth.idToken);
   assert.equal(targetViewerLogin.response.status, 200);
@@ -406,7 +406,10 @@ async function main() {
   const logout = await appRequest('/api/auth/session', { method: 'DELETE', cookie: ownerCookie.header });
   assert.equal(logout.response.status, 200);
   assert.match(logout.response.headers.get('set-cookie') || '', /Max-Age=0/i);
-  pass('logout clears session cookie', { status: 200 });
+  pass('logout clears session cookie', { logoutStatus: 200 });
+
+  assert.ok(checks.length > 0, 'Protected runtime receipt must retain at least one check');
+  assert.ok(checks.every((check) => check.status === 'PASS'), 'Protected runtime receipt cannot retain a non-PASS check');
 
   const receipt = {
     schemaVersion: 1,
@@ -419,7 +422,7 @@ async function main() {
     cloudCredentialUsed: false,
     protectedRuntimeMode: 'isolated-auth-firestore-emulator',
     checks,
-    passed: checks.length,
+    passed: checks.filter((check) => check.status === 'PASS').length,
     generatedAt: new Date().toISOString(),
   };
   await writeFile(RECEIPT_PATH, JSON.stringify(receipt, null, 2) + '\n', 'utf8');
