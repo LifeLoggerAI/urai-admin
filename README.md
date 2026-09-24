@@ -36,6 +36,7 @@ Do not commit real secrets, service-account files, raw user data, private operat
 - `/admin/system`
 - `/admin/audit`
 - `/admin/policies`
+- `/admin/privacy-requests`
 - `/admin/settings`
 
 ## Stack
@@ -108,10 +109,13 @@ Minimum launch sequence:
 
 ```bash
 pnpm release:lock
+# Bootstrap only after the Firebase project and approved ADC identity are verified.
 pnpm bootstrap:owner
-pnpm deploy
+# Production deploy authority is the protected "Deploy URAI Admin" GitHub Actions workflow.
 pnpm verify:production
 ```
+
+Do not substitute a local `pnpm deploy`, Firebase CLI token, raw service-account JSON, or long-lived private key for the governed GitHub OIDC → Workload Identity Federation → short-lived ADC production path.
 
 Do not claim production launch complete until the release checklist is complete, GitHub Actions deployment is green, staging smoke passes, owner approval is recorded, and `pnpm verify:production` passes against `https://www.uraiadmin.com`.
 
@@ -122,12 +126,15 @@ Use `.env.production.example` as the source checklist for required GitHub/Fireba
 Required categories:
 
 - Firebase public app values
-- Firebase deploy token
-- optional Firebase service account key
+- protected GitHub WIF provider resource name
+- dedicated least-privilege deploy service-account identity
+- approved ADC identity for authorized local/operator tasks
 - initial owner bootstrap UID/email
 - Firebase project and hosting site IDs
 - staging and production verification URLs
 - rollback release/SHA inputs
+
+Never place `FIREBASE_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_KEY`, raw service-account JSON, private keys, or `credentials_json` in application environment files or the governed production deploy path.
 
 ## Privacy boundary
 
@@ -194,14 +201,9 @@ pnpm functions:build:active
 
 ## Deploy
 
-Preferred deploy path is GitHub Actions: `Deploy URAI Admin`.
+The canonical production deploy authority is the protected GitHub Actions workflow: `Deploy URAI Admin`.
 
-Manual fallback after all checks pass:
-
-```bash
-pnpm deploy
-pnpm verify:production
-```
+Local/operator shells may perform approved verification or recovery work through short-lived ADC only. They are not a substitute production-deployment authority. Emergency recovery must follow the same approval, exact-SHA, rollback, evidence, and least-privilege requirements documented in the deployment runbook.
 
 ## Production domain checklist
 
