@@ -1,3 +1,7 @@
+// Estate status values below are the bounded snapshot from 2026-07-11 unless a
+// protected runtime readback supersedes them. Do not bump this date without
+// re-verifying every registry record; source/runtime compatibility facts may be
+// corrected independently without pretending the whole estate was re-proved.
 export const REGISTRY_EVIDENCE_DATE = '2026-07-11';
 
 const defaults = Object.freeze({
@@ -39,13 +43,13 @@ const records = [
     id: 'urai-admin',
     name: 'URAI Admin',
     repo: 'LifeLoggerAI/urai-admin',
-    runtime: 'Next.js 14 / Firebase Hosting and Functions / Node 20',
+    runtime: 'Next.js 14 / Firebase Hosting and Functions / Node 22',
     status: 'blocked',
     productionUrl: 'https://www.uraiadmin.com',
     firebaseTarget: 'urai-4dc1d',
-    healthEndpoint: '/status',
-    requiredSecrets: ['Firebase public config', 'Protected deploy credentials', 'Owner bootstrap identity'],
-    knownBlockers: ['Deployment, owner bootstrap, authorized and denied route proof, DNS, monitoring and rollback missing'],
+    healthEndpoint: '/api/health',
+    requiredSecrets: ['Firebase public config', 'Protected WIF provider/deploy identity', 'Owner bootstrap identity'],
+    knownBlockers: ['Independent review, protected auth/runtime acceptance, exact deployed revision, WIF deployment, DNS/TLS/Auth-domain proof, monitoring and rollback evidence missing'],
     integrationContracts: ['Operational metadata only'],
     dataBoundary: 'Operational metadata only',
     operationalRisk: 'high',
