@@ -2,14 +2,16 @@
 
 This file is the canonical human-readable registry mirror until the `systemRegistry` Firestore seed is verified in staging and production. Executable registry data is defined in `scripts/system-registry-data.mjs`.
 
-Evidence date: 2026-07-11.
+Estate snapshot evidence date: 2026-07-11.
+
+This registry intentionally preserves the July estate snapshot unless a system has separately verified current evidence. Individual source-compatibility facts may be corrected later without pretending the entire estate was re-proved. Provider/runtime status must remain fail-closed until current readback exists.
 
 A repository, route, workflow, candidate SHA, or planned URL does not establish production health. Exact deployed SHA, distinct rollback SHA, current smoke, monitoring, authorization, privacy, and rollback evidence are required.
 
 | System | Canonical repository/runtime | Status | Production surface | Current evidence | Blocking evidence |
 | --- | --- | --- | --- | --- | --- |
 | URAI Main Experience | `LifeLoggerAI/urai-spatial` / `urai-tier1` / `main` | `degraded` | `https://urai.app` | Core route content is externally reachable; release-control candidate PR #539 is held unchanged and sensory candidate PR #541 remains separate | Exact deployed SHA, distinct rollback SHA, monitoring, privacy parity and authenticated backend proof missing |
-| URAI Admin | `LifeLoggerAI/urai-admin` / `apps/urai-admin` | `blocked` | `https://www.uraiadmin.com` target | App, rules, functions and fail-closed registry/deploy gates exist in source; PR #45 is the current registry candidate | Deployment, owner bootstrap, authorized and denied route proof, DNS, monitoring and rollback missing |
+| URAI Admin | `LifeLoggerAI/urai-admin` / `apps/urai-admin` / Node 22 | `blocked` | `https://uraiadmin.com` public shell + intended `https://www.uraiadmin.com`; protected `/admin/*` | Current source candidate is PR #75. Source contains deny-by-default rules, hardened session/RBAC mutation controls, fail-closed registry evidence, institutional decision/evidence/event primitives, and protected GitHub OIDC → WIF → short-lived ADC deployment fencing | Fresh exact-head proof, eligible independent approval, protected Auth/Firestore runtime acceptance, exact deployed revision/provider receipts, WIF production authority, DNS/TLS/Auth-domain proof, monitoring and distinct-revision rollback evidence |
 | URAI Analytics | `LifeLoggerAI/urai-analytics` | `blocked` | Not certified | Privacy-safe API/workers and governed ingestion hardening exist in source | Durable live Firestore, deployment, monitoring and rollback evidence missing |
 | URAI Communications | `LifeLoggerAI/urai-communications` | `blocked` | Not certified | Provider adapters, signed webhook intake, consent gating and staging harnesses exist | Live provider callbacks, retention and data-rights proof, monitoring, legal review and rollback missing |
 | URAI Privacy | `LifeLoggerAI/urai-privacy` | `blocked` | `https://uraiprivacy.com` target | Authorization/security base PR #82 remains the required predecessor for stacked consent/export PR #93 | Authenticated live export, deletion and consent proof, deployment, monitoring, backup and restore, and legal evidence missing |
@@ -64,6 +66,6 @@ If a system has no exact deployed SHA plus current live and monitoring evidence,
 
 ## Seed rule
 
-Use `pnpm seed:system-registry`. Dry-run mode validates the canonical contract and performs no Firestore write. Apply mode additionally requires an explicitly selected project, exact clean Git head, matching service-account project, and explicit staging or production approval. Direct execution of `scripts/seed-system-registry.mjs` is rejected.
+Use `pnpm seed:system-registry`. Dry-run mode validates the canonical contract and performs no Firestore write. Apply mode additionally requires an explicitly selected project, exact clean Git head, verified short-lived ADC/provider project identity, and explicit staging or production approval. Direct execution of `scripts/seed-system-registry.mjs` is rejected.
 
-No authoritative URAI Admin staging Firebase project is currently recorded. Non-production seeding therefore remains blocked until an approved project is established in provider evidence and supplied through the protected `URAI_ADMIN_STAGING_FIREBASE_PROJECT` environment variable. The selected target must exactly match that approved staging project. Production remains fixed to `urai-4dc1d` and requires separate production approval.
+No authoritative URAI Admin staging Firebase project is currently recorded. Non-production seeding therefore remains blocked until an approved project is established in provider evidence and supplied through the protected `URAI_ADMIN_STAGING_FIREBASE_PROJECT` environment variable. The selected target must exactly match that approved staging project. Production remains fixed to `urai-4dc1d` and requires separate production approval through the protected WIF/ADC authority. Raw service-account JSON and long-lived Firebase tokens are not registry or deployment authority.
