@@ -40,7 +40,7 @@ function isServerFirebaseAdminSource(source) {
 }
 
 const middlewareSource = await read('src/middleware.ts');
-assert.match(middlewareSource, /pathname === '\/api\/jobs'/, 'middleware must protect the legacy /api/jobs alias');
+assert.match(middlewareSource, /\['\/api\/jobs', '\/api\/analytics', '\/api\/dashboard', '\/api\/audit'\]\.includes\(pathname\)/, 'middleware must protect the legacy /api/jobs alias through the compatibility allowlist');
 assert.match(middlewareSource, /'\/api\/jobs'/, 'middleware matcher must include the legacy /api/jobs alias');
 assert.match(middlewareSource, /'\/api\/analytics'/, 'middleware matcher must include legacy analytics read');
 assert.match(middlewareSource, /'\/api\/dashboard'/, 'middleware matcher must include dashboard read');
