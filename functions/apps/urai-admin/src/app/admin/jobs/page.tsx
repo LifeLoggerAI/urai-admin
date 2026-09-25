@@ -5,16 +5,16 @@ export default function JobsPage() {
     <SpatialCollectionPage
       eyebrow="Automation control"
       title="Jobs"
-      description="Monitor scheduled and background job definitions, runtime status, enablement, and operational readiness."
-      signalValue="Scheduler grid"
+      description="Monitor the canonical URAI Jobs ledger through a minimized, authenticated operational view."
+      signalValue="Runtime ledger"
       collection="jobs"
       emptyLabel="No jobs found."
       columns={[
         { key: 'id', label: 'Job ID' },
-        { key: 'name', label: 'Name' },
         { key: 'type', label: 'Type' },
         { key: 'status', label: 'Status' },
-        { key: 'enabled', label: 'Enabled' },
+        { key: 'retryCount', label: 'Retries' },
+        { key: 'updatedAt', label: 'Updated' },
       ]}
     />
   );
