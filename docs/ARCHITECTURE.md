@@ -2,11 +2,11 @@
 
 ## Runtime and framework
 
-URAI Admin is a pnpm workspace repository. The primary admin console is a Next.js 14 React/TypeScript app in `apps/urai-admin`. Firebase Hosting routes requests through the `nextServer` Firebase Function. Active Functions code is in `functions/src/index.ts`. Node 20 is the locked runtime for Firebase Functions.
+URAI Admin is a pnpm workspace repository. The primary admin console is a Next.js 14 React/TypeScript app in `apps/urai-admin`. Firebase Hosting routes requests through the `nextServer` Firebase Function. Active Functions code is in `functions/src/index.ts`. Node 22 is the locked runtime for Firebase Functions.
 
 ## Product role
 
-`urai-admin` is the official internal operations and Council control plane for the URAI system of systems. It is not a raw consumer-data browser. It coordinates operations, release evidence, system health, governance, analytics status, communications status, partner review, and audit trails.
+`urai-admin` has two explicit surfaces: a public informational/product shell at `uraiadmin.com` and a protected `/admin/*` operations control plane for the URAI system of systems. It is not a raw consumer-data browser. The public shell explains the boundary; authenticated operator routes coordinate operations, release evidence, system health, governance, analytics status, communications status, partner review, and audit trails.
 
 ## Route map
 
@@ -93,9 +93,7 @@ Existing operational collections:
 - `auditLogs`
 - `systemConfig`
 - `projectRegistry`
-- `jobs`
-- `jobRuns`
-- `deadLetters`
+- `jobs` — canonical URAI Jobs operational ledger; terminal/dead states are status-filtered views, not separate collection authorities
 - `featureFlags`
 - `analytics_events_raw_{date}`
 - `analytics_aggregates`
@@ -119,6 +117,6 @@ Each URAI subsystem should expose a status contract containing name, owner, envi
 
 ## Data boundary
 
-Allowed: operational metadata, release evidence, aggregate analytics status, communications status, partner/admin records, feature flags, jobs, dead letters, audit events, governance evidence.
+Allowed: operational metadata, release evidence, aggregate analytics status, communications status, partner/admin records, feature flags, canonical job status metadata, audit events, governance evidence.
 
 Forbidden unless separately approved: raw passive telemetry, raw audio, private transcripts, raw location trails, consumer identity vectors, unreviewed mental-health inference records, and unredacted secrets.

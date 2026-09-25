@@ -7,8 +7,6 @@ export type CollectionKey =
   | 'projectRegistry'
   | 'featureFlags'
   | 'jobs'
-  | 'jobRuns'
-  | 'deadLetters'
   | 'roles'
   | 'systemConfig'
   | 'systemRegistry'
@@ -25,6 +23,7 @@ type AdminCollectionTableProps = {
   columns: AdminColumn[];
   emptyLabel: string;
   limit?: number;
+  status?: string;
 };
 
 function formatValue(value: RecordValue | undefined) {
@@ -54,15 +53,16 @@ function formatValue(value: RecordValue | undefined) {
   }
 }
 
-export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 100 }: AdminCollectionTableProps) {
+export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 100, status }: AdminCollectionTableProps) {
   const [records, setRecords] = useState<AdminRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams({ collection, limit: String(limit) });
+    if (status) params.set('status', status);
     return `/api/admin/collection?${params.toString()}`;
-  }, [collection, limit]);
+  }, [collection, limit, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +103,7 @@ export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 
 
   if (loading) {
     return (
-      <div className="spatial-table-state">
+      <div className="spatial-table-state" role="status" aria-live="polite" aria-busy="true">
         <span>Syncing live records</span>
         <strong>{collection}</strong>
         <p>Secure runtime data is loading through the authenticated admin API.</p>
@@ -128,11 +128,11 @@ export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 
         <strong>{records.length} records</strong>
       </div>
       <div className="overflow-x-auto">
-        <table className="spatial-table">
+        <table className="spatial-table" aria-label={`${collection} records`}>
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column.key}>{column.label}</th>
+                <th key={column.key} scope="col">{column.label}</th>
               ))}
             </tr>
           </thead>

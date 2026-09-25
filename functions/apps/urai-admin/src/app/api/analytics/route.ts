@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 import { firestore } from '@/lib/firebase/admin';
 
 type FirestoreDoc = {
@@ -14,8 +15,9 @@ function incrementByName(acc: CountMap, doc: FirestoreDoc) {
   return acc;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await requireAdminSession(request, ['owner', 'admin', 'viewer']);
     const eventsSnapshot = await firestore.collection('events').get();
     const topEvents = (eventsSnapshot.docs as FirestoreDoc[]).reduce<CountMap>(incrementByName, {});
 
@@ -24,6 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ topEvents, topRoutes });
   } catch (error) {
+    if (error instanceof Error && 'status' in error) return adminAuthErrorResponse(error);
     console.error('Failed to load analytics:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

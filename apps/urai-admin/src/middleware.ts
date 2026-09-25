@@ -23,7 +23,10 @@ async function verifyAdminSession(req: NextRequest) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdminPage = pathname.startsWith('/admin');
-  const isAdminApi = pathname.startsWith('/api/admin');
+  const isAdminApi =
+    pathname.startsWith('/api/admin')
+    || pathname.startsWith('/api/qa')
+    || ['/api/jobs', '/api/analytics', '/api/dashboard', '/api/audit'].includes(pathname);
 
   if (!isAdminPage && !isAdminApi) {
     return NextResponse.next();
@@ -56,5 +59,13 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/api/admin/:path*',
+    '/api/jobs',
+    '/api/analytics',
+    '/api/dashboard',
+    '/api/audit',
+    '/api/qa/:path*',
+  ],
 };
