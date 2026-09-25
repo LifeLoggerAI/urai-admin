@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "predeploy": [
-      "pnpm --filter functions build"
-    ],
-    "source": "."
-  }
-}
