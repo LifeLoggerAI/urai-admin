@@ -45,7 +45,7 @@ assert.match(middlewareSource, /'\/api\/jobs'/, 'middleware matcher must include
 assert.match(middlewareSource, /'\/api\/analytics'/, 'middleware matcher must include legacy analytics read');
 assert.match(middlewareSource, /'\/api\/dashboard'/, 'middleware matcher must include dashboard read');
 assert.match(middlewareSource, /'\/api\/audit'/, 'middleware matcher must include audit compatibility route');
-assert.match(middlewareSource, /'\/api\/qa\/:path\\*'/, 'middleware matcher must include QA APIs');
+assert.match(middlewareSource, /'\/api\/qa\/:path\*'/, 'middleware matcher must include QA APIs');
 
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
