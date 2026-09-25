@@ -42,6 +42,10 @@ function isServerFirebaseAdminSource(source) {
 const middlewareSource = await read('src/middleware.ts');
 assert.match(middlewareSource, /pathname === '\\/api\\/jobs'/, 'middleware must protect the legacy /api/jobs alias');
 assert.match(middlewareSource, /'\\/api\\/jobs'/, 'middleware matcher must include the legacy /api/jobs alias');
+assert.match(middlewareSource, /'\\/api\\/analytics'/, 'middleware matcher must include legacy analytics read');
+assert.match(middlewareSource, /'\\/api\\/dashboard'/, 'middleware matcher must include dashboard read');
+assert.match(middlewareSource, /'\\/api\\/audit'/, 'middleware matcher must include audit compatibility route');
+assert.match(middlewareSource, /'\\/api\\/qa\\/:path\\\*'/, 'middleware matcher must include QA APIs');
 
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
@@ -94,6 +98,25 @@ assert.match(legacyJobsRoute, /requireAdminSession\(request, \['owner', 'admin',
 assert.match(legacyJobsRoute, /JOB_FIELDS/, 'legacy /api/jobs must minimize returned job fields');
 assert.doesNotMatch(legacyJobsRoute, /\.\.\.doc\.data\(\)/, 'legacy /api/jobs must not expose the full job document');
 assert.match(legacyJobsRoute, /deprecated:\s*true/, 'legacy /api/jobs must advertise deprecation');
+
+const qaImageRoute = await read('src/app/api/qa/image/route.ts');
+assert.match(qaImageRoute, /requireAdminSession\(request, \['owner'\]\)/, 'QA image reads must require owner session');
+assert.match(qaImageRoute, /deploy_screenshots/, 'QA image reads must stay inside deploy_screenshots');
+assert.match(qaImageRoute, /deploy_diffs/, 'QA image reads must stay inside deploy_diffs');
+assert.match(qaImageRoute, /X-Content-Type-Options/, 'QA image responses must disable content sniffing');
+assert.doesNotMatch(qaImageRoute, /fs\.readFile\(imagePath\)/, 'QA image route must never read an unvalidated caller path directly');
+
+const legacyAnalyticsRoute = await read('src/app/api/analytics/route.ts');
+assert.match(legacyAnalyticsRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'legacy analytics read must require admin session');
+
+const dashboardRoute = await read('src/app/api/dashboard/route.ts');
+assert.match(dashboardRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'dashboard read must require admin session');
+
+const ingestRoute = await read('src/app/api/ingest/route.ts');
+assert.match(ingestRoute, /status:\s*'gone'/, 'legacy Admin analytics ingestion must remain hard-off');
+assert.match(ingestRoute, /authority:\s*'urai-analytics'/, 'canonical analytics ingestion authority must remain urai-analytics');
+assert.match(ingestRoute, /status:\s*410/, 'legacy Admin analytics ingestion must fail with Gone');
+assert.doesNotMatch(ingestRoute, /collection\(['"]events['"]\)/, 'Admin ingest route must not write parallel analytics events');
 
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
