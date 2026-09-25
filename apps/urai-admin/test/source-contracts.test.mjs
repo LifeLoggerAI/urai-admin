@@ -84,8 +84,19 @@ assert.match(analyticsRoute, /urai-admin-legacy-aggregate-compatibility/, 'legac
 assert.match(analyticsRoute, /canonicalAnalyticsIntegrated:\s*false/, 'legacy Admin analytics reader must not claim canonical Analytics integration');
 assert.match(analyticsRoute, /Zero activity must not be inferred/, 'missing aggregate documents must not be represented as zero activity');
 
+const legacyJobsRoute = await read('src/app/api/jobs/route.ts');
+assert.match(legacyJobsRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'legacy /api/jobs must enforce admin session in the route itself');
+assert.match(legacyJobsRoute, /JOB_FIELDS/, 'legacy /api/jobs must minimize returned job fields');
+assert.doesNotMatch(legacyJobsRoute, /\.\.\.doc\.data\(\)/, 'legacy /api/jobs must not expose the full job document');
+assert.match(legacyJobsRoute, /deprecated:\s*true/, 'legacy /api/jobs must advertise deprecation');
+
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
+assert.match(collectionRoute, /jobs:\s*\{[\s\S]*allowedFields:\s*\['jobId'/, 'canonical jobs reader must use a minimized field allowlist');
+assert.doesNotMatch(collectionRoute, /jobRuns:\s*\{/, 'Admin must not invent a separate jobRuns collection authority');
+assert.doesNotMatch(collectionRoute, /deadLetters:\s*\{/, 'Admin must not invent a separate deadLetters collection authority');
+assert.match(collectionRoute, /TERMINAL_JOB_STATUSES/, 'terminal job history must filter the canonical jobs ledger');
+assert.match(collectionRoute, /where\('status', 'in', statusFilter\.statuses\)/, 'terminal history must use bounded canonical status filtering');
 assert.match(collectionRoute, /auditLogs:\s*\{[^}]*orderBy:\s*'createdAt'/s, 'audit logs must order by the canonical createdAt field');
 assert.match(collectionRoute, /SENSITIVE_KEY_PATTERN/, 'generic collection reads must define sensitive key redaction');
 assert.match(collectionRoute, /REDACTED/, 'generic collection reads must redact secret-like fields');
