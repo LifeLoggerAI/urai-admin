@@ -39,6 +39,10 @@ function isServerFirebaseAdminSource(source) {
   return /firebase-admin\/(app|firestore|auth)/.test(source) || /from ["']firebase-admin["']/.test(source);
 }
 
+const middlewareSource = await read('src/middleware.ts');
+assert.match(middlewareSource, /pathname === '\\/api\\/jobs'/, 'middleware must protect the legacy /api/jobs alias');
+assert.match(middlewareSource, /'\\/api\\/jobs'/, 'middleware matcher must include the legacy /api/jobs alias');
+
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
 assert.match(requireAdminSession, /adminUsers/, 'admin sessions must check the adminUsers collection');
