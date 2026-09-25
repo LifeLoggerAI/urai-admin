@@ -9,6 +9,7 @@ type SpatialCollectionPageProps = {
   collection: CollectionKey;
   columns: AdminColumn[];
   emptyLabel: string;
+  status?: string;
 };
 
 export function SpatialCollectionPage({
@@ -19,6 +20,7 @@ export function SpatialCollectionPage({
   collection,
   columns,
   emptyLabel,
+  status,
 }: SpatialCollectionPageProps) {
   return (
     <SpatialAdminFrame
@@ -32,7 +34,7 @@ export function SpatialCollectionPage({
       ]}
     >
       <SpatialSection title="Live records" description="Authenticated runtime records with production-safe loading, empty, and error states.">
-        <AdminCollectionTable collection={collection} emptyLabel={emptyLabel} columns={columns} />
+        <AdminCollectionTable collection={collection} emptyLabel={emptyLabel} columns={columns} status={status} />
       </SpatialSection>
     </SpatialAdminFrame>
   );
