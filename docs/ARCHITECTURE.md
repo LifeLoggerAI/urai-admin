@@ -93,9 +93,7 @@ Existing operational collections:
 - `auditLogs`
 - `systemConfig`
 - `projectRegistry`
-- `jobs`
-- `jobRuns`
-- `deadLetters`
+- `jobs` — canonical URAI Jobs operational ledger; terminal/dead states are status-filtered views, not separate collection authorities
 - `featureFlags`
 - `analytics_events_raw_{date}`
 - `analytics_aggregates`
@@ -119,6 +117,6 @@ Each URAI subsystem should expose a status contract containing name, owner, envi
 
 ## Data boundary
 
-Allowed: operational metadata, release evidence, aggregate analytics status, communications status, partner/admin records, feature flags, jobs, dead letters, audit events, governance evidence.
+Allowed: operational metadata, release evidence, aggregate analytics status, communications status, partner/admin records, feature flags, canonical job status metadata, audit events, governance evidence.
 
 Forbidden unless separately approved: raw passive telemetry, raw audio, private transcripts, raw location trails, consumer identity vectors, unreviewed mental-health inference records, and unredacted secrets.
