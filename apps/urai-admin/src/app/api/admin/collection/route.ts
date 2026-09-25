@@ -9,9 +9,11 @@ const COLLECTIONS = {
   adminUsers: { collection: 'adminUsers', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin'] },
   projectRegistry: { collection: 'projectRegistry', roles: ['owner', 'admin', 'viewer'] },
   featureFlags: { collection: 'featureFlags', orderBy: 'name', direction: 'asc', roles: ['owner', 'admin', 'viewer'] },
-  jobs: { collection: 'jobs', roles: ['owner', 'admin', 'viewer'] },
-  jobRuns: { collection: 'jobRuns', orderBy: 'startedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
-  deadLetters: { collection: 'deadLetters', orderBy: 'createdAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
+  jobs: {
+    collection: 'jobs',
+    roles: ['owner', 'admin', 'viewer'],
+    allowedFields: ['jobId', 'type', 'jobType', 'status', 'retryCount', 'createdAt', 'updatedAt', 'completedAt'],
+  },
   roles: { collection: 'roles', roles: ['owner', 'admin', 'viewer'] },
   systemConfig: { collection: 'systemConfig', orderBy: 'updatedAt', direction: 'desc', roles: ['owner', 'admin', 'viewer'] },
   systemRegistry: {
@@ -67,6 +69,18 @@ type FirestoreDocument = {
 function isCollectionKey(value: string | null): value is CollectionKey {
   return Boolean(value && value in COLLECTIONS);
 }
+
+const JOB_STATUSES = new Set(['PENDING', 'LEASED', 'RUNNING', 'SUCCESS', 'FAILED', 'DEAD', 'CANCELLED']);
+const TERMINAL_JOB_STATUSES = ['SUCCESS', 'FAILED', 'DEAD', 'CANCELLED'];
+
+function parseJobStatusFilter(value: string | null) {
+  if (!value) return null;
+  if (value === 'terminal') return { kind: 'terminal' as const, statuses: TERMINAL_JOB_STATUSES };
+  if (JOB_STATUSES.has(value)) return { kind: 'exact' as const, status: value };
+  throw new AdminCollectionQueryError('Invalid job status filter');
+}
+
+class AdminCollectionQueryError extends Error {}
 
 function parseLimit(value: string | null) {
   const parsed = value ? Number.parseInt(value, 10) : 100;
@@ -153,13 +167,23 @@ export async function GET(req: NextRequest) {
     const config = COLLECTIONS[collectionKey];
     await requireAdminSession(req, [...config.roles] as AdminRole[]);
 
-    let query = firestore.collection(config.collection).limit(parseLimit(searchParams.get('limit')));
+    const limit = parseLimit(searchParams.get('limit'));
+    const statusFilter = collectionKey === 'jobs' ? parseJobStatusFilter(searchParams.get('status')) : null;
+    if (collectionKey !== 'jobs' && searchParams.has('status')) {
+      throw new AdminCollectionQueryError('Status filtering is only supported for the canonical jobs ledger');
+    }
 
-    if ('orderBy' in config && config.orderBy) {
+    let query = firestore.collection(config.collection).limit(limit);
+
+    if (statusFilter?.kind === 'exact') {
+      query = firestore.collection(config.collection).where('status', '==', statusFilter.status).limit(limit);
+    } else if (statusFilter?.kind === 'terminal') {
+      query = firestore.collection(config.collection).where('status', 'in', statusFilter.statuses).limit(limit);
+    } else if ('orderBy' in config && config.orderBy) {
       query = firestore
         .collection(config.collection)
         .orderBy(config.orderBy, (config.direction ?? 'desc') as Direction)
-        .limit(parseLimit(searchParams.get('limit')));
+        .limit(limit);
     }
 
     const snapshot = await query.get();
@@ -170,6 +194,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ collection: collectionKey, records }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
+    if (error instanceof AdminCollectionQueryError) {
+      return NextResponse.json({ error: error.message }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+    }
+
     if (error instanceof Error && 'status' in error) {
       return adminAuthErrorResponse(error);
     }
