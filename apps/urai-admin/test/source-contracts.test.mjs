@@ -79,6 +79,11 @@ assert.match(sessionRoute, /requireSameOrigin/, 'session clearing must reject un
 const privacyRequestsPage = await read('src/app/admin/privacy-requests/page.tsx');
 assert.doesNotMatch(privacyRequestsPage, /requesterEmail/, 'privacy request queue must not ask the redacted API for requester email');
 
+const analyticsRoute = await read('src/app/api/admin/analytics/route.ts');
+assert.match(analyticsRoute, /urai-admin-legacy-aggregate-compatibility/, 'legacy Admin analytics reader must identify compatibility authority');
+assert.match(analyticsRoute, /canonicalAnalyticsIntegrated:\s*false/, 'legacy Admin analytics reader must not claim canonical Analytics integration');
+assert.match(analyticsRoute, /Zero activity must not be inferred/, 'missing aggregate documents must not be represented as zero activity');
+
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
 assert.match(collectionRoute, /auditLogs:\s*\{[^}]*orderBy:\s*'createdAt'/s, 'audit logs must order by the canonical createdAt field');
