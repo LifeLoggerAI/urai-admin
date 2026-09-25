@@ -76,6 +76,9 @@ assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refre
 assert.match(sessionRoute, /export\s+async\s+function\s+DELETE/, 'session endpoint must support session clearing');
 assert.match(sessionRoute, /requireSameOrigin/, 'session clearing must reject untrusted origins');
 
+const privacyRequestsPage = await read('src/app/admin/privacy-requests/page.tsx');
+assert.doesNotMatch(privacyRequestsPage, /requesterEmail/, 'privacy request queue must not ask the redacted API for requester email');
+
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
 assert.match(collectionRoute, /auditLogs:\s*\{[^}]*orderBy:\s*'createdAt'/s, 'audit logs must order by the canonical createdAt field');
