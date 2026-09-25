@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -176,6 +177,8 @@ assert.match(firebaseAdmin, /runTransaction/, 'build Firestore stub must expose 
 assert.match(firebaseAdmin, /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/, 'runtime must explicitly reject the retired raw service-account input');
 assert.doesNotMatch(firebaseAdmin, /credential\.cert|private_key|client_email/, 'runtime must remain ADC-only');
 assert.match(firebaseAdmin, /writeRequiredAuditLog/, 'authentication-sensitive audit writes must have a non-swallowing path');
+
+assert.equal(existsSync(fileURLToPath(new URL('../../../firestore/firestore.rules', import.meta.url))), false, 'superseded nested Firestore ruleset must remain absent');
 
 const firestoreRules = await readRoot('firestore.rules');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
