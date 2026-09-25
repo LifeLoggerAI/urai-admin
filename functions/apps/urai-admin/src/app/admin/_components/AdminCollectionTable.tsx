@@ -7,8 +7,6 @@ export type CollectionKey =
   | 'projectRegistry'
   | 'featureFlags'
   | 'jobs'
-  | 'jobRuns'
-  | 'deadLetters'
   | 'roles'
   | 'systemConfig'
   | 'systemRegistry'
@@ -25,6 +23,7 @@ type AdminCollectionTableProps = {
   columns: AdminColumn[];
   emptyLabel: string;
   limit?: number;
+  status?: string;
 };
 
 function formatValue(value: RecordValue | undefined) {
@@ -54,15 +53,16 @@ function formatValue(value: RecordValue | undefined) {
   }
 }
 
-export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 100 }: AdminCollectionTableProps) {
+export function AdminCollectionTable({ collection, columns, emptyLabel, limit = 100, status }: AdminCollectionTableProps) {
   const [records, setRecords] = useState<AdminRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams({ collection, limit: String(limit) });
+    if (status) params.set('status', status);
     return `/api/admin/collection?${params.toString()}`;
-  }, [collection, limit]);
+  }, [collection, limit, status]);
 
   useEffect(() => {
     let cancelled = false;
