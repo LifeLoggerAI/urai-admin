@@ -17,6 +17,7 @@ const expectedRoutes = [
   'admin/feature-flags/page.tsx',
   'admin/policies/page.tsx',
   'admin/privacy-requests/page.tsx',
+  'admin/storytime-moderation/page.tsx',
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
   'admin/settings/page.tsx',
@@ -102,6 +103,24 @@ requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'SENSITIVE_KEY_PATTERN',
   'REDACTED',
   'requireAdminSession',
+]);
+requireTokens(join(appRoot, 'admin/storytime-moderation/page.tsx'), [
+  'Connection',
+  'Not connected',
+  'listStorytimeModerationCases',
+  'getStorytimeModerationCase',
+  'transitionStorytimeModerationCase',
+  'escalate',
+  'close_blocked',
+  'performs no remote reads or mutations',
+  'direct Storytime Firestore coupling',
+  'approve/release action',
+]);
+forbidTokens(join(appRoot, 'admin/storytime-moderation/page.tsx'), [
+  'firebase/firestore',
+  'getFirestore(',
+  'collection(',
+  'httpsCallable(',
 ]);
 requireTokens(join(appRoot, 'api/health/route.ts'), ['urai-admin', 'Cache-Control', 'no-store']);
 requireTokens('.github/workflows/deploy.yml', [
