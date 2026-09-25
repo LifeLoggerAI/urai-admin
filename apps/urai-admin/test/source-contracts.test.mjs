@@ -208,6 +208,8 @@ assert.match(firebaseAdmin, /writeRequiredAuditLog/, 'authentication-sensitive a
 assert.equal(existsSync(fileURLToPath(new URL('../../../firestore/firestore.rules', import.meta.url))), false, 'superseded nested Firestore ruleset must remain absent');
 
 const firestoreRules = await readRoot('firestore.rules');
+assert.doesNotMatch(firestoreRules, /match \/jobRuns\//, 'legacy jobRuns collection authority must remain absent');
+assert.doesNotMatch(firestoreRules, /match \/deadLetters\//, 'legacy deadLetters collection authority must remain absent');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
 assert.match(firestoreRules, /function\s+adminRecord\(\)\s*\{\s*return get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data;\s*\}/s, 'Firestore rules must resolve the canonical adminUsers record');
 assert.match(firestoreRules, /function\s+hasActiveAdminRecord\(\)\s*\{[\s\S]*exists\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)[\s\S]*adminRecord\(\)\.isActive\s*==\s*true;\s*\}/, 'Firestore admin access must require an existing active adminUsers record');
