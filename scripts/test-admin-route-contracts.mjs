@@ -18,6 +18,7 @@ const expectedRoutes = [
   'admin/policies/page.tsx',
   'admin/privacy-requests/page.tsx',
   'admin/storytime-moderation/page.tsx',
+  'admin/global-emotional-weather/page.tsx',
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
   'admin/settings/page.tsx',
@@ -100,10 +101,25 @@ requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
 requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'COLLECTIONS',
   'privacyRequests',
+  'populationWeatherOps',
+  'humanitarianAttentionReviews',
   'SENSITIVE_KEY_PATTERN',
   'REDACTED',
   'requireAdminSession',
 ]);
+requireTokens(join(appRoot, 'admin/global-emotional-weather/page.tsx'), [
+  'Aggregate only',
+  'Contribution data',
+  'populationWeatherOps',
+  'humanitarianAttentionReviews',
+  'no route to individual contributors',
+]);
+forbidTokens(join(appRoot, 'admin/global-emotional-weather/page.tsx'), [
+  'subjectPseudonym',
+  'revocationKey',
+  'populationContributions',
+]);
+
 requireTokens(join(appRoot, 'admin/storytime-moderation/page.tsx'), [
   'Connection',
   'Not connected',
@@ -157,6 +173,9 @@ requireTokens('firestore.rules', [
   'Raw passive telemetry remains server-only',
   "match /{rawAnalyticsCollection}/{eventId}",
   'allow read, write: if false',
+  'match /populationContributions/{contributionId}',
+  'match /populationRevocations/{revocationId}',
+  'match /populationPrivacyBudgets/{budgetId}',
 ]);
 requireTokens('scripts/seed-system-registry.mjs', [
   'conflictingRegistryRecords',
