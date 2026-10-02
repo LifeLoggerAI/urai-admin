@@ -89,7 +89,7 @@ export const aggregateAnalytics = functions.runWith({ memory: '512MB', timeoutSe
 });
 
 // --- Next.js Hosting ---
-// The production build step packages apps/urai-admin into functions/apps/urai-admin
+// The production build step packages apps/urai-admin into functions/.generated/urai-admin
 // so Firebase Functions deploys a self-contained server-rendered Next app.
 const adminProductionUrl = defineString('URAI_ADMIN_PRODUCTION_URL');
 const adminAllowedOrigins = defineString('URAI_ADMIN_ALLOWED_ORIGINS');
@@ -104,7 +104,7 @@ function bindAdminOriginEnvironment() {
   process.env.URAI_ADMIN_ALLOWED_ORIGINS = allowedOrigins;
 }
 
-const packagedNextAppDir = join(__dirname, '..', 'apps', 'urai-admin');
+const packagedNextAppDir = join(__dirname, '..', '.generated', 'urai-admin');
 const isDev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev: isDev, dir: packagedNextAppDir });
 const handle = nextApp.getRequestHandler();
