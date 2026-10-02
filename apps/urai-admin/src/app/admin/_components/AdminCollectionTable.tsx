@@ -11,6 +11,8 @@ export type CollectionKey =
   | 'systemConfig'
   | 'systemRegistry'
   | 'privacyRequests'
+  | 'populationWeatherOps'
+  | 'humanitarianAttentionReviews'
   | 'auditLogs';
 
 export type AdminColumn = { key: string; label: string };
