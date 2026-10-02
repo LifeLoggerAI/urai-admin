@@ -15,7 +15,7 @@ assert.match(source, /export\s+const\s+nextServer\b/, 'nextServer must remain ex
 assert.match(source, /functions\.https\.onRequest/, 'nextServer must be an HTTPS request handler');
 assert.match(source, /from\s+['"]next['"]/, 'nextServer requires the Next runtime package');
 assert.match(source, /packagedNextAppDir/, 'nextServer must resolve the packaged Next app directory');
-assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]apps['"],\s*['"]urai-admin['"]\)/, 'nextServer must point at functions/apps/urai-admin after build');
+assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]\.generated['"],\s*['"]urai-admin['"]\)/, 'nextServer must point at the hermetic generated Functions app bundle after build');
 assert.match(source, /dir:\s*packagedNextAppDir/, 'nextServer must run from the packaged app directory');
 assert.match(source, /defineString\(['"]URAI_ADMIN_PRODUCTION_URL['"]\)/, 'Functions must declare the production-origin runtime parameter');
 assert.match(source, /defineString\(['"]URAI_ADMIN_ALLOWED_ORIGINS['"]\)/, 'Functions must declare the origin-allowlist runtime parameter');
@@ -37,7 +37,7 @@ assert.doesNotMatch(source, /json\(\{[^}]*GOOGLE_APPLICATION_CREDENTIALS/s, 'Adm
 
 assert.match(rootPkg.scripts?.build ?? '', /package-next-for-functions\.sh/, 'root build must package Next before building Functions');
 assert.match(packager, /APP_DIR=.*apps\/urai-admin/, 'packager must define the app source directory');
-assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/apps\/urai-admin/, 'packager must define the Functions staging directory');
+assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/\.generated\/urai-admin/, 'packager must define a generated Functions staging directory outside tracked source');
 assert.match(packager, /\$\{APP_DIR\}\/\.next/, 'packager must require the app Next build output');
 assert.match(packager, /\$\{FUNCTIONS_APP_DIR\}\/\.next/, 'packager must stage the Next build output under Functions');
 assert.match(packager, /rm -rf "\$\{FUNCTIONS_APP_DIR\}"/, 'packager must clean the staged app before copying');
