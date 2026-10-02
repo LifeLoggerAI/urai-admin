@@ -11,6 +11,7 @@ const sections = [
   { href: '/admin/policies', label: 'Roles & Policies', description: 'Review admin governance, role definitions, and permission intent.' },
   { href: '/admin/privacy-requests', label: 'Privacy Requests', description: 'Review minimized request metadata only; raw private payloads stay out of the generic console reader.' },
   { href: '/admin/storytime-moderation', label: 'Storytime Moderation', description: 'Inspect the hard-off Storytime moderation contract without direct Firestore coupling or release authority.' },
+  { href: '/admin/global-emotional-weather', label: 'Global Emotional Weather', description: 'Monitor aggregate-only population health, privacy suppression, and humanitarian review state without contributor access.' },
   { href: '/admin/system', label: 'System', description: 'View system config and operational health after environment and monitoring proof is recorded.' },
   { href: '/admin/settings', label: 'Settings', description: 'Inspect runtime settings and production control-plane configuration.' },
   { href: '/admin/audit', label: 'Audit Log', description: 'Review admin actions and before/after metadata.' },
