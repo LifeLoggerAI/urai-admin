@@ -22,6 +22,19 @@ assert.match(source, /defineString\(['"]URAI_ADMIN_ALLOWED_ORIGINS['"]\)/, 'Func
 assert.match(source, /bindAdminOriginEnvironment\(\)/, 'nextServer must bind deployed origin parameters before handling requests');
 assert.match(source, /Deployed Admin origin parameters are not configured/, 'deployed Admin must fail closed when origin parameters are absent');
 
+assert.match(source, /export\s+const\s+health\s*=\s*functions\.https\.onRequest/, 'Admin must expose a non-secret health primitive');
+assert.match(source, /export\s+const\s+readiness\s*=\s*functions\.https\.onRequest/, 'Admin must expose a readiness primitive');
+assert.match(source, /export\s+function\s+evaluateAdminReadiness/, 'Admin readiness predicates must remain independently testable');
+assert.match(source, /projectIdentityPresent/, 'Admin readiness must require provider project identity');
+assert.match(source, /revisionPresent/, 'Admin readiness must require deployed revision identity');
+assert.match(source, /productionOriginHttps/, 'Admin readiness must require HTTPS production origin');
+assert.match(source, /allowedOriginsHttps/, 'Admin readiness must reject non-HTTPS allowlist members');
+assert.match(source, /productionOriginAllowed/, 'Admin readiness must require the production origin in the protected allowlist');
+assert.match(source, /packagedAdminApp/, 'Admin readiness must verify the packaged Next app exists');
+assert.match(source, /result\.ready \? 200 : 503/, 'Admin readiness must fail closed with HTTP 503');
+assert.match(source, /Cache-Control['"],\s*['"]no-store/, 'health/readiness responses must not be cached');
+assert.doesNotMatch(source, /json\(\{[^}]*GOOGLE_APPLICATION_CREDENTIALS/s, 'Admin operations endpoints must not return credential material');
+
 assert.match(rootPkg.scripts?.build ?? '', /package-next-for-functions\.sh/, 'root build must package Next before building Functions');
 assert.match(packager, /APP_DIR=.*apps\/urai-admin/, 'packager must define the app source directory');
 assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/apps\/urai-admin/, 'packager must define the Functions staging directory');

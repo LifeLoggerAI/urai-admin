@@ -2,12 +2,18 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { defineString } from 'firebase-functions/params';
 import next from 'next';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import {
+  createInstitutionalControlPlaneStore,
+  INSTITUTIONAL_RUNTIME_SCHEMA_VERSION,
+} from './institutionalControlPlane';
 
 export { aggregateUraiAnalyticsV1 } from './uraiAnalyticsV1';
 
 admin.initializeApp();
 const db = admin.firestore();
+const institutionalControlPlane = createInstitutionalControlPlaneStore(db);
 
 function errorMessage(error: unknown): string {
     if (error instanceof Error) {
@@ -102,6 +108,95 @@ const packagedNextAppDir = join(__dirname, '..', 'apps', 'urai-admin');
 const isDev = process.env.NODE_ENV !== 'production';
 const nextApp = next({ dev: isDev, dir: packagedNextAppDir });
 const handle = nextApp.getRequestHandler();
+
+export interface AdminReadinessInput {
+  projectIdentityPresent: boolean;
+  revisionPresent: boolean;
+  productionUrl: string;
+  allowedOrigins: string;
+  packagedAppPresent: boolean;
+}
+
+export interface AdminReadinessResult {
+  ready: boolean;
+  checks: Record<string, boolean>;
+}
+
+function httpsOrigin(value: string): string | null {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+export function evaluateAdminReadiness(input: AdminReadinessInput): AdminReadinessResult {
+  const productionOrigin = httpsOrigin(input.productionUrl);
+  const allowed = input.allowedOrigins.split(',').map((value) => value.trim()).filter(Boolean);
+  const allowedOrigins = allowed.map(httpsOrigin);
+  const checks = {
+    projectIdentity: input.projectIdentityPresent,
+    runtimeRevision: input.revisionPresent,
+    productionOriginHttps: productionOrigin !== null,
+    allowedOriginsPresent: allowed.length > 0,
+    allowedOriginsHttps: allowed.length > 0 && allowedOrigins.every((origin) => origin !== null),
+    productionOriginAllowed: productionOrigin !== null && allowedOrigins.includes(productionOrigin),
+    packagedAdminApp: input.packagedAppPresent,
+  };
+  return {ready: Object.values(checks).every(Boolean), checks};
+}
+
+export const health = functions.https.onRequest((_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.status(200).json({
+    service: 'urai-admin',
+    status: 'ok',
+    projectIdentityPresent: Boolean(process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT),
+    revisionPresent: Boolean(process.env.K_REVISION),
+  });
+});
+
+export const readiness = functions.https.onRequest((_req, res) => {
+  let productionUrl = '';
+  let allowedOrigins = '';
+  try {
+    productionUrl = adminProductionUrl.value().trim();
+    allowedOrigins = adminAllowedOrigins.value().trim();
+  } catch {
+    // Missing protected runtime parameters are represented only as failed booleans below.
+  }
+
+  const result = evaluateAdminReadiness({
+    projectIdentityPresent: Boolean(process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT),
+    revisionPresent: Boolean(process.env.K_REVISION),
+    productionUrl,
+    allowedOrigins,
+    packagedAppPresent: existsSync(join(packagedNextAppDir, 'package.json')),
+  });
+
+  res.set('Cache-Control', 'no-store');
+  res.status(result.ready ? 200 : 503).json({
+    service: 'urai-admin',
+    status: result.ready ? 'ready' : 'not_ready',
+    checks: result.checks,
+  });
+});
+
+export const institutionalControlPlaneReadiness = functions.https.onRequest(async (_req, res) => {
+  const result = await institutionalControlPlane.readRuntimeReadiness({
+    projectIdentityPresent: Boolean(process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT),
+    revisionPresent: Boolean(process.env.K_REVISION),
+  });
+  res.set('Cache-Control', 'no-store');
+  res.status(result.ready ? 200 : 503).json({
+    service: 'urai-admin-control-plane',
+    schemaVersion: INSTITUTIONAL_RUNTIME_SCHEMA_VERSION,
+    status: result.ready ? 'ready' : 'not_ready',
+    checks: result.checks,
+    killSwitch: result.killSwitch,
+  });
+});
 
 export const nextServer = functions.https.onRequest((req, res) => {
   bindAdminOriginEnvironment();

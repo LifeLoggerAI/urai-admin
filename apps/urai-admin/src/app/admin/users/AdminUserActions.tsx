@@ -66,10 +66,10 @@ export function AdminUserActions({ uid, role, isActive }: AdminUserActionsProps)
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/update-user-role', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(uid)}/role`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, role: nextRole }),
+        body: JSON.stringify({ role: nextRole }),
       });
 
       if (!response.ok) {

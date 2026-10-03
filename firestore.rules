@@ -136,16 +136,6 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /jobRuns/{runId} {
-      allow read: if isViewerOrAbove();
-      allow write: if false;
-    }
-
-    match /deadLetters/{letterId} {
-      allow read: if isOwnerOrAdmin();
-      allow write: if false;
-    }
-
     match /featureFlags/{key} {
       allow read: if isViewerOrAbove();
       allow write: if false;

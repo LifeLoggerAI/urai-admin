@@ -16,7 +16,7 @@ env:
 
 jobs:
   verify:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_FIREBASE_API_KEY: dummy
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -82,4 +82,4 @@ jobs:
             /tmp/urai-admin-production-verify.log
             /tmp/urai-admin-final-source-status.log
           if-no-files-found: error
-          retention-days: 365
+          retention-days: 90

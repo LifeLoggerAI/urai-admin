@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -90,6 +89,20 @@ jobs:
           test "$emulator_status" -eq 0
           test -s "$URAI_ADMIN_EMULATOR_RECEIPT_PATH"
 
+      - name: Protected Auth/RBAC runtime emulator receipt
+        shell: bash
+        env:
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          GCLOUD_PROJECT: urai-admin-emulator
+          GOOGLE_CLOUD_PROJECT: urai-admin-emulator
+          URAI_ADMIN_AUTH_RUNTIME_RECEIPT_PATH: /tmp/urai-admin-auth-runtime-emulator-receipt.json
+          URAI_ADMIN_AUTH_RUNTIME_SERVER_LOG_PATH: /tmp/urai-admin-auth-runtime-server.log
+        run: |
+          set -euo pipefail
+          pnpm receipt:admin-auth-runtime:emulator 2>&1 | tee /tmp/urai-admin-auth-runtime-emulator.log
+          test -s "$URAI_ADMIN_AUTH_RUNTIME_RECEIPT_PATH"
+
       - name: Security gate
         run: pnpm security:gate
 
@@ -155,6 +168,18 @@ jobs:
             /tmp/urai-admin-system-registry-emulator-diagnostic.log
             /tmp/urai-admin-registry-contract.log
             /tmp/urai-admin-registry-emulator.log
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload protected Auth/RBAC runtime receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: urai-admin-auth-runtime-emulator-${{ env.TARGET_SHA }}
+          path: |
+            /tmp/urai-admin-auth-runtime-emulator-receipt.json
+            /tmp/urai-admin-auth-runtime-emulator.log
+            /tmp/urai-admin-auth-runtime-server.log
           if-no-files-found: warn
           retention-days: 90
 

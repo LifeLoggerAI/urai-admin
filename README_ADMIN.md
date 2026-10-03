@@ -15,13 +15,13 @@ This README is intentionally conservative: do not treat the admin system as prod
 
 ## Source-of-truth warning
 
-The repo currently references `urai-4dc1d` as the intended admin project in release scripts and readiness docs. `.firebaserc` also contains a separate `default` project value. Before any production deployment, an authorized operator must verify the active Firebase project, hosting site, DNS, Auth domains, and protected environment configuration.
+The canonical Admin Firebase project in release configuration is `urai-4dc1d`. Before any production deployment, an authorized operator must still verify the active Firebase project, hosting site, DNS, Auth domains, WIF principal, deploy service account, and protected environment configuration from provider evidence. Source configuration is intent, not provider-state proof.
 
 Do not deploy from a shell where the active Firebase project or identity is uncertain.
 
 ## Prerequisites
 
-- Node.js 20 or later
+- Node.js 22 for the locked Functions/release toolchain
 - pnpm 9.15.0 or compatible with the root `packageManager`
 - Firebase CLI with access to the intended Firebase project
 - Application Default Credentials for local/server operator flows where authenticated provider access is required
