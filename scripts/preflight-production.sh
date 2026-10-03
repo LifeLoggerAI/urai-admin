@@ -85,7 +85,7 @@ else
 fi
 
 require_grep '"source": "apps/urai-admin"' "firebase.json" "firebase.json hosting source points to apps/urai-admin"
-require_grep '"runtime": "nodejs20"' "firebase.json" "firebase.json functions runtime is nodejs20"
+require_grep '"runtime": "nodejs22"' "firebase.json" "firebase.json functions runtime is nodejs22"
 require_grep '"default": "urai-4dc1d"' ".firebaserc" ".firebaserc default project is urai-4dc1d"
 require_grep '"admin": "urai-4dc1d"' ".firebaserc" ".firebaserc has admin project alias for urai-4dc1d"
 require_grep 'allow read, write: if false;' "storage.rules" "storage rules remain deny-all by default"

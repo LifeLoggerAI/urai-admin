@@ -4,17 +4,18 @@ export default function DeadLettersPage() {
   return (
     <SpatialCollectionPage
       eyebrow="Failure recovery"
-      title="Dead letters"
-      description="Surface failed queue events that need operational follow-up, retry planning, or source-system cleanup."
+      title="Dead jobs"
+      description="Surface DEAD records from the canonical URAI Jobs ledger for controlled recovery. No separate deadLetters collection is treated as authority."
       signalValue="Recovery queue"
-      collection="deadLetters"
-      emptyLabel="No dead letters found."
+      collection="jobs"
+      status="DEAD"
+      emptyLabel="No dead jobs found."
       columns={[
-        { key: 'id', label: 'Letter' },
-        { key: 'source', label: 'Source' },
-        { key: 'reason', label: 'Reason' },
-        { key: 'attempts', label: 'Attempts' },
-        { key: 'createdAt', label: 'Created' },
+        { key: 'id', label: 'Job' },
+        { key: 'type', label: 'Type' },
+        { key: 'status', label: 'Status' },
+        { key: 'retryCount', label: 'Retries' },
+        { key: 'updatedAt', label: 'Updated' },
       ]}
     />
   );

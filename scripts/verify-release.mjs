@@ -92,8 +92,8 @@ requireScript(packageJson, 'preflight:production', 'preflight-production.sh');
 requireScript(packageJson, 'verify:production', 'verify-production-live.sh');
 requireScript(packageJson, 'smoke-test', 'smoke-test.sh');
 
-if (firebaseJson?.functions?.[0]?.runtime !== 'nodejs20') {
-  fail('firebase.json functions runtime must be nodejs20');
+if (firebaseJson?.functions?.[0]?.runtime !== 'nodejs22') {
+  fail('firebase.json functions runtime must be nodejs22');
 }
 
 if (firebaseJson?.hosting?.source !== 'apps/urai-admin') {

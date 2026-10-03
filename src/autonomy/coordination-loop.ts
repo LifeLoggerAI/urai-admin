@@ -1,3 +1,7 @@
+// LEGACY / DORMANT PROTOTYPE.
+// This loop is not connected to the production Admin system registry and must not be
+// used as live-health or autonomous-remediation authority. Current orchestration must
+// use the governed institutional/control-plane contracts and protected runtime evidence.
 export type SystemRegistry = {
   services: Array<{ name: string; status: string; lastSeen?: number }>
 };

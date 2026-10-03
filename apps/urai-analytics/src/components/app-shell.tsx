@@ -16,7 +16,7 @@ export function AppShell({ title, children }: { title: string; children: React.R
     <div className="appshell">
       <aside className="sidebar">
         <Link href="/" className="brand">URAI Analytics</Link>
-        <p>Workspace: <span className="badge">Demo Production</span></p>
+        <p>Workspace: <span className="badge">Fixture workspace</span></p>
         <nav className="side-nav">
           {links.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}
         </nav>
@@ -24,7 +24,11 @@ export function AppShell({ title, children }: { title: string; children: React.R
       <main className="main">
         <div className="toolbar">
           <div><p className="eyebrow">V1 Command Center</p><h2>{title}</h2></div>
-          <div className="ctas"><span className="badge">Last 7 days</span><span className="badge">Production</span></div>
+          <div className="ctas"><span className="badge">Static fixture window</span><span className="badge">Demo · not production</span></div>
+        </div>
+        <div className="card" role="status">
+          <strong>Demo fixture data — not production telemetry.</strong>
+          <p>Provider/runtime readback is not connected on this surface. Values below are static sample data for interface verification only.</p>
         </div>
         {children}
       </main>

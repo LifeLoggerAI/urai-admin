@@ -6,8 +6,18 @@ import './spatial-admin.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'URAI Admin | Secure admin OS for AI products',
-  description: 'URAI Admin is a standalone operations console for AI apps, Firebase products, feature flags, jobs, audit logs, and internal teams.',
+  title: 'URAI Admin — System-of-systems control plane',
+  description: 'URAI Admin is the protected control plane for systems, releases, evidence, workflows, providers, policy, incidents, domains, cost, audit, and governance.',
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({

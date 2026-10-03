@@ -35,6 +35,8 @@
   html {
     scroll-behavior: smooth;
     background: #020617;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -364,5 +366,19 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+
+@layer base {
+  :where(a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 3px solid rgb(165, 243, 252);
+    outline-offset: 3px;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(.hero-glass, .world-card, .command-world, .spatial-table-shell, .spatial-table-state) {
+    border: 1px solid CanvasText;
   }
 }

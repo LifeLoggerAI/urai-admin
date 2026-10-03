@@ -13,7 +13,6 @@ export default function PrivacyRequestsPage() {
         { key: 'id', label: 'Request' },
         { key: 'type', label: 'Type' },
         { key: 'status', label: 'Status' },
-        { key: 'requesterEmail', label: 'Requester' },
         { key: 'createdAt', label: 'Created' },
         { key: 'updatedAt', label: 'Updated' },
       ]}

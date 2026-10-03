@@ -2,15 +2,18 @@
 
 **Current verdict: PARTIAL / BLOCKED FOR PRODUCTION**
 
-Date: 2026-06-30
-Target production domain: `https://www.uraiadmin.com`
-Runtime lock: pnpm workspace, Node 20, Next.js app in `apps/urai-admin`, Firebase Hosting, Firebase Functions, Firebase Auth, Firestore, Storage rules.
+Current authority date: 2026-09-23
+Target production surfaces: `https://uraiadmin.com`, intended `https://www.uraiadmin.com`, and Firebase Hosting readback.
+Runtime lock: pnpm workspace, Node 22, Next.js app in `apps/urai-admin`, Firebase Hosting, Firebase Functions, Firebase Auth, Firestore, Storage rules.
+Production deployment authority: protected GitHub `Deploy URAI Admin` workflow using OIDC → Google Workload Identity Federation → short-lived ADC. Long-lived Firebase tokens and raw service-account keys are not release authority.
+
+Any source change invalidates predecessor exact-head workflow/review evidence. Current proof must always bind to the exact release SHA actually reviewed, merged, deployed, and read back from the provider.
 
 ## Production-lock definition
 
 `urai-admin` is production locked only when every release gate below has command output, deployment evidence, or an explicit documented deferral with owner, date, risk, and rollback path. A passing source review or local build is not enough. Staging smoke, production environment validation, DNS/SSL, monitoring, rollback proof, admin seed, legal links, and owner approval are mandatory.
 
-## 2026-06-30 done-done completion status
+## Historical 2026-06-30 source-completion status
 
 The source-level admin safety posture was improved on branch `production-lock-admin-20260630`:
 
@@ -24,7 +27,7 @@ These fixes improve source readiness, but they do not satisfy production lock. E
 
 ## Privacy boundary
 
-URAI Admin is an internal operations control plane. It may display operational metadata, admin audit events, system health, partner review state, release evidence, aggregate analytics status, and communications status. It must not expose raw consumer passive telemetry, raw audio, private transcripts, consumer identity vectors, raw privacy request payloads, or unreviewed health/mental-health inference records unless a privacy review explicitly approves the collection, route, field list, retention model, and admin role.
+URAI Admin consists of a public informational/product shell plus a protected internal operations control plane. Public pages may explain the product and trust boundary but must not expose private operator state or fabricated operational truth. Protected Admin may display operational metadata, admin audit events, system health, partner review state, release evidence, aggregate analytics status, and communications status. It must not expose raw consumer passive telemetry, raw audio, private transcripts, consumer identity vectors, raw privacy request payloads, or unreviewed health/mental-health inference records unless a privacy review explicitly approves the collection, route, field list, retention model, and admin role.
 
 ## Evidence table
 
@@ -56,6 +59,10 @@ URAI Admin is an internal operations control plane. It may display operational m
 | Monitoring | Alerting/logging dashboard link or deferral | BLOCKED | Needs evidence |
 | Rollback | Known-good SHA/release and rollback command proof | BLOCKED | Rollback helper exists; proof required |
 | Owner approval | Adam Clamp or designated owner signoff | BLOCKED | Required before production ready |
+
+## Current release evidence rule
+
+The detailed 2026-06-30 table below is retained as historical gate design, not as a claim about the current head. For the active release candidate, machine gates, independent review, protected runtime acceptance, deployment, monitoring, rollback, and live readback must be recorded against the current exact SHA in `docs/EVIDENCE_LOG.md` and provider/GitHub evidence. A predecessor PASS never transfers after a source mutation.
 
 ## Required command sequence
 

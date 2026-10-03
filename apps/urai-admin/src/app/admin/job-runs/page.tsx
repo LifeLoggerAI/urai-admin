@@ -4,17 +4,18 @@ export default function JobRunsPage() {
   return (
     <SpatialCollectionPage
       eyebrow="Execution telemetry"
-      title="Job runs"
-      description="Review recent execution status, timing, and outcomes from the authenticated runtime admin API."
-      signalValue="Run ledger"
-      collection="jobRuns"
-      emptyLabel="No job runs found."
+      title="Terminal job history"
+      description="Review completed, failed, dead, and cancelled records from the canonical URAI Jobs ledger. This is not a separate jobRuns datastore."
+      signalValue="Terminal ledger"
+      collection="jobs"
+      status="terminal"
+      emptyLabel="No terminal jobs found."
       columns={[
-        { key: 'id', label: 'Run' },
-        { key: 'jobId', label: 'Job' },
+        { key: 'id', label: 'Job' },
+        { key: 'type', label: 'Type' },
         { key: 'status', label: 'Status' },
-        { key: 'startedAt', label: 'Started' },
-        { key: 'endedAt', label: 'Ended' },
+        { key: 'retryCount', label: 'Retries' },
+        { key: 'updatedAt', label: 'Updated' },
       ]}
     />
   );

@@ -15,16 +15,29 @@ assert.match(source, /export\s+const\s+nextServer\b/, 'nextServer must remain ex
 assert.match(source, /functions\.https\.onRequest/, 'nextServer must be an HTTPS request handler');
 assert.match(source, /from\s+['"]next['"]/, 'nextServer requires the Next runtime package');
 assert.match(source, /packagedNextAppDir/, 'nextServer must resolve the packaged Next app directory');
-assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]apps['"],\s*['"]urai-admin['"]\)/, 'nextServer must point at functions/apps/urai-admin after build');
+assert.match(source, /join\(__dirname,\s*['"]\.\.['"],\s*['"]\.generated['"],\s*['"]urai-admin['"]\)/, 'nextServer must point at the hermetic generated Functions app bundle after build');
 assert.match(source, /dir:\s*packagedNextAppDir/, 'nextServer must run from the packaged app directory');
 assert.match(source, /defineString\(['"]URAI_ADMIN_PRODUCTION_URL['"]\)/, 'Functions must declare the production-origin runtime parameter');
 assert.match(source, /defineString\(['"]URAI_ADMIN_ALLOWED_ORIGINS['"]\)/, 'Functions must declare the origin-allowlist runtime parameter');
 assert.match(source, /bindAdminOriginEnvironment\(\)/, 'nextServer must bind deployed origin parameters before handling requests');
 assert.match(source, /Deployed Admin origin parameters are not configured/, 'deployed Admin must fail closed when origin parameters are absent');
 
+assert.match(source, /export\s+const\s+health\s*=\s*functions\.https\.onRequest/, 'Admin must expose a non-secret health primitive');
+assert.match(source, /export\s+const\s+readiness\s*=\s*functions\.https\.onRequest/, 'Admin must expose a readiness primitive');
+assert.match(source, /export\s+function\s+evaluateAdminReadiness/, 'Admin readiness predicates must remain independently testable');
+assert.match(source, /projectIdentityPresent/, 'Admin readiness must require provider project identity');
+assert.match(source, /revisionPresent/, 'Admin readiness must require deployed revision identity');
+assert.match(source, /productionOriginHttps/, 'Admin readiness must require HTTPS production origin');
+assert.match(source, /allowedOriginsHttps/, 'Admin readiness must reject non-HTTPS allowlist members');
+assert.match(source, /productionOriginAllowed/, 'Admin readiness must require the production origin in the protected allowlist');
+assert.match(source, /packagedAdminApp/, 'Admin readiness must verify the packaged Next app exists');
+assert.match(source, /result\.ready \? 200 : 503/, 'Admin readiness must fail closed with HTTP 503');
+assert.match(source, /Cache-Control['"],\s*['"]no-store/, 'health/readiness responses must not be cached');
+assert.doesNotMatch(source, /json\(\{[^}]*GOOGLE_APPLICATION_CREDENTIALS/s, 'Admin operations endpoints must not return credential material');
+
 assert.match(rootPkg.scripts?.build ?? '', /package-next-for-functions\.sh/, 'root build must package Next before building Functions');
 assert.match(packager, /APP_DIR=.*apps\/urai-admin/, 'packager must define the app source directory');
-assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/apps\/urai-admin/, 'packager must define the Functions staging directory');
+assert.match(packager, /FUNCTIONS_APP_DIR=.*functions\/\.generated\/urai-admin/, 'packager must define a generated Functions staging directory outside tracked source');
 assert.match(packager, /\$\{APP_DIR\}\/\.next/, 'packager must require the app Next build output');
 assert.match(packager, /\$\{FUNCTIONS_APP_DIR\}\/\.next/, 'packager must stage the Next build output under Functions');
 assert.match(packager, /rm -rf "\$\{FUNCTIONS_APP_DIR\}"/, 'packager must clean the staged app before copying');
