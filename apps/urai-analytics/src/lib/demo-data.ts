@@ -1,11 +1,11 @@
 import type { DailyWorkspaceMetrics } from '@urai/analytics-core';
 
 export const demoMetrics: DailyWorkspaceMetrics = {
-  id: 'org_demo_wrk_demo_production_2026-05-11',
+  id: 'org_demo_wrk_demo_preview_2026-05-11',
   date: '2026-05-11',
   organizationId: 'org_demo',
   workspaceId: 'wrk_demo',
-  environment: 'production',
+  environment: 'preview',
   totalEvents: 18420,
   activeUsers: 1248,
   anonymousUsers: 391,
@@ -53,6 +53,6 @@ export const reports = [
 ];
 
 export const apiKeys = [
-  { id: 'key_live_demo', name: 'Production ingest key', prefix: 'urai_live', scopes: 'events:write', status: 'active' },
-  { id: 'key_dev_demo', name: 'Development ingest key', prefix: 'urai_dev', scopes: 'events:write metrics:read', status: 'active' }
+  { id: 'key_demo_primary', name: 'Demo ingest key', prefix: 'urai_demo', scopes: 'events:write', status: 'fixture' },
+  { id: 'key_demo_secondary', name: 'Demo read/write key', prefix: 'urai_demo', scopes: 'events:write metrics:read', status: 'fixture' }
 ];

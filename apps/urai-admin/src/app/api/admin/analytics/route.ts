@@ -29,9 +29,19 @@ export async function GET(req: NextRequest) {
     const dauDoc = await firestore.collection('analytics_aggregates').doc(`dau_${dateStr}`).get();
     const eventsDoc = await firestore.collection('analytics_aggregates').doc(`events_${dateStr}`).get();
 
+    const available = dauDoc.exists || eventsDoc.exists;
+
     return NextResponse.json({
-      dau: dauDoc.exists ? dauDoc.data() : { count: 0, date: dateStr },
-      events: eventsDoc.exists ? eventsDoc.data() : { counts: {}, date: dateStr },
+      authority: 'urai-admin-legacy-aggregate-compatibility',
+      canonicalAnalyticsIntegrated: false,
+      available,
+      date: dateStr,
+      dau: dauDoc.exists ? dauDoc.data() : null,
+      events: eventsDoc.exists ? eventsDoc.data() : null,
+      migrationTarget: 'aggregateUraiAnalyticsV1 / analyticsDailyWorkspaceMetrics',
+      note: available
+        ? 'Legacy Admin aggregate compatibility data. Do not treat this response as canonical urai-analytics authority.'
+        : 'No legacy Admin aggregate exists for this date. Zero activity must not be inferred from missing documents.',
     });
   } catch (error) {
     if (error instanceof Error && 'status' in error) {

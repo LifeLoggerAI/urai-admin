@@ -3,9 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="${ROOT_DIR}/apps/urai-admin"
-FUNCTIONS_APP_DIR="${ROOT_DIR}/functions/apps/urai-admin"
+FUNCTIONS_APP_DIR="${ROOT_DIR}/functions/.generated/urai-admin"
 
-echo "--- Packaging Next build and app source for Functions hosting ---"
+echo "--- Packaging hermetic Next runtime bundle for Functions hosting ---"
 
 if [[ ! -d "${APP_DIR}/.next" ]]; then
   echo "ERROR: Missing Next build output at ${APP_DIR}/.next. Run pnpm --dir apps/urai-admin build first." >&2

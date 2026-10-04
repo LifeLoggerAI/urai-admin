@@ -1,3 +1,6 @@
+// LEGACY / DORMANT PROTOTYPE.
+// Not production control-plane authority. The canonical Admin runtime lives in apps/urai-admin
+// and protected Functions/provider workflows. Do not use this prototype to assert live health.
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -20,7 +23,7 @@ app.get("/control-plane/status", (req, res) => {
   const registry = loadRegistry();
 
   const status = {
-    system: "URAI_CONTROL_PLANE_MVP",
+    system: "URAI_CONTROL_PLANE_LEGACY_MVP",
     timestamp: new Date().toISOString(),
     serviceCount: registry.services?.length || 0,
     services: registry.services?.map((s) => ({
@@ -51,7 +54,7 @@ app.get("/control-plane", (req, res) => {
       </style>
     </head>
     <body>
-      <div class="title">URAI Control Plane MVP</div>
+      <div class="title">URAI Control Plane — Legacy / Dormant Prototype</div>
       <div class="card">Services: ${registry.services.length}</div>
       ${registry.services.map((s) => `
         <div class="card">

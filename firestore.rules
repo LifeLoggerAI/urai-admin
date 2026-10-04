@@ -136,16 +136,6 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /jobRuns/{runId} {
-      allow read: if isViewerOrAbove();
-      allow write: if false;
-    }
-
-    match /deadLetters/{letterId} {
-      allow read: if isOwnerOrAdmin();
-      allow write: if false;
-    }
-
     match /featureFlags/{key} {
       allow read: if isViewerOrAbove();
       allow write: if false;
@@ -160,6 +150,31 @@ service cloud.firestore {
     match /analytics_aggregates/{aggregateId} {
       allow read: if isViewerOrAbove();
       allow write: if false;
+    }
+
+    // Population intelligence operations expose aggregate health and review
+    // metadata only. Underlying contributions and revocation keys remain
+    // server-only and have no Admin read path.
+    match /populationWeatherOps/{recordId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /humanitarianAttentionReviews/{reviewId} {
+      allow read: if isViewerOrAbove();
+      allow write: if false;
+    }
+
+    match /populationContributions/{contributionId} {
+      allow read, write: if false;
+    }
+
+    match /populationRevocations/{revocationId} {
+      allow read, write: if false;
+    }
+
+    match /populationPrivacyBudgets/{budgetId} {
+      allow read, write: if false;
     }
 
     match /analytics_job_runs/{jobId}/runs/{runId} {

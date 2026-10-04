@@ -17,6 +17,8 @@ const expectedRoutes = [
   'admin/feature-flags/page.tsx',
   'admin/policies/page.tsx',
   'admin/privacy-requests/page.tsx',
+  'admin/storytime-moderation/page.tsx',
+  'admin/global-emotional-weather/page.tsx',
   'admin/system/page.tsx',
   'admin/audit/page.tsx',
   'admin/settings/page.tsx',
@@ -76,6 +78,14 @@ requireTokens(join(appRoot, 'api/admin/users/[uid]/role/route.ts'), [
   'requireAdminMutationSession',
   'updateAdminRole',
 ]);
+requireTokens('apps/urai-admin/src/app/admin/users/AdminUserActions.tsx', [
+  '/api/admin/users/${encodeURIComponent(uid)}/role',
+  "method: 'PUT'",
+  'body: JSON.stringify({ role: nextRole })',
+]);
+forbidTokens('apps/urai-admin/src/app/admin/users/AdminUserActions.tsx', [
+  '/api/admin/update-user-role',
+]);
 requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
   'runTransaction',
   'roleMutation',
@@ -91,9 +101,42 @@ requireTokens('apps/urai-admin/src/lib/admin/update-admin-role.ts', [
 requireTokens(join(appRoot, 'api/admin/collection/route.ts'), [
   'COLLECTIONS',
   'privacyRequests',
+  'populationWeatherOps',
+  'humanitarianAttentionReviews',
   'SENSITIVE_KEY_PATTERN',
   'REDACTED',
   'requireAdminSession',
+]);
+requireTokens(join(appRoot, 'admin/global-emotional-weather/page.tsx'), [
+  'Aggregate only',
+  'Contribution data',
+  'populationWeatherOps',
+  'humanitarianAttentionReviews',
+  'no route to individual contributors',
+]);
+forbidTokens(join(appRoot, 'admin/global-emotional-weather/page.tsx'), [
+  'subjectPseudonym',
+  'revocationKey',
+  'populationContributions',
+]);
+
+requireTokens(join(appRoot, 'admin/storytime-moderation/page.tsx'), [
+  'Connection',
+  'Not connected',
+  'listStorytimeModerationCases',
+  'getStorytimeModerationCase',
+  'transitionStorytimeModerationCase',
+  'escalate',
+  'close_blocked',
+  'performs no remote reads or mutations',
+  'direct Storytime Firestore coupling',
+  'approve/release action',
+]);
+forbidTokens(join(appRoot, 'admin/storytime-moderation/page.tsx'), [
+  'firebase/firestore',
+  'getFirestore(',
+  'collection(',
+  'httpsCallable(',
 ]);
 requireTokens(join(appRoot, 'api/health/route.ts'), ['urai-admin', 'Cache-Control', 'no-store']);
 requireTokens('.github/workflows/deploy.yml', [
@@ -130,6 +173,9 @@ requireTokens('firestore.rules', [
   'Raw passive telemetry remains server-only',
   "match /{rawAnalyticsCollection}/{eventId}",
   'allow read, write: if false',
+  'match /populationContributions/{contributionId}',
+  'match /populationRevocations/{revocationId}',
+  'match /populationPrivacyBudgets/{budgetId}',
 ]);
 requireTokens('scripts/seed-system-registry.mjs', [
   'conflictingRegistryRecords',

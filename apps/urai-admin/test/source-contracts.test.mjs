@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -38,6 +39,14 @@ function isServerFirebaseAdminSource(source) {
   return /firebase-admin\/(app|firestore|auth)/.test(source) || /from ["']firebase-admin["']/.test(source);
 }
 
+const middlewareSource = await read('src/middleware.ts');
+assert.match(middlewareSource, /\['\/api\/jobs', '\/api\/analytics', '\/api\/dashboard', '\/api\/audit'\]\.includes\(pathname\)/, 'middleware must protect the legacy /api/jobs alias through the compatibility allowlist');
+assert.match(middlewareSource, /'\/api\/jobs'/, 'middleware matcher must include the legacy /api/jobs alias');
+assert.match(middlewareSource, /'\/api\/analytics'/, 'middleware matcher must include legacy analytics read');
+assert.match(middlewareSource, /'\/api\/dashboard'/, 'middleware matcher must include dashboard read');
+assert.match(middlewareSource, /'\/api\/audit'/, 'middleware matcher must include audit compatibility route');
+assert.match(middlewareSource, /'\/api\/qa\/:path\*'/, 'middleware matcher must include QA APIs');
+
 const requireAdminSession = await read('src/lib/admin/require-admin-session.ts');
 assert.match(requireAdminSession, /verifySessionCookie\(sessionCookie,\s*true\)/, 'admin sessions must verify revocation-aware Firebase session cookies');
 assert.match(requireAdminSession, /adminUsers/, 'admin sessions must check the adminUsers collection');
@@ -76,8 +85,46 @@ assert.match(sessionRoute, /response\.cookies\.set\('__session'/, 'session refre
 assert.match(sessionRoute, /export\s+async\s+function\s+DELETE/, 'session endpoint must support session clearing');
 assert.match(sessionRoute, /requireSameOrigin/, 'session clearing must reject untrusted origins');
 
+const privacyRequestsPage = await read('src/app/admin/privacy-requests/page.tsx');
+assert.doesNotMatch(privacyRequestsPage, /requesterEmail/, 'privacy request queue must not ask the redacted API for requester email');
+
+const analyticsRoute = await read('src/app/api/admin/analytics/route.ts');
+assert.match(analyticsRoute, /urai-admin-legacy-aggregate-compatibility/, 'legacy Admin analytics reader must identify compatibility authority');
+assert.match(analyticsRoute, /canonicalAnalyticsIntegrated:\s*false/, 'legacy Admin analytics reader must not claim canonical Analytics integration');
+assert.match(analyticsRoute, /Zero activity must not be inferred/, 'missing aggregate documents must not be represented as zero activity');
+
+const legacyJobsRoute = await read('src/app/api/jobs/route.ts');
+assert.match(legacyJobsRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'legacy /api/jobs must enforce admin session in the route itself');
+assert.match(legacyJobsRoute, /JOB_FIELDS/, 'legacy /api/jobs must minimize returned job fields');
+assert.doesNotMatch(legacyJobsRoute, /\.\.\.doc\.data\(\)/, 'legacy /api/jobs must not expose the full job document');
+assert.match(legacyJobsRoute, /deprecated:\s*true/, 'legacy /api/jobs must advertise deprecation');
+
+const qaImageRoute = await read('src/app/api/qa/image/route.ts');
+assert.match(qaImageRoute, /requireAdminSession\(request, \['owner'\]\)/, 'QA image reads must require owner session');
+assert.match(qaImageRoute, /deploy_screenshots/, 'QA image reads must stay inside deploy_screenshots');
+assert.match(qaImageRoute, /deploy_diffs/, 'QA image reads must stay inside deploy_diffs');
+assert.match(qaImageRoute, /X-Content-Type-Options/, 'QA image responses must disable content sniffing');
+assert.doesNotMatch(qaImageRoute, /fs\.readFile\(imagePath\)/, 'QA image route must never read an unvalidated caller path directly');
+
+const legacyAnalyticsRoute = await read('src/app/api/analytics/route.ts');
+assert.match(legacyAnalyticsRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'legacy analytics read must require admin session');
+
+const dashboardRoute = await read('src/app/api/dashboard/route.ts');
+assert.match(dashboardRoute, /requireAdminSession\(request, \['owner', 'admin', 'viewer'\]\)/, 'dashboard read must require admin session');
+
+const ingestRoute = await read('src/app/api/ingest/route.ts');
+assert.match(ingestRoute, /status:\s*'gone'/, 'legacy Admin analytics ingestion must remain hard-off');
+assert.match(ingestRoute, /authority:\s*'urai-analytics'/, 'canonical analytics ingestion authority must remain urai-analytics');
+assert.match(ingestRoute, /status:\s*410/, 'legacy Admin analytics ingestion must fail with Gone');
+assert.doesNotMatch(ingestRoute, /collection\(['"]events['"]\)/, 'Admin ingest route must not write parallel analytics events');
+
 const collectionRoute = await read('src/app/api/admin/collection/route.ts');
 assert.match(collectionRoute, /const\s+COLLECTIONS\s*=/, 'collection route must use an explicit allow-list');
+assert.match(collectionRoute, /jobs:\s*\{[\s\S]*allowedFields:\s*\['jobId'/, 'canonical jobs reader must use a minimized field allowlist');
+assert.doesNotMatch(collectionRoute, /jobRuns:\s*\{/, 'Admin must not invent a separate jobRuns collection authority');
+assert.doesNotMatch(collectionRoute, /deadLetters:\s*\{/, 'Admin must not invent a separate deadLetters collection authority');
+assert.match(collectionRoute, /TERMINAL_JOB_STATUSES/, 'terminal job history must filter the canonical jobs ledger');
+assert.match(collectionRoute, /where\('status', 'in', statusFilter\.statuses\)/, 'terminal history must use bounded canonical status filtering');
 assert.match(collectionRoute, /auditLogs:\s*\{[^}]*orderBy:\s*'createdAt'/s, 'audit logs must order by the canonical createdAt field');
 assert.match(collectionRoute, /SENSITIVE_KEY_PATTERN/, 'generic collection reads must define sensitive key redaction');
 assert.match(collectionRoute, /REDACTED/, 'generic collection reads must redact secret-like fields');
@@ -123,6 +170,9 @@ const legacyRoleRoute = await read('src/app/api/admin/update-user-role/route.ts'
 assert.match(legacyRoleRoute, /requireAdminMutationSession\(request, \['owner'\]\)/, 'legacy role route must use the same origin and owner guard');
 assert.match(legacyRoleRoute, /updateAdminRole/, 'legacy role route must not implement a second role authority');
 assert.doesNotMatch(legacyRoleRoute, /runTransaction/, 'legacy role route must not retain independent mutation logic');
+assert.match(legacyRoleRoute, /Compatibility alias only/, 'legacy role route must be explicitly classified as compatibility-only');
+assert.match(legacyRoleRoute, /Deprecation/, 'legacy role route must advertise deprecation');
+assert.match(legacyRoleRoute, /successor-version/, 'legacy role route must point clients to the canonical role endpoint');
 
 const activeRoute = await read('src/app/api/admin/set-user-active/route.ts');
 assert.match(activeRoute, /requireAdminMutationSession/, 'active-state mutation must require trusted origin');
@@ -155,7 +205,11 @@ assert.match(firebaseAdmin, /FIREBASE_SERVICE_ACCOUNT_KEY is forbidden/, 'runtim
 assert.doesNotMatch(firebaseAdmin, /credential\.cert|private_key|client_email/, 'runtime must remain ADC-only');
 assert.match(firebaseAdmin, /writeRequiredAuditLog/, 'authentication-sensitive audit writes must have a non-swallowing path');
 
+assert.equal(existsSync(fileURLToPath(new URL('../../../firestore/firestore.rules', import.meta.url))), false, 'superseded nested Firestore ruleset must remain absent');
+
 const firestoreRules = await readRoot('firestore.rules');
+assert.doesNotMatch(firestoreRules, /match \/jobRuns\//, 'legacy jobRuns collection authority must remain absent');
+assert.doesNotMatch(firestoreRules, /match \/deadLetters\//, 'legacy deadLetters collection authority must remain absent');
 assert.match(firestoreRules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/s, 'Firestore rules must default-deny all unmatched documents');
 assert.match(firestoreRules, /function\s+adminRecord\(\)\s*\{\s*return get\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)\.data;\s*\}/s, 'Firestore rules must resolve the canonical adminUsers record');
 assert.match(firestoreRules, /function\s+hasActiveAdminRecord\(\)\s*\{[\s\S]*exists\(\/databases\/\$\(database\)\/documents\/adminUsers\/\$\(request\.auth\.uid\)\)[\s\S]*adminRecord\(\)\.isActive\s*==\s*true;\s*\}/, 'Firestore admin access must require an existing active adminUsers record');

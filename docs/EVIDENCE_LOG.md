@@ -1,8 +1,39 @@
 # URAI Admin Evidence Log
 
-This file is the operational source of truth for release verification evidence.
+This file preserves release-verification evidence across Admin generations. Current status must bind to the live PR/release exact head plus current workflow/provider/runtime evidence; a dated historical section never transfers its PASS state to a successor SHA.
 
 Do not mark systems GREEN without evidence.
+
+---
+
+## Current release authority — 2026-09-23
+
+Release candidate: PR #75, `Finalize Admin truth boundary, WIF deployment authority, and release source`.
+
+Exact candidate SHA: resolve from the **current PR #75 head at the same Git ref as this document**. This file intentionally does not hard-code its own commit SHA because editing the evidence log changes that SHA. GitHub PR head + exact-head workflow receipts are the authoritative identity pair.
+
+Current source reconciliation completed on the release branch:
+
+- production and governed provider identity is GitHub OIDC → Google Workload Identity Federation → short-lived ADC;
+- long-lived `FIREBASE_TOKEN`, raw service-account JSON, private-key env slots, and `credentials_json` are not production authority;
+- direct local production deployment is fail-closed; `scripts/deploy-production.sh` requires GitHub Actions, `refs/heads/main`, a temporary WIF/ADC credential file, and the exact approved target SHA;
+- rollback documentation no longer directs an operator to invoke local `pnpm deploy`;
+- active Functions/runtime authority is Node 22;
+- canonical role mutation authority is `PUT /api/admin/users/[uid]/role`;
+- `POST /api/admin/update-user-role` is a deprecated compatibility alias only and uses the same guarded mutation service;
+- the old `control-plane/*` MVP and disconnected coordination loop are explicitly legacy/dormant and are not live-health, deployment, or autonomous-remediation authority;
+- the public informational shell and protected `/admin/*` operator console are explicit separate surfaces.
+
+Current external/runtime observation before deployment of this candidate:
+
+- `https://uraiadmin.com` and `https://urai-admin.web.app` still serve an older Admin generation;
+- live `/api/health` still exposes the fixed May 20, 2026 timestamp, proving the current candidate is **not** the deployed runtime;
+- unauthenticated `/api/admin/users` still returns `401`, which is valid evidence only for that older deployed runtime;
+- exact deployed SHA, Hosting release identity, current Functions revisions, WIF principal, Cloud Audit attribution, Auth-domain state, monitoring, and distinct-revision rollback remain provider/runtime evidence gates.
+
+**Current classification: SOURCE RECONCILED / FRESH EXACT-HEAD PROOF REQUIRED / INDEPENDENT REVIEW + PROTECTED RUNTIME ACCEPTANCE + GOVERNED MERGE/DEPLOYMENT BLOCKED UNTIL THEIR OWN EVIDENCE EXISTS.**
+
+All dated sections below this point are **historical receipts**. They remain useful evidence for the exact commits/runs named inside them, but their GREEN/MERGED/BLOCKED labels are not current release verdicts.
 
 ---
 
@@ -32,9 +63,11 @@ PR #35 head `2cf51782bf392d9439c87db37ffad9463f03c251` completed all source-veri
 
 The passing source gates include dependency install, security gate, active Functions typecheck/build, lint, root typecheck, unit tests, production build, and production verifier.
 
-### Main deploy workflow status
+### Historical main deploy workflow status
 
-The deploy workflow exists at `.github/workflows/deploy.yml` and is configured for both manual `workflow_dispatch` and `push` to `main`. It runs `bash scripts/launch-lock.sh`, which performs:
+The text below records the June 30 workflow state. It is superseded for current release authority. The current production workflow is manual `workflow_dispatch` from `main` with explicit target/rollback SHAs and protected WIF/ADC identity.
+
+At the time of this historical receipt, the deploy workflow existed at `.github/workflows/deploy.yml`. It runs `bash scripts/launch-lock.sh`, which performs:
 
 - clean deployable tree check;
 - `pnpm preflight:production`;
@@ -56,11 +89,13 @@ On 2026-06-30, the deploy workflow was hardened on `main` to use Node 22 plus Co
 | Custom claims proof | BLOCKED | Requires Firebase Admin/Auth access. |
 | Monitoring/rollback proof | BLOCKED | Requires production environment access and runbook execution evidence. |
 
-### Current verdict
+### Historical 2026-06-30 verdict
 
-Source and CI status: **GREEN / MERGED**.
+For the exact June 30 commits named in this section, source and CI status was **GREEN / MERGED**.
 
-Production/live status: **NOT VERIFIED** until a Firebase deployment succeeds and live URL smoke tests pass.
+That statement is historical only. It is not the verdict for PR #75 or any later successor.
+
+Production/live status at that time was **NOT VERIFIED** until a Firebase deployment succeeded and live URL smoke tests passed.
 
 Do not mark this repo `DONE DONE / DEPLOYED` in the global URAI release plan yet. Mark it as: **DONE BUT NEEDS EXTERNAL DEPLOY ENV + LIVE DNS/SMOKE RECEIPTS**.
 

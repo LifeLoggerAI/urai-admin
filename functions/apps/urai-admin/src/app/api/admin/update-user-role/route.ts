@@ -11,6 +11,9 @@ const updateUserRoleSchema = z.object({
   role: z.enum(['owner', 'admin', 'viewer']),
 });
 
+// Compatibility alias only. The canonical product authority is
+// PUT /api/admin/users/[uid]/role. This route must never gain independent
+// mutation logic; both paths converge on updateAdminRole().
 export async function POST(request: NextRequest) {
   try {
     const actor = await requireAdminMutationSession(request, ['owner']);
@@ -18,7 +21,11 @@ export async function POST(request: NextRequest) {
     const result = await updateAdminRole({ actor, uid: payload.uid, role: payload.role });
 
     return NextResponse.json(result, {
-      headers: { 'Cache-Control': 'no-store' },
+      headers: {
+        'Cache-Control': 'no-store',
+        'Deprecation': 'true',
+        'Link': `</api/admin/users/${encodeURIComponent(payload.uid)}/role>; rel="successor-version"`,
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

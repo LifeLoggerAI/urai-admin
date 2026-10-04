@@ -16,8 +16,10 @@ export function initializeCentralFirestore(): void {
     return;
   }
 
-  // Expects GOOGLE_APPLICATION_CREDENTIALS env var to be set,
-  // pointing to the service account key for the central urai-admin project.
+  // Uses Google Application Default Credentials. In governed GitHub workflows,
+  // ADC must be short-lived credentials obtained through OIDC + Workload Identity
+  // Federation; managed runtimes use their attached service identity. Never supply
+  // raw service-account JSON or private-key material through application env files.
   admin.initializeApp();
 
   firestore = admin.firestore();

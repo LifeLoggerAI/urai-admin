@@ -44,21 +44,15 @@ if [[ -n "${ROLLBACK_COMMIT}" ]]; then
   cat <<EOF
 Code/rules rollback requires a Git revert or redeploy from the known-good commit.
 
-Recommended operator steps:
-1. git fetch origin
-2. git checkout main
-3. git pull --ff-only origin main
-4. git revert --no-edit ${ROLLBACK_COMMIT}..HEAD
-5. pnpm install
-6. pnpm lint
-7. pnpm typecheck
-8. pnpm test
-9. pnpm build
-10. pnpm preflight:production
-11. pnpm deploy
-12. pnpm verify:production
+Recommended governed recovery steps:
+1. identify the exact known-good rollback SHA and current failed/live SHA;
+2. prepare a reviewed main-line recovery commit or use the protected workflow's approved automatic rollback path;
+3. run fresh exact-head verification on the recovery authority;
+4. dispatch production recovery only from the protected GitHub production environment using WIF/ADC;
+5. verify the exact deployed revision, protected auth boundary, monitoring, and provider readback;
+6. record the workflow run, principal, target/rollback identities, verification result, and audit evidence in docs/EVIDENCE_LOG.md.
 
-Use approved ADC/WIF identity for any deploy step and record all evidence in docs/EVIDENCE_LOG.md.
+Direct local package-manager deployment is not production rollback authority.
 EOF
 fi
 

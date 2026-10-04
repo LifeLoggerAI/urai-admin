@@ -44,6 +44,7 @@ tmp/
 urai_backups/
 **/urai_backups/
 *.bak*
+*.tmp
 .backup_*/
 urai_backup_*/
 .tmp_cache/
@@ -66,3 +67,6 @@ apps/urai-analytics/next-env.d.ts
 apps/urai-admin/src/**/*.js
 apps/urai-admin/src/**/*.jsx
 !apps/urai-admin/src/**/*.config.js
+
+# Hermetic Firebase Functions Next runtime staging
+functions/.generated/

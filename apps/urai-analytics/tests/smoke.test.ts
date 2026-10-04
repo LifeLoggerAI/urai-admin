@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { AnalyticsEventInputSchema, redactJsonValue } from '@urai/analytics-core';
-import { demoMetrics, recentEvents } from '../src/lib/demo-data';
+import { apiKeys, demoMetrics, recentEvents } from '../src/lib/demo-data';
 
 const now = new Date().toISOString();
 const event = AnalyticsEventInputSchema.parse({
@@ -26,5 +26,11 @@ const redacted = redactJsonValue(event.properties);
 assert.equal((redacted.value as any).token, '[REDACTED]');
 assert.ok(demoMetrics.totalEvents > 0);
 assert.ok(recentEvents.length >= 1);
+
+assert.equal(demoMetrics.environment, 'preview');
+assert.ok(demoMetrics.id.includes('_preview_'));
+assert.ok(apiKeys.every((key) => key.status === 'fixture'));
+assert.ok(apiKeys.every((key) => key.prefix === 'urai_demo'));
+assert.ok(apiKeys.every((key) => !/production|live/i.test(`${key.id} ${key.name} ${key.prefix} ${key.status}`)));
 
 console.log('URAI Analytics app smoke tests passed');
