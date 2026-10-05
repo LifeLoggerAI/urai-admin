@@ -73,11 +73,23 @@ assert.match(loginRoute, /exchangeAdminIdToken/, 'login must use the canonical t
 assert.match(loginRoute, /auth\.verifyIdToken/, 'login must fail closed without token verification support');
 assert.match(loginRoute, /auth\.createSessionCookie/, 'login must fail closed without cookie exchange support');
 
+const publicDocs = await read('src/app/docs/page.tsx');
+assert.doesNotMatch(publicDocs, /clean-functions-legacy|green-ship|\/api\/admin\/\*|URAI_ADMIN_STANDALONE_READINESS/i, 'public Admin docs must not expose internal deployment or protected-route instructions');
+
+const publicContact = await read('src/app/contact/page.tsx');
+assert.match(publicContact, /support@urailabs\.com/, 'public Admin contact must expose the authoritative support mailbox');
+assert.match(publicContact, /security@urailabs\.com/, 'public Admin contact must expose the authoritative security mailbox');
+assert.doesNotMatch(publicContact, /For launch, connect this page/i, 'public Admin contact must not contain launch placeholder instructions');
+
 const loginClient = await read('src/app/login/LoginClient.tsx');
 assert.match(loginClient, /exchange\.response\.status === 409/, 'client must recognize the claim synchronization response');
 assert.match(loginClient, /exchange\.payload\.refreshRequired === true/, 'client must require the explicit refresh flag');
 assert.equal((loginClient.match(/credential\.user\.getIdToken\(true\)/g) ?? []).length, 2, 'client must allow exactly one forced-token retry path');
 assert.doesNotMatch(loginClient, /while\s*\(/, 'admin claim refresh must not loop indefinitely');
+assert.doesNotMatch(loginClient, />Project<|>Auth domain</, 'public login must not render Firebase project or auth-domain diagnostics');
+assert.doesNotMatch(loginClient, /bootstrap:owner|server logs|Firebase Auth config is invalid/, 'public login errors must not expose operator-only remediation detail');
+assert.match(loginClient, /role="alert"/, 'public login errors must be announced accessibly');
+assert.match(loginClient, /aria-live="polite"/, 'public login status must announce changes accessibly');
 
 const sessionRoute = await read('src/app/api/auth/session/route.ts');
 assert.match(sessionRoute, /exchangeAdminIdToken/, 'session refresh must use the canonical exchange');
