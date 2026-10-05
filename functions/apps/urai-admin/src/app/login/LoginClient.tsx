@@ -234,7 +234,7 @@ export function LoginClient() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="owner@uraiadmin.com"
+                placeholder="name@company.com"
                 required
               />
             </label>
