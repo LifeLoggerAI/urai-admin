@@ -127,6 +127,10 @@ forbidden_recursive "headers\.get\(['\"]x-user-id['\"]\)" "apps/urai-admin/src/a
 forbidden_recursive "request\.headers\.get\(['\"]Authorization['\"]\)\?\.split\(['\"]Bearer " "apps/urai-admin/src/app/api/admin" "Admin route using Authorization bearer session parsing found"
 forbidden_recursive "owner@uraiadmin\.com" "apps/urai-admin/src" "Stale Admin owner mailbox placeholder found in canonical app source"
 forbidden_recursive "owner@uraiadmin\.com" "functions/apps/urai-admin/src" "Stale Admin owner mailbox placeholder found in Functions-bundled app source"
+required_pattern "apps/urai-admin/src/app/page.tsx" "min-h-12"
+required_pattern "functions/apps/urai-admin/src/app/page.tsx" "min-h-12"
+forbidden_pattern "apps/urai-admin/src/app/page.tsx" "min-h-11"
+forbidden_pattern "functions/apps/urai-admin/src/app/page.tsx" "min-h-11"
 
 if [[ -d "apps/urai-admin/src/app/api/qa" ]]; then
   required_pattern "apps/urai-admin/src/app/api/qa/logs/route.ts" "requireAdminSession"
