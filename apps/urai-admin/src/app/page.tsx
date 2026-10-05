@@ -117,7 +117,13 @@ export default function AdminEntryPage() {
 
       <footer className="relative z-10 mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 px-6 py-8 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
         <div>© {new Date().getFullYear()} URAI Admin. Authorized operations only.</div>
-        <div className="flex gap-4"><Link href="/privacy" className="hover:text-white">Privacy</Link><Link href="/terms" className="hover:text-white">Terms</Link><Link href="/security" className="hover:text-white">Security</Link></div>
+        <nav className="flex flex-wrap gap-4" aria-label="Footer">
+          <Link href="/privacy" className="hover:text-white">Privacy</Link>
+          <Link href="/terms" className="hover:text-white">Terms</Link>
+          <Link href="/accessibility" className="hover:text-white">Accessibility</Link>
+          <Link href="/contact" className="hover:text-white">Contact</Link>
+          <Link href="/security" className="hover:text-white">Security</Link>
+        </nav>
       </footer>
     </main>
   );
