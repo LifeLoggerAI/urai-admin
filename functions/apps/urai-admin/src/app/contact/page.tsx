@@ -34,7 +34,10 @@ export default function ContactPage() {
             </ul>
           </div>
           <p className="mt-8 text-sm text-slate-400">
-            For launch, connect this page to the preferred URAI Labs support mailbox, CRM, or contact form provider.
+            Public inquiries can be sent to{' '}
+            <a className="text-cyan-300 underline underline-offset-4 hover:text-cyan-200" href="mailto:contact@urailabs.com?subject=URAI%20Admin%20access%20request">
+              contact@urailabs.com
+            </a>.
           </p>
         </section>
       </div>
