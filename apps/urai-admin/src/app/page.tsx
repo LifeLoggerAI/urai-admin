@@ -37,7 +37,7 @@ export default function AdminEntryPage() {
           <Link href="/privacy" className="hover:text-white">Privacy</Link>
           <Link href="/terms" className="hover:text-white">Terms</Link>
         </nav>
-        <Link href="/login" className="min-h-11 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+        <Link href="/login" className="min-h-12 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
           Operator sign in
         </Link>
       </header>
@@ -56,10 +56,10 @@ export default function AdminEntryPage() {
               The public gate explains the boundary. Real operational state, controls, evidence, and authority remain behind authenticated role checks.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login" className="min-h-11 rounded-full bg-cyan-200 px-6 py-3 text-center text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/10 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+              <Link href="/login" className="min-h-12 rounded-full bg-cyan-200 px-6 py-3 text-center text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/10 hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
                 Open admin console
               </Link>
-              <Link href="/security" className="min-h-11 rounded-full border border-white/20 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+              <Link href="/security" className="min-h-12 rounded-full border border-white/20 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
                 Review security boundary
               </Link>
             </div>
