@@ -1,17 +1,20 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+const siteUrl = 'https://uraianalytics.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.uraianalytics.com'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'URAI Analytics | Privacy-aware analytics for passive intelligence systems',
     template: '%s | URAI Analytics'
   },
   description: 'URAI Analytics is a privacy-aware analytics command center for product behavior, passive intelligence systems, AI insight usage, reports, exports, and enterprise-ready analytics.',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'URAI Analytics',
     description: 'Privacy-aware analytics for passive intelligence systems.',
-    url: 'https://www.uraianalytics.com',
+    url: siteUrl,
     siteName: 'URAI Analytics',
     type: 'website'
   }
