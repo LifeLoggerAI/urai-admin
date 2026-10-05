@@ -1,24 +1,10 @@
 import type { MetadataRoute } from 'next';
 
-const baseUrl = 'https://uraiadmin.com';
-
-const publicRoutes = [
-  '',
-  '/features',
-  '/pricing',
-  '/security',
-  '/docs',
-  '/contact',
-  '/privacy',
-  '/terms',
-  '/login',
-];
-
+/**
+ * URAI Admin is intentionally noindex/nofollow across both its public gate and
+ * protected operator surface. An empty sitemap avoids advertising URLs that
+ * search engines are explicitly told not to index.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return publicRoutes.map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: route === '' ? 'weekly' : 'monthly',
-    priority: route === '' ? 1 : route === '/features' || route === '/pricing' ? 0.8 : 0.5,
-  }));
+  return [];
 }
