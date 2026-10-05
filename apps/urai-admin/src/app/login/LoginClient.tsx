@@ -30,28 +30,19 @@ type AdminSessionPayload = {
 
 function loginErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  if (message.includes('auth/invalid-credential') || message.includes('auth/wrong-password')) {
+  if (message.includes('auth/invalid-credential') || message.includes('auth/wrong-password') || message.includes('auth/user-not-found')) {
     return 'The email or password was not accepted. Check credentials and try again.';
   }
-  if (message.includes('auth/user-not-found')) {
-    return 'No Firebase Auth user was found for that email.';
-  }
   if (message.includes('auth/too-many-requests')) {
-    return 'Firebase temporarily blocked attempts for this account. Wait, then try again.';
+    return 'Sign-in attempts are temporarily limited. Try again later or contact support.';
   }
   if (message.includes('auth/popup-blocked')) {
-    return 'Google popup was blocked. Use Google redirect or email/password fallback.';
-  }
-  if (message.includes('auth/api-key-not-valid')) {
-    return 'Firebase Auth config is invalid. The app will try Firebase Hosting runtime config; rebuild and redeploy if this persists.';
-  }
-  if (message.includes('Admin access is not active')) {
-    return 'This account exists, but it is not active in adminUsers yet. Run pnpm bootstrap:owner or activate the admin record.';
+    return 'The sign-in window was blocked. Use another available sign-in method.';
   }
   if (message.includes('Recent sign-in required')) {
-    return 'Your Firebase sign-in is too old for an admin session. Sign in again to continue.';
+    return 'Your sign-in is too old for an admin session. Sign in again to continue.';
   }
-  return message || 'Login failed. Check Firebase config, adminUsers, and server logs.';
+  return 'Sign-in could not be completed. Try another available sign-in method or contact support.';
 }
 
 async function exchangeAdminSession(idToken: string) {
@@ -78,7 +69,7 @@ async function openAdminSession(credential: UserCredential) {
     if (exchange.payload.reauthRequired) {
       throw new Error('Recent sign-in required');
     }
-    throw new Error(exchange.payload.error || `Admin session failed with status ${exchange.response.status}`);
+    throw new Error('Admin session unavailable');
   }
 
   window.location.assign('/admin');
@@ -88,7 +79,7 @@ export function LoginClient() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('Loading Firebase config...');
+  const [status, setStatus] = useState('Checking sign-in availability...');
   const [config, setConfig] = useState<ConfigState>({ ready: false, source: 'loading', missing: [] });
   const [submitting, setSubmitting] = useState(false);
 
@@ -101,18 +92,18 @@ export function LoginClient() {
         if (cancelled) return;
 
         setConfig(nextConfig);
-        setStatus(nextConfig.ready ? 'Firebase config loaded' : 'Firebase config missing');
+        setStatus(nextConfig.ready ? 'Sign-in available' : 'Sign-in temporarily unavailable');
 
         const redirectCredential = await getRedirectResult(auth);
         if (redirectCredential) {
-          setStatus('Completing Google redirect session...');
+          setStatus('Completing sign-in...');
           await openAdminSession(redirectCredential);
         }
       } catch (nextError) {
         if (!cancelled) {
           setConfig({ ready: false, source: 'missing', missing: [] });
           setError(loginErrorMessage(nextError));
-          setStatus('Firebase config unavailable');
+          setStatus('Sign-in temporarily unavailable');
         }
       }
     }
@@ -127,7 +118,7 @@ export function LoginClient() {
   async function handleGooglePopup() {
     setSubmitting(true);
     setError('');
-    setStatus('Opening Google popup...');
+    setStatus('Opening sign-in window...');
 
     try {
       const auth = await getClientAuth();
@@ -137,7 +128,7 @@ export function LoginClient() {
       await openAdminSession(credential);
     } catch (nextError) {
       setError(loginErrorMessage(nextError));
-      setStatus('Google popup blocked');
+      setStatus('Sign-in did not complete');
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +137,7 @@ export function LoginClient() {
   async function handleGoogleRedirect() {
     setSubmitting(true);
     setError('');
-    setStatus('Starting Google redirect...');
+    setStatus('Starting secure sign-in...');
 
     try {
       const auth = await getClientAuth();
@@ -154,7 +145,7 @@ export function LoginClient() {
       await signInWithRedirect(auth, provider);
     } catch (nextError) {
       setError(loginErrorMessage(nextError));
-      setStatus('Google redirect failed');
+      setStatus('Sign-in did not complete');
       setSubmitting(false);
     }
   }
@@ -162,7 +153,7 @@ export function LoginClient() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    setStatus('Verifying Firebase credentials...');
+    setStatus('Verifying credentials...');
     setSubmitting(true);
 
     try {
@@ -172,7 +163,7 @@ export function LoginClient() {
       await openAdminSession(credential);
     } catch (nextError) {
       setError(loginErrorMessage(nextError));
-      setStatus('Email/password failed');
+      setStatus('Sign-in did not complete');
       setSubmitting(false);
     }
   }
@@ -189,80 +180,76 @@ export function LoginClient() {
           </div>
           <h1 className="text-4xl font-black tracking-tight md:text-5xl">Sign in to URAI Admin.</h1>
           <p className="mt-4 text-sm leading-6 text-slate-300">
-            This route supports Google popup, Google redirect, and email/password sign-in so provider or popup issues do not block admin access.
+            Authorized operators can use an available organization sign-in method. Access still requires an active administrator record and an allowed role.
           </p>
 
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-7 text-slate-300">
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-7 text-slate-300" role="status" aria-live="polite">
             <div className="flex justify-between gap-4"><span>Status</span><strong className="text-white">{status}</strong></div>
-            <div className="flex justify-between gap-4"><span>Project</span><strong className="text-white">{config.projectId ?? 'loading'}</strong></div>
-            <div className="flex justify-between gap-4"><span>Auth config</span><strong className="text-white">{config.ready ? config.source : config.missing.join(', ') || 'loading'}</strong></div>
-            {config.authDomain ? <div className="flex justify-between gap-4"><span>Auth domain</span><strong className="text-white">{config.authDomain}</strong></div> : null}
           </div>
 
           {error ? (
-            <div className="mt-4 rounded-2xl border border-rose-300/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+            <div className="mt-4 rounded-2xl border border-rose-300/30 bg-rose-500/10 p-4 text-sm text-rose-100" role="alert">
               {error}
             </div>
           ) : null}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <button
-              className="rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-12 rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={submitting || !config.ready}
               type="button"
               onClick={handleGooglePopup}
             >
-              Google popup
+              Continue with Google
             </button>
             <button
-              className="rounded-2xl border border-cyan-300/40 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-cyan-300/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-12 rounded-2xl border border-cyan-300/40 px-5 py-3 font-semibold text-cyan-100 transition hover:bg-cyan-300/10 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={submitting || !config.ready}
               type="button"
               onClick={handleGoogleRedirect}
             >
-              Google redirect
+              Use redirect sign-in
             </button>
           </div>
 
-          <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4" onSubmit={handleSubmit}>
-            <h2 className="font-semibold">Email/password fallback</h2>
+          <form className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4" onSubmit={handleSubmit} aria-busy={submitting}>
+            <h2 className="font-semibold">Email sign in</h2>
             <label className="block text-sm font-medium text-slate-200">
               Email
               <input
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none ring-cyan-300/30 placeholder:text-slate-500 focus:ring-4"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none ring-cyan-300/30 placeholder:text-slate-500 focus:ring-4"
                 autoComplete="email"
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="owner@uraiadmin.com"
                 required
               />
             </label>
             <label className="block text-sm font-medium text-slate-200">
               Password
               <input
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none ring-cyan-300/30 placeholder:text-slate-500 focus:ring-4"
+                className="mt-2 min-h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none ring-cyan-300/30 placeholder:text-slate-500 focus:ring-4"
                 autoComplete="current-password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
                 required
               />
             </label>
 
             <button
-              className="w-full rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 shadow-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-12 w-full rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 shadow-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={submitting || !config.ready}
               type="submit"
             >
               {submitting ? 'Opening session...' : 'Sign in with email'}
             </button>
           </form>
+          <p className="mt-5 text-sm text-slate-400">Need help? <a className="text-cyan-200 underline underline-offset-4 hover:text-white" href="mailto:support@urailabs.com">Contact support</a>.</p>
         </div>
       </section>
 
-      <section className="hidden lg:block">
+      <section className="hidden lg:block" aria-hidden="true">
         <CommandWorld compact />
       </section>
     </main>
