@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { AnalyticsEventInputSchema, redactJsonValue } from '@urai/analytics-core';
 import { apiKeys, demoMetrics, recentEvents } from '../src/lib/demo-data';
 
@@ -34,3 +36,22 @@ assert.ok(apiKeys.every((key) => key.prefix === 'urai_demo'));
 assert.ok(apiKeys.every((key) => !/production|live/i.test(`${key.id} ${key.name} ${key.prefix} ${key.status}`)));
 
 console.log('URAI Analytics app smoke tests passed');
+
+
+const appRoot = resolve(process.cwd());
+const homeSource = readFileSync(resolve(appRoot, 'src/app/page.tsx'), 'utf8');
+const privacySource = readFileSync(resolve(appRoot, 'src/app/privacy/page.tsx'), 'utf8');
+const termsSource = readFileSync(resolve(appRoot, 'src/app/terms/page.tsx'), 'utf8');
+const robotsSource = readFileSync(resolve(appRoot, 'src/app/robots.ts'), 'utf8');
+const appLayoutSource = readFileSync(resolve(appRoot, 'src/app/app/layout.tsx'), 'utf8');
+const globalsSource = readFileSync(resolve(appRoot, 'src/app/globals.css'), 'utf8');
+
+assert.doesNotMatch(homeSource, /Live workspace snapshot|sold as a SaaS/i);
+assert.match(homeSource, /Demo data — not production telemetry/);
+assert.doesNotMatch(privacySource, /placeholder/i);
+assert.doesNotMatch(termsSource, /placeholder/i);
+assert.match(robotsSource, /disallow: \['\/app'/);
+assert.match(appLayoutSource, /index:\s*false/);
+assert.match(globalsSource, /:focus-visible/);
+assert.match(globalsSource, /prefers-reduced-motion/);
+assert.match(globalsSource, /text-size-adjust:\s*100%/);
