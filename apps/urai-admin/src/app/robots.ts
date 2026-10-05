@@ -5,11 +5,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/features', '/pricing', '/security', '/docs', '/contact', '/privacy', '/terms', '/login'],
-        disallow: ['/admin', '/admin/', '/admin/*', '/api/admin', '/api/admin/*'],
+        disallow: '/',
       },
     ],
-    sitemap: 'https://uraiadmin.com/sitemap.xml',
     host: 'https://uraiadmin.com',
   };
 }
