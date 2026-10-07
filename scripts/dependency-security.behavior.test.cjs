@@ -89,6 +89,16 @@ for (const filterName of ['Pick', 'Ignore', 'Filter', 'Replace']) {
       await assert.rejects(pipeline(Readable.from(tokens), new Filter({ filter }), sink()), { name: 'SyntaxError', message: /maximum depth/ });
     }
   });
+
+  test(`Firebase CLI stream-json ${filterName} rejects unmatched closing tokens before they can evade the depth bound`, async () => {
+    const Filter = cliRequire(`stream-json/filters/${filterName}`);
+    for (const close of ['endArray', 'endObject']) {
+      const tokens = [{ name: close }, ...Array.from({ length: 129 }, () => ({ name: 'startArray' }))];
+      for (const filter of [() => false, () => true, /never-matches/]) {
+        await assert.rejects(pipeline(Readable.from(tokens), new Filter({ filter }), sink()), { name: 'SyntaxError', message: /unbalanced JSON nesting/i });
+      }
+    }
+  });
 }
 
 test('Firebase CLI stream-json excludes JSONC comment processing', async () => {
