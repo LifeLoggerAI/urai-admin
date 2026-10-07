@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -128,3 +128,45 @@ test('actual rollback workflow denies an ancestor without the owned symbolic tar
     assert.match(result.stderr, /fallback is forbidden/);
   } finally { f.close(); }
 });
+
+function securityGateFixture() {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'urai-admin-hosting-security-gate-'));
+  for (const relative of [
+    'package.json', 'firebase.json', '.firebaserc', '.gitignore', 'firestore.rules', 'storage.rules',
+    '.github/workflows/deploy.yml', 'docs/DEPLOYMENT_RUNBOOK.md', 'docs/EVIDENCE_LOG.md',
+    'scripts/security-gate.sh', 'scripts/wif-deploy-auth-contract.mjs',
+    'scripts/preflight-production.sh', 'scripts/deploy-production.sh', 'scripts/smoke-test.sh',
+    'scripts/verify-production-live.sh', 'scripts/rollback-production.sh',
+    'scripts/validate-admin-hosting-target.mjs', 'apps/urai-admin/src',
+    'functions/apps/urai-admin/src', 'functions/src', 'packages/governance-sdk/src/firebase.ts',
+  ]) {
+    const destination = path.join(dir, relative);
+    mkdirSync(path.dirname(destination), { recursive: true });
+    cpSync(path.join(root, relative), destination, { recursive: true });
+  }
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  return { dir, close() { rmSync(dir, { recursive: true, force: true }); } };
+}
+
+for (const gate of ['security-gate.sh', 'wif-deploy-auth-contract.mjs']) {
+  for (const change of ['reviewed-target', 'broad-hosting', 'foreign-target', 'missing-bound-guard']) {
+    test(`actual ${gate} ${change === 'reviewed-target' ? 'accepts' : 'rejects'} ${change} deployment contract`, () => {
+      const f = securityGateFixture();
+      try {
+        const relative = gate.endsWith('.sh') ? 'scripts/deploy-production.sh' : '.github/workflows/deploy.yml';
+        const filename = path.join(f.dir, relative);
+        let source = readFileSync(filename, 'utf8');
+        if (change === 'broad-hosting') source = source.replaceAll('hosting:urai-admin-production,', 'hosting,');
+        if (change === 'foreign-target') source = source.replaceAll('hosting:urai-admin-production,', 'hosting:urai-analytics,');
+        if (change === 'missing-bound-guard') source = source.split('\n').filter(line => !line.includes('validate-admin-hosting-target.mjs')).join('\n');
+        writeFileSync(filename, source);
+        const result = spawnSync(gate.endsWith('.sh') ? 'bash' : process.execPath, [path.join(f.dir, 'scripts', gate)], { cwd: f.dir, encoding: 'utf8' });
+        if (change === 'reviewed-target') assert.equal(result.status, 0, result.stderr);
+        else {
+          assert.notEqual(result.status, 0, 'unsafe deployment contract cannot satisfy the actual source gate');
+          assert.match(result.stderr, /Required rule pattern|missing .*deploy|missing .*bound/);
+        }
+      } finally { f.close(); }
+    });
+  }
+}
