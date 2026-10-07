@@ -56,11 +56,16 @@ jobs:
             pkg.devDependencies['eslint-config-next'] = '15.5.27';
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
           }
+          const functionsPath = 'functions/package.json';
+          const functionsPkg = JSON.parse(fs.readFileSync(functionsPath, 'utf8'));
+          if (functionsPkg.dependencies.next !== '15.5.26') throw new Error('Unexpected Functions maintenance input');
+          functionsPkg.dependencies.next = '15.5.27';
+          fs.writeFileSync(functionsPath, JSON.stringify(functionsPkg, null, 2) + '\n');
           NODE
           pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
           mkdir -p /tmp/urai-admin-next-patch
-          cp --parents apps/urai-admin/package.json apps/urai-analytics/package.json pnpm-lock.yaml /tmp/urai-admin-next-patch
-          sha256sum apps/urai-admin/package.json apps/urai-analytics/package.json pnpm-lock.yaml > /tmp/urai-admin-next-patch/generated-sha256.txt
+          cp --parents apps/urai-admin/package.json apps/urai-analytics/package.json functions/package.json pnpm-lock.yaml /tmp/urai-admin-next-patch
+          sha256sum apps/urai-admin/package.json apps/urai-analytics/package.json functions/package.json pnpm-lock.yaml > /tmp/urai-admin-next-patch/generated-sha256.txt
           printf 'input_head=%s\ninput_tree=%s\nnode=%s\npnpm=%s\ndeployment=false\npaid_execution=false\n' "$TARGET_SHA" "$(git rev-parse HEAD^{tree})" "$(node --version)" "$(pnpm --version)" > /tmp/urai-admin-next-patch/authority.env
       - name: Audit complete generated dependency graph
         shell: bash
