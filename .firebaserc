@@ -3,6 +3,14 @@
     "default": "urai-4dc1d",
     "admin": "urai-4dc1d"
   },
-  "targets": {},
+  "targets": {
+    "urai-4dc1d": {
+      "hosting": {
+        "urai-admin-production": [
+          "urai-admin"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
