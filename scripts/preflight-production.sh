@@ -110,6 +110,10 @@ if grep -q "${legacy_project_id}" "${legacy_scan_targets[@]}"; then
   missing=1
 fi
 
+if ! node scripts/validate-admin-hosting-target.mjs --require-bound; then
+  missing=1
+fi
+
 if [[ "${missing}" != "0" ]]; then
   echo "--- Production preflight failed ---" >&2
   exit 1

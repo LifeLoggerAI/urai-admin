@@ -56,6 +56,7 @@ jobs:
       URAI_ADMIN_ROLLBACK_SHA: ${{ inputs.rollback_sha }}
       URAI_ADMIN_DEPLOY_MARKER: tmp/urai-admin-target-deployed.json
       URAI_ADMIN_RECEIPT_PATH: tmp/urai-admin-deployment-receipt.json
+      URAI_ADMIN_HOSTING_SITE: ${{ vars.URAI_ADMIN_HOSTING_SITE }}
 
     steps:
       - name: Checkout approved commit
@@ -95,6 +96,9 @@ jobs:
           git merge-base --is-ancestor "${URAI_ADMIN_TARGET_SHA}" origin/main || { echo "target_sha must belong to origin/main." >&2; exit 1; }
           git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" "${URAI_ADMIN_TARGET_SHA}" || { echo "rollback_sha must be an ancestor of target_sha." >&2; exit 1; }
           git merge-base --is-ancestor "${URAI_ADMIN_ROLLBACK_SHA}" origin/main || { echo "rollback_sha must belong to origin/main." >&2; exit 1; }
+
+      - name: Require reviewed Admin Hosting boundary
+        run: node scripts/validate-admin-hosting-target.mjs --require-bound
 
       - name: Require WIF deploy identity
         shell: bash
@@ -171,6 +175,7 @@ jobs:
           rm -rf "${rollback_dir}"
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
+          node "${GITHUB_WORKSPACE}/scripts/validate-admin-hosting-target.mjs" --cwd "${rollback_dir}" --require-bound
           node - <<'NODE'
           const fs = require('node:fs');
           const values = {
@@ -181,7 +186,7 @@ jobs:
           NODE
           corepack pnpm install --frozen-lockfile
           corepack pnpm build
-          corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d
+          corepack pnpm exec firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d
           URAI_ADMIN_BASE_URL="${URAI_ADMIN_BASE_URL}" URAI_ADMIN_FUNCTIONS_BASE_URL="${URAI_ADMIN_FUNCTIONS_BASE_URL}" bash "${GITHUB_WORKSPACE}/scripts/verify-production-live.sh"
           echo "result=success" >> "${GITHUB_OUTPUT}"
 

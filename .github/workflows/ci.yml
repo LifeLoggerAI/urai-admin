@@ -110,6 +110,11 @@ jobs:
           pnpm receipt:admin-auth-runtime:emulator 2>&1 | tee /tmp/urai-admin-auth-runtime-emulator.log
           test -s "$URAI_ADMIN_AUTH_RUNTIME_RECEIPT_PATH"
 
+      - name: Admin Hosting target and rollback boundary
+        run: |
+          node scripts/validate-admin-hosting-target.mjs
+          node --test scripts/test-admin-hosting-target.mjs
+
       - name: Security gate
         run: pnpm security:gate
 
