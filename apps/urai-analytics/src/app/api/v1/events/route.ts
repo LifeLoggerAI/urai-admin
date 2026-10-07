@@ -4,8 +4,6 @@ import {
   ApiKeySchema,
   assertAnalyticsConsent,
   assertApiKeyTenantScope,
-  rawEventCollectionName,
-  redactJsonValue,
   type ApiKey
 } from '@urai/analytics-core';
 import { db } from '@/lib/server/firebase-admin';
@@ -15,6 +13,7 @@ export const runtime = 'nodejs';
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = Number(process.env.URAI_ANALYTICS_INGEST_RATE_LIMIT_PER_MINUTE ?? 600);
+const RATE_LIMIT_KEY_CAP = 10_000;
 const memoryRateLimit = new Map<string, { count: number; resetAt: number }>();
 
 function bearerToken(request: NextRequest): string | null {
@@ -27,6 +26,12 @@ function rateLimit(key: string): { ok: true } | { ok: false; retryAfterSeconds: 
   const now = Date.now();
   const current = memoryRateLimit.get(key);
   if (!current || current.resetAt <= now) {
+    if (!current && memoryRateLimit.size >= RATE_LIMIT_KEY_CAP) {
+      for (const [entryKey, entry] of memoryRateLimit) {
+        if (entry.resetAt <= now) memoryRateLimit.delete(entryKey);
+      }
+      if (memoryRateLimit.size >= RATE_LIMIT_KEY_CAP) return { ok: false, retryAfterSeconds: 60 };
+    }
     memoryRateLimit.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return { ok: true };
   }
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing_api_key' }, { status: 401 });
   }
 
-  const limit = rateLimit(rawKey.slice(0, 24));
+  const limit = rateLimit(hashApiKey(rawKey));
   if (!limit.ok) {
     await auditRejected('rate_limited', body, request);
     return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } });
@@ -111,37 +116,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: consentCheck.reason }, { status: 403 });
   }
 
-  const redacted = redactJsonValue(event.properties);
-  const now = new Date().toISOString();
-  const collectionName = rawEventCollectionName(new Date(event.timestamp));
-  const docRef = db.collection(collectionName).doc(event.eventId);
-  const storedEvent = {
-    ...event,
-    properties: redacted.value,
-    redactedPaths: redacted.redactedPaths,
-    ingestedAt: now,
-    receivedAt: now,
-    ipHash: hashIp(request.headers.get('x-forwarded-for') ?? null),
-    requestId: request.headers.get('x-request-id') ?? undefined,
-    rejected: false
-  };
-
-  await db.runTransaction(async (transaction) => {
-    const existing = await transaction.get(docRef);
-    if (!existing.exists) {
-      transaction.set(docRef, storedEvent);
-      transaction.set(
-        db.collection('organizations').doc(event.organizationId).collection('workspaces').doc(event.workspaceId).collection('ingestionHealth').doc(event.eventId),
-        { eventId: event.eventId, status: 'accepted', redactedPaths: redacted.redactedPaths, createdAt: now }
-      );
-    }
-  });
-
-  await db.collection('organizations').doc(event.organizationId).collection('workspaces').doc(event.workspaceId).collection('apiKeyUsage').doc(apiKey.id).set(
-    { lastUsedAt: now, lastEventId: event.eventId },
-    { merge: true }
-  );
-
-  return NextResponse.json({ accepted: true, eventId: event.eventId, redactedPaths: redacted.redactedPaths }, { status: 202 });
+  // Client snapshots cannot authorize retention. This legacy adapter has no
+  // approved canonical purpose, subject authority or distributed deletion fence.
+  // Bind the deliberate canonical Analytics consumer before admitting events;
+  // a configuration flag must not revive the predecessor storage path.
+  await auditRejected('canonical_ingest_unavailable', body, request);
+  return NextResponse.json({ error: 'canonical_ingest_unavailable' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
 }
 

@@ -8,7 +8,7 @@
     "start": "next start -p 3010",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx tests/smoke.test.ts && node --test tests/rejected-ingest-privacy.test.mjs"
+    "test": "node --import tsx tests/smoke.test.ts && node --test tests/rejected-ingest-privacy.test.mjs && node --import tsx --test tests/canonical-ingest-boundary.test.mjs"
   },
   "dependencies": {
     "@urai/analytics-core": "workspace:*",
