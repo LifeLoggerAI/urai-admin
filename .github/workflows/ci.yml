@@ -71,6 +71,13 @@ jobs:
         shell: bash
         run: test -z "$(git status --porcelain --untracked-files=all)"
 
+      - name: Full dependency audit and installed mitigation behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm audit --json > /tmp/urai-admin-full-dependency-audit.json
+          pnpm test:dependency-security | tee /tmp/urai-admin-dependency-security.log
+
       - name: Registry contract and isolated emulator receipt
         shell: bash
         env:
@@ -194,8 +201,11 @@ jobs:
             /tmp/urai-admin-build.log
             /tmp/urai-admin-preflight.log
             /tmp/urai-admin-final-source-status.log
+            /tmp/urai-admin-full-dependency-audit.json
+            /tmp/urai-admin-dependency-security.log
             docs/EVIDENCE_LOG.md
             docs/DEPLOYMENT_RUNBOOK.md
             docs/URAI_ADMIN_STANDALONE_READINESS.md
           if-no-files-found: warn
           retention-days: 90
+

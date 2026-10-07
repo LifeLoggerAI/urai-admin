@@ -56,8 +56,8 @@ async function auditRejected(reason: string, body: unknown, request: NextRequest
   await db.collection('analyticsAuditLogs').add({
     kind: 'event_ingest_rejected',
     reason,
-    bodyPreview: JSON.stringify(body).slice(0, 2000),
-    ipHash: hashIp(request.headers.get('x-forwarded-for') ?? request.ip ?? null),
+    bodyKind: body === null ? 'null' : Array.isArray(body) ? 'array' : typeof body,
+    ipHash: hashIp(request.headers.get('x-forwarded-for') ?? null),
     createdAt: new Date().toISOString()
   });
 }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     redactedPaths: redacted.redactedPaths,
     ingestedAt: now,
     receivedAt: now,
-    ipHash: hashIp(request.headers.get('x-forwarded-for') ?? request.ip ?? null),
+    ipHash: hashIp(request.headers.get('x-forwarded-for') ?? null),
     requestId: request.headers.get('x-request-id') ?? undefined,
     rejected: false
   };
@@ -144,3 +144,4 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ accepted: true, eventId: event.eventId, redactedPaths: redacted.redactedPaths }, { status: 202 });
 }
+
