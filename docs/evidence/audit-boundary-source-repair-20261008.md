@@ -28,13 +28,15 @@ the existing active canonical owner/admin and timestamp checks. Existing
 immutable update/delete denials remain. Admin SDK writes retain their existing
 server authority.
 
-The same 19 behavior cases run against the original source and this repair on
-Node 22.23.3. Original: 7 passed, 12 failed. Repair: 19 passed, 0 failed.
+The same 22 behavior cases run against the original source and this repair on
+Node 22.23.3. Original: 7 passed, 15 failed. Repair: 22 passed, 0 failed.
 The tests load the actual TypeScript route handlers and Firebase audit library
 with explicit synthetic SDK/session adapters. They cover session/role denial,
 cross-origin rejection, durable-write failure, invalid payload/JSON, verified
 actor attribution, recursive private-field removal, actual document identity,
-both audit read paths, datastore failure and content-free error behavior. They are not live provider
+both audit read paths, datastore failure and content-free error behavior. A
+provider/datastore error with a status property cannot masquerade as the actual
+AdminAuthError class and enter an authentication error logger. They are not live provider
 or cloud lifecycle tests. The helper passes a standalone strict TypeScript
 check; the actual emulator runner passes JavaScript syntax checking.
 
@@ -42,7 +44,7 @@ The existing native Auth/Firestore/Next runtime emulator runner adds actual
 positive/foreign-actor/forged-email create cases in each immutable collection,
 plus same-origin audit creation, cross-origin rejection, durable persisted actor
 readback and minimized legacy records through both audit read paths. The
-repository app test command runs the 19 behavior cases. Exact candidate native CI must prove these cases using
+repository app test command runs the 22 behavior cases. Exact candidate native CI must prove these cases using
 the repository's declared dependencies and real emulators before source
 admission. No native result is claimed by this preparation note.
 
