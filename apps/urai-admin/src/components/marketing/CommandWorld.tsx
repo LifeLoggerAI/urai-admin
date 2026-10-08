@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 const nodes = [
-  { label: 'Auth', value: 'access-gated', x: 14, y: 26, z: 0 },
-  { label: 'Audit', value: 'evidence-gated', x: 69, y: 21, z: 2 },
-  { label: 'Jobs', value: 'runtime-gated', x: 77, y: 60, z: 1 },
-  { label: 'Flags', value: 'source-defined', x: 22, y: 68, z: 3 },
-  { label: 'Registry', value: 'systems', x: 47, y: 43, z: 4 },
+  { label: 'Auth', value: 'access-gated', x: 24, y: 24, z: 0 },
+  { label: 'Audit', value: 'evidence-gated', x: 76, y: 24, z: 2 },
+  { label: 'Jobs', value: 'runtime-gated', x: 76, y: 62, z: 1 },
+  { label: 'Flags', value: 'source-defined', x: 24, y: 60, z: 3 },
+  { label: 'Registry', value: 'systems', x: 50, y: 80, z: 4 },
 ];
 
 export function CommandWorld({ compact = false }: { compact?: boolean }) {
@@ -47,18 +47,20 @@ export function CommandWorld({ compact = false }: { compact?: boolean }) {
           <div
             className={`command-node command-node-${node.z}`}
             key={node.label}
-            style={{ left: `${node.x}%`, top: `${node.y}%` }}
+            style={{ '--node-x': `${node.x}%`, '--node-y': `${node.y}%` } as CSSProperties}
           >
             <span>{node.label}</span>
             <strong>{node.value}</strong>
           </div>
         ))}
-        <div className="command-panel command-panel-left">
+      </div>
+      <div className="command-world-panels">
+        <div className="command-panel">
           <span>Release posture</span>
           <strong>Protected</strong>
           <small>Roles · evidence · system checks</small>
         </div>
-        <div className="command-panel command-panel-right">
+        <div className="command-panel">
           <span>System mesh</span>
           <strong>Documented</strong>
           <small>Admin · Analytics · Comms · Privacy · Studio</small>
