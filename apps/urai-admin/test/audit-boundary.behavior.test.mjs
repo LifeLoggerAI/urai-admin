@@ -10,6 +10,7 @@ const library = ts.transpileModule(read('lib/firebase/admin.ts'),{compilerOption
 const helpers = compile(read('lib/admin/safe-audit-data.ts'));
 const postSource=compile(read('app/api/audit/route.ts'));
 const getSource=compile(read('app/api/admin/audit/route.ts'));
+const collectionSource=compile(read('app/api/admin/collection/route.ts'));
 
 function fixture({deniedStatus,crossOrigin=false,failAudit=false,failQuery=false}={}) {
   const writes=[],queries=[],guards=[],errors=[];
@@ -40,7 +41,8 @@ function fixture({deniedStatus,crossOrigin=false,failAudit=false,failQuery=false
   Object.assign(context,safe);
   const post=vm.runInContext(`(()=>{${postSource};return POST;})()`,context);
   const get=vm.runInContext(`(()=>{${getSource};return GET;})()`,context);
-  return{post,get,writes,queries,guards,record,errors};
+  const collection=vm.runInContext(`(()=>{${collectionSource};return GET;})()`,context);
+  return{post,get,collection,writes,queries,guards,record,errors};
 }
 const payload=()=>({action:'proof.audit',target:{id:'synthetic',type:'job',apiKey:'synthetic-private'},actorUid:'forged-actor',metadata:{requestId:'proof-request',role:'admin',apiKey:'synthetic-private',transcript:'synthetic-private',unreviewed:'synthetic-private',before:{role:'viewer',isActive:true,accessToken:'synthetic-private'}}});
 const request=(body=payload())=>({url:'https://synthetic.example.invalid/api/audit',json:async()=>body});
@@ -54,3 +56,7 @@ for(const body of [null,[],{...payload(),metadata:[]},{...payload(),action:''},{
 test('audit GET returns only safe evidence with actual document identity and no-store',async()=>{const f=fixture();const r=await f.get(request());assert.equal(r.status,200);assert.equal(r.headers['Cache-Control'],'no-store');assert.equal(r.body.logs[0].id,'real-document-id');assert.equal(JSON.stringify(r.body).includes('synthetic-private'),false);assert.equal(r.body.logs[0].metadata.role,'admin');assert.equal(r.body.logs[0].metadata.before.isActive,true);assert.equal(f.record.rawPayload,'synthetic-private');});
 test('audit GET fails closed without disclosing a datastore error',async()=>{const f=fixture({failQuery:true});const r=await f.get(request());assert.equal(r.status,500);assert.equal(r.headers['Cache-Control'],'no-store');assert.equal(JSON.stringify({response:r,errors:f.errors}).includes('synthetic-private'),false);});
 for(const status of [401,403])test('audit GET rejects session/role denial '+status+' before query',async()=>{const f=fixture({deniedStatus:status});const r=await f.get(request());assert.equal(r.status,status);assert.equal(f.queries.length,0);});
+const collectionRequest=()=>({...request(),url:'https://synthetic.example.invalid/api/admin/collection?collection=auditLogs'});
+test('alternate audit collection read uses the same minimized evidence boundary',async()=>{const f=fixture();const r=await f.collection(collectionRequest());assert.equal(r.status,200);assert.equal(r.headers['Cache-Control'],'no-store');assert.equal(r.body.records[0].id,'real-document-id');assert.equal(JSON.stringify(r.body).includes('synthetic-private'),false);assert.equal(r.body.records[0].metadata.role,'admin');});
+test('alternate audit collection fails closed without raw datastore error logs',async()=>{const f=fixture({failQuery:true});const r=await f.collection(collectionRequest());assert.equal(r.status,500);assert.equal(r.headers['Cache-Control'],'no-store');assert.equal(JSON.stringify({response:r,errors:f.errors}).includes('synthetic-private'),false);});
+for(const status of [401,403])test('alternate audit collection rejects session/role denial '+status+' before query',async()=>{const f=fixture({deniedStatus:status});const r=await f.collection(collectionRequest());assert.equal(r.status,status);assert.equal(f.queries.length,0);});
