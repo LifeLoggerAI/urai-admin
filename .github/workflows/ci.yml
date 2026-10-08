@@ -114,6 +114,7 @@ jobs:
         run: |
           node scripts/validate-admin-hosting-target.mjs
           node --test scripts/test-admin-hosting-target.mjs
+          node --test scripts/test-admin-production-operations.mjs
 
       - name: Security gate
         run: pnpm security:gate
