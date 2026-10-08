@@ -292,14 +292,17 @@ export class InstitutionalControlPlaneStore {
         );
         const quorum = Number(requiredApprovers.quorum);
         if (!Number.isInteger(quorum) || quorum < 0) throw new Error('decision.requiredApprovers.quorum must be non-negative');
-        if (approvals.length < quorum) throw new Error('authorization quorum not satisfied');
+        const approvalPrincipals = new Set<string>();
         for (const approval of approvals) {
           const approvalRecord = requireObject(approval, 'approval');
           const principalId = requireString(approvalRecord.principalId, 'approval.principalId');
           if (identities.length > 0 && !identities.includes(principalId)) {
             throw new Error('approval from unauthorized principal');
           }
+          if (approvalPrincipals.has(principalId)) throw new Error('duplicate approval principal');
+          approvalPrincipals.add(principalId);
         }
+        if (approvalPrincipals.size < quorum) throw new Error('authorization quorum not satisfied');
         next.approvals = approvals;
       }
       if (nextState === 'DENIED') next.denialReason = requireString(evidence.reason, 'transition evidence.reason');
@@ -618,3 +621,4 @@ export class InstitutionalControlPlaneStore {
 export function createInstitutionalControlPlaneStore(db: Firestore): InstitutionalControlPlaneStore {
   return new InstitutionalControlPlaneStore(db);
 }
+

@@ -206,10 +206,16 @@ export function transitionDecision(decision, nextState, evidence = {}) {
 
   if (nextState === 'AUTHORIZED') {
     const approvals = requireArray(evidence.approvals, 'evidence.approvals');
-    invariant(approvals.length >= current.requiredApprovers.quorum, 'authorization quorum not satisfied');
-    if (current.requiredApprovers.identities.length > 0) {
-      for (const approval of approvals) invariant(current.requiredApprovers.identities.includes(approval.principalId), 'approval from unauthorized principal');
+    const approvalPrincipals = new Set();
+    for (const approval of approvals) {
+      const principalId = requireString(requireObject(approval, 'approval').principalId, 'approval.principalId');
+      if (current.requiredApprovers.identities.length > 0) {
+        invariant(current.requiredApprovers.identities.includes(principalId), 'approval from unauthorized principal');
+      }
+      invariant(!approvalPrincipals.has(principalId), 'duplicate approval principal');
+      approvalPrincipals.add(principalId);
     }
+    invariant(approvalPrincipals.size >= current.requiredApprovers.quorum, 'authorization quorum not satisfied');
     next.approvals = approvals;
   }
   if (nextState === 'DENIED') next.denialReason = requireString(evidence.reason, 'evidence.reason');
@@ -343,3 +349,4 @@ export function writesAllowedAtKillSwitchLevel(level) {
   requireEnum(level, KILL_SWITCH_LEVELS, 'level');
   return KILL_SWITCH_LEVELS.indexOf(level) < KILL_SWITCH_LEVELS.indexOf('ENVIRONMENT_WRITE_FREEZE');
 }
+
