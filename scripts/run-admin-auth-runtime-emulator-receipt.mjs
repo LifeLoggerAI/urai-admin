@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
@@ -175,6 +176,7 @@ async function main() {
     recovery: { uid: 'proof-recovery', email: 'proof-recovery@urai.invalid', role: 'viewer' },
     inactive: { uid: 'proof-inactive', email: 'proof-inactive@urai.invalid', role: 'admin' },
     outsider: { uid: 'proof-outsider', email: 'proof-outsider@urai.invalid' },
+    flagActor: { uid: 'proof-flag-actor', email: 'proof-flag-actor@urai.invalid', role: 'admin' },
   };
 
   await seedAdmin(auth, db, users.owner);
@@ -184,6 +186,7 @@ async function main() {
   await seedAdmin(auth, db, users.stale);
   await seedAdmin(auth, db, users.recovery);
   await seedAdmin(auth, db, users.inactive, { active: false, claimAdmin: true });
+  await seedAdmin(auth, db, users.flagActor);
   await auth.createUser({ uid: users.outsider.uid, email: users.outsider.email, password: PASSWORD, emailVerified: true });
 
   await db.collection('systemRegistry').doc('proof').set({
@@ -344,6 +347,81 @@ async function main() {
   assert.ok(!serialized.includes('secret-never-expose') && !serialized.includes('private-text'));
   assert.equal((await appRequest('/api/admin/collection?collection=analytics_events_raw_test', { cookie: ownerCookie.header })).response.status, 400);
   pass('privacy boundary and redaction', { sensitiveFieldsRedacted: true, rawCollectionNotExposed: true });
+
+  // Only this loopback emulator's disposable records participate. This proves
+  // the actual protected consuming route, not a direct helper invocation.
+  await db.collection('institutionalControlState').doc('global').set({ level: 'NORMAL', version: 1 });
+  const flagActorLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(flagActorLogin.response.status, 200);
+  const flagActorCookie = sessionCookie(flagActorLogin.response);
+  const flagBody = { operationId: randomUUID(), flagId: 'proof-institutional-flag', enabled: true };
+  assert.equal((await appRequest('/api/auth/admin-session', { cookie: flagActorCookie.header })).response.status, 200);
+
+  // Current Auth authority is withdrawn while the original signed cookie and
+  // canonical member remain unchanged. An old cookie must not authorize effect.
+  await auth.setCustomUserClaims(users.flagActor.uid, { admin: false, role: 'admin', roleVersion: 0 });
+  const withdrawnFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: flagActorCookie.header, body: flagBody });
+  assert.equal(withdrawnFlag.response.status, 403, JSON.stringify(withdrawnFlag.body));
+  assert.equal((await db.collection('featureFlags').doc(flagBody.flagId).get()).exists, false);
+  pass('institutional flag current Auth claim withdrawal', { originalSignedSessionAdmitted: true, currentClaimDenied: 403, flagUnchanged: true });
+
+  await auth.setCustomUserClaims(users.flagActor.uid, { admin: true, role: 'admin', roleVersion: 1 });
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ roleVersion: 1 }, { merge: true });
+  const staleFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: flagActorCookie.header, body: flagBody });
+  assert.equal(staleFlag.response.status, 403);
+  assert.equal((await db.collection('featureFlags').doc(flagBody.flagId).get()).exists, false);
+  pass('institutional flag same-role incarnation denial', { oldIncarnationDenied: 403, flagUnchanged: true });
+
+  const freshFlagLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(freshFlagLogin.response.status, 200);
+  const freshFlagCookie = sessionCookie(freshFlagLogin.response);
+  const currentFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: flagBody });
+  assert.equal(currentFlag.response.status, 200, JSON.stringify(currentFlag.body));
+  assert.equal(currentFlag.body?.duplicate, false);
+  const repeatedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: flagBody });
+  assert.equal(repeatedFlag.response.status, 200, JSON.stringify(repeatedFlag.body));
+  assert.equal(repeatedFlag.body?.duplicate, true);
+  const flagDecisions = await db.collection('institutionalDecisions').where('decisionId', '==', currentFlag.body.decisionId).get();
+  const flagReceipts = await db.collection('institutionalEvidenceReceipts').where('evidenceId', '==', currentFlag.body.evidenceId).get();
+  const flagAudits = await db.collection('auditLogs').where('action', '==', 'featureFlags.set').get();
+  assert.equal(flagDecisions.size, 1); assert.equal(flagDecisions.docs[0].data().state, 'CLOSED');
+  assert.equal(flagReceipts.size, 1); assert.equal(flagReceipts.docs[0].data().verificationResult, 'PASS');
+  assert.ok(flagAudits.docs.some(doc => doc.data().actorUid === users.flagActor.uid));
+  pass('institutional flag protected route durable closure and same-incarnation idempotency', { requestStatus: 200, duplicateStatus: 200, closedDecision: 1, positiveReceipt: 1, actualActorAudit: true });
+
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ isActive: false, roleMutation: { id: 'proof-pending-role' } }, { merge: true });
+  const pendingFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(pendingFlag.response.status, 403);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ isActive: true, roleMutation: null }, { merge: true });
+  pass('institutional flag pending membership mutation denial', { pendingMutationDenied: 403, flagUnchanged: true });
+
+  await auth.updateUser(users.flagActor.uid, { disabled: true });
+  const disabledFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(disabledFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  await auth.updateUser(users.flagActor.uid, { disabled: false });
+  pass('institutional flag disabled Auth account denial', { disabledDenied: 401, flagUnchanged: true });
+
+  const originalAuthTime = decodeJwt(freshFlagCookie.value).auth_time;
+  assert.equal(typeof originalAuthTime, 'number');
+  const rollover = (originalAuthTime + 1) * 1000 - Date.now();
+  if (rollover >= 0) await sleep(rollover + 50);
+  await auth.revokeRefreshTokens(users.flagActor.uid);
+  assert.ok(Date.parse((await auth.getUser(users.flagActor.uid)).tokensValidAfterTime) / 1000 > originalAuthTime);
+  const revokedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(revokedFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  pass('institutional flag revoked original session denial', { revokedDenied: 401, realSdkRevocationReadback: true, flagUnchanged: true });
+
+  const deletableFlagLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(deletableFlagLogin.response.status, 200);
+  const deletableFlagCookie = sessionCookie(deletableFlagLogin.response);
+  await auth.deleteUser(users.flagActor.uid);
+  const deletedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: deletableFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(deletedFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  pass('institutional flag deleted Auth account denial', { deletedDenied: 401, disposableAccountOnly: true, flagUnchanged: true });
 
   assert.equal((await appRequest('/api/admin/users/' + users.owner.uid + '/role', {
     method: 'PUT', cookie: ownerCookie.header, body: { role: 'admin' },

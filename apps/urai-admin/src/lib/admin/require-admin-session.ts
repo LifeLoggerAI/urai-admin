@@ -9,6 +9,7 @@ export type AdminSession = {
   uid: string;
   email?: string;
   role: AdminRole;
+  roleVersion: number;
 };
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' } as const;
@@ -32,6 +33,15 @@ export class AdminAuthError extends Error {
 
 function isAdminRole(role: unknown): role is AdminRole {
   return typeof role === 'string' && ADMIN_ROLES.includes(role as AdminRole);
+}
+
+// Match the canonical membership mutation contract, including legacy version 0.
+function readRoleVersion(value: unknown): number {
+  if (value == null) return 0;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new AdminAuthError('Invalid admin authority version', 403);
+  }
+  return value;
 }
 
 function normalizeOrigin(value: string | null | undefined): string | null {
@@ -252,7 +262,9 @@ export async function requireAdminSession(
     throw new AdminAuthError('Unauthorized', 401);
   }
 
-  const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+  const decodedToken = await auth.verifySessionCookie(sessionCookie, true).catch(() => {
+    throw new AdminAuthError('Unauthorized', 401);
+  });
   const role = decodedToken.role as AdminRole | undefined;
 
   if (!role || !allowedRoles.includes(role)) {
@@ -261,8 +273,11 @@ export async function requireAdminSession(
 
   const adminUserDoc = await firestore.collection('adminUsers').doc(decodedToken.uid).get();
   const adminUser = adminUserDoc.data();
+  const roleVersion = readRoleVersion(decodedToken.roleVersion);
 
-  if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role) {
+  if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role ||
+      readRoleVersion(adminUser?.roleVersion) !== roleVersion ||
+      adminUser?.roleMutation?.id || adminUser?.activeMutation?.id) {
     throw new AdminAuthError('Forbidden', 403);
   }
 
@@ -270,6 +285,7 @@ export async function requireAdminSession(
     uid: decodedToken.uid,
     email: decodedToken.email,
     role,
+    roleVersion,
   };
 }
 
@@ -279,6 +295,41 @@ export async function requireAdminMutationSession(
 ) {
   requireSameOrigin(req);
   return requireAdminSession(req, allowedRoles);
+}
+
+export async function revalidateAdminMutationSession(
+  req: NextRequest,
+  admitted: AdminSession,
+  allowedRoles: AdminRole[] = ['owner', 'admin'],
+): Promise<AdminSession> {
+  try {
+    const current = await requireAdminMutationSession(req, allowedRoles);
+    if (current.uid !== admitted.uid || current.role !== admitted.role ||
+        current.roleVersion !== admitted.roleVersion) {
+      throw new AdminAuthError('Admin authority changed', 403);
+    }
+
+    const user = await auth.getUser(current.uid);
+    const claims = user.customClaims ?? {};
+    if (user.disabled || user.uid !== current.uid || claims.admin !== true ||
+        claims.role !== current.role || readRoleVersion(claims.roleVersion) !== current.roleVersion) {
+      throw new AdminAuthError('Admin authority changed', 403);
+    }
+
+    // Recheck the original request credential after the account read. It stays
+    // inside this request; it is never persisted in a decision or receipt.
+    const sessionCookie = req.cookies.get('__session')?.value;
+    if (!sessionCookie) throw new AdminAuthError('Unauthorized', 401);
+    const verified = await auth.verifySessionCookie(sessionCookie, true);
+    if (verified.uid !== admitted.uid || verified.admin !== true ||
+        verified.role !== admitted.role || readRoleVersion(verified.roleVersion) !== admitted.roleVersion) {
+      throw new AdminAuthError('Admin authority changed', 403);
+    }
+    return current;
+  } catch (error) {
+    if (error instanceof AdminAuthError) throw error;
+    throw new AdminAuthError('Unauthorized', 401);
+  }
 }
 
 export function adminAuthErrorResponse(error: unknown) {

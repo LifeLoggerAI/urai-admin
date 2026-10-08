@@ -36,6 +36,7 @@ type InstitutionalActor = {
   uid: string;
   email?: string | null;
   role: ActorRole;
+  roleVersion: number;
 };
 
 type FeatureFlagState = {
@@ -46,6 +47,7 @@ type FeatureFlagState = {
 
 type FeatureFlagWorkflowInput = {
   actor: InstitutionalActor;
+  revalidateActor: () => Promise<InstitutionalActor>;
   operationId: string;
   flagId: string;
   enabled: boolean;
@@ -194,15 +196,49 @@ function assertCompatibleDecision(decision: InstitutionalRecord, requestFingerpr
     throw new InstitutionalWorkflowError('Existing institutional decision uses an incompatible schema.', 409);
   }
   if (decision.requestFingerprint !== requestFingerprint) {
-    throw new InstitutionalWorkflowError('Conflicting feature flag operation already uses this operation ID.', 409);
+    throw new InstitutionalWorkflowError('Conflicting or unbound feature flag authority already uses this operation ID; controlled reconciliation required.', 409);
   }
 }
 
 export async function executeInstitutionalFeatureFlag(
   input: FeatureFlagWorkflowInput,
 ): Promise<InstitutionalFeatureFlagResult> {
-  if (input.actor.role !== 'owner' && input.actor.role !== 'admin') {
+  const actor = Object.freeze({ ...input.actor });
+  const revalidateSession = input.revalidateActor;
+  if (actor.role !== 'owner' && actor.role !== 'admin') {
     throw new InstitutionalWorkflowError('Feature flag institutional execution requires owner or admin authority.', 403);
+  }
+  if (!actor.uid || !Number.isInteger(actor.roleVersion) || actor.roleVersion < 0 ||
+      typeof revalidateSession !== 'function') {
+    throw new InstitutionalWorkflowError('Feature flag execution requires bound current session authority.', 403);
+  }
+
+  async function revalidateActor(): Promise<void> {
+    const current = await revalidateSession();
+    if (current.uid !== actor.uid || current.role !== actor.role ||
+        current.roleVersion !== actor.roleVersion) {
+      throw new InstitutionalWorkflowError('Feature flag actor authority changed.', 403);
+    }
+  }
+
+  async function assertCurrentActor(transaction: Transaction): Promise<void> {
+    const snapshot = await transaction.get(firestore.collection('adminUsers').doc(actor.uid));
+    const member = recordFromSnapshot(snapshot);
+    if (member.roleVersion != null &&
+        (typeof member.roleVersion !== 'number' || !Number.isInteger(member.roleVersion) || member.roleVersion < 0)) {
+      throw new InstitutionalWorkflowError('Invalid feature flag actor authority version.', 403);
+    }
+    const roleVersion = typeof member.roleVersion === 'number' && Number.isInteger(member.roleVersion) && member.roleVersion >= 0
+      ? member.roleVersion : 0;
+    if (!snapshot.exists || member.isActive !== true || member.role !== actor.role ||
+        roleVersion !== actor.roleVersion ||
+        (member.roleMutation as InstitutionalRecord | undefined)?.id ||
+        (member.activeMutation as InstitutionalRecord | undefined)?.id) {
+      throw new InstitutionalWorkflowError('Feature flag actor authority changed.', 403);
+    }
+    // The membership read participates in transaction conflict detection; the
+    // original session is checked after the asynchronous reads, before writes.
+    await revalidateActor();
   }
 
   const decisionId = `admin-feature-flag:${input.operationId}`;
@@ -210,7 +246,9 @@ export async function executeInstitutionalFeatureFlag(
   const eventId = `${decisionId}:changed`;
   const idempotencyKey = `${ACTION}:${input.operationId}`;
   const requestFingerprint = fingerprint({
-    actorUid: input.actor.uid,
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    actorRoleVersion: actor.roleVersion,
     operationId: input.operationId,
     flagId: input.flagId,
     enabled: input.enabled,
@@ -227,6 +265,7 @@ export async function executeInstitutionalFeatureFlag(
   const reservation = await firestore.runTransaction(async (transaction: Transaction) => {
     const killSwitchLevel = await assertEffectfulWritesAllowed(transaction);
     const existingSnapshot = await transaction.get(decisionRef);
+    await assertCurrentActor(transaction);
     if (existingSnapshot.exists) {
       const existing = recordFromSnapshot(existingSnapshot);
       assertCompatibleDecision(existing, requestFingerprint);
@@ -241,7 +280,7 @@ export async function executeInstitutionalFeatureFlag(
     const requestedEvidence = {
       state: 'REQUESTED',
       at,
-      actor: { uid: input.actor.uid, role: input.actor.role },
+      actor: { uid: actor.uid, role: actor.role },
       action: ACTION,
       target: { type: 'featureFlag', id: input.flagId },
     };
@@ -251,7 +290,7 @@ export async function executeInstitutionalFeatureFlag(
       authorization: {
         outcome: 'PERMIT',
         basis: 'allowlisted-low-risk-reversible-feature-flag-mutation',
-        actorRole: input.actor.role,
+        actorRole: actor.role,
         killSwitchLevel,
       },
     };
@@ -261,9 +300,9 @@ export async function executeInstitutionalFeatureFlag(
       state: 'AUTHORIZED',
       action: ACTION,
       actor: {
-        principalId: input.actor.uid,
-        email: input.actor.email ?? null,
-        role: input.actor.role,
+        principalId: actor.uid,
+        email: actor.email ?? null,
+        role: actor.role,
       },
       target: { type: 'featureFlag', id: input.flagId },
       requestFingerprint,
@@ -300,6 +339,7 @@ export async function executeInstitutionalFeatureFlag(
   });
 
   if (reservation.state === 'CLOSED') {
+    await revalidateActor();
     return {
       success: true,
       duplicate: true,
@@ -322,9 +362,11 @@ export async function executeInstitutionalFeatureFlag(
     assertCompatibleDecision(decision, requestFingerprint);
     const state = typeof decision.state === 'string' ? decision.state : '';
     if (state === 'CLOSED') {
+      await assertCurrentActor(transaction);
       return { state, expectedAfter: expectedState(decision), resumed: true };
     }
     if (state === 'EXECUTED') {
+      await assertCurrentActor(transaction);
       return { state, expectedAfter: expectedState(decision), resumed: true };
     }
     if (state !== 'AUTHORIZED') {
@@ -332,6 +374,7 @@ export async function executeInstitutionalFeatureFlag(
     }
 
     const flagSnapshot = await transaction.get(flagRef);
+    await assertCurrentActor(transaction);
     const before = stateFromSnapshot(flagSnapshot);
     const expectedAfter: FeatureFlagState = {
       exists: true,
@@ -342,7 +385,7 @@ export async function executeInstitutionalFeatureFlag(
     const flagUpdate: InstitutionalRecord = {
       enabled: input.enabled,
       updatedAt: new Date(at),
-      updatedBy: input.actor.uid,
+      updatedBy: actor.uid,
     };
     if (input.rollout !== undefined) flagUpdate.rollout = input.rollout;
 
@@ -351,7 +394,7 @@ export async function executeInstitutionalFeatureFlag(
     const executionEvidence = {
       at,
       execution: {
-        principalId: input.actor.uid,
+        principalId: actor.uid,
         reference: `featureFlags/${input.flagId}`,
         mutationId: input.operationId,
         killSwitchLevel,
@@ -368,9 +411,9 @@ export async function executeInstitutionalFeatureFlag(
 
     transaction.set(flagRef, flagUpdate, { merge: true });
     transaction.set(auditRef, {
-      actorUid: input.actor.uid,
-      actorEmail: input.actor.email ?? null,
-      actorRole: input.actor.role,
+      actorUid: actor.uid,
+      actorEmail: actor.email ?? null,
+      actorRole: actor.role,
       action: ACTION,
       target: { type: 'featureFlag', id: input.flagId },
       metadata: {
@@ -395,6 +438,7 @@ export async function executeInstitutionalFeatureFlag(
   });
 
   if (execution.state === 'CLOSED') {
+    await revalidateActor();
     return {
       success: true,
       duplicate: true,
@@ -422,7 +466,10 @@ export async function executeInstitutionalFeatureFlag(
     const decision = recordFromSnapshot(decisionSnapshot);
     assertCompatibleDecision(decision, requestFingerprint);
     const state = typeof decision.state === 'string' ? decision.state : '';
-    if (state === 'CLOSED') return { duplicate: true };
+    if (state === 'CLOSED') {
+      await assertCurrentActor(transaction);
+      return { duplicate: true };
+    }
     if (state !== 'EXECUTED') {
       throw new InstitutionalWorkflowError(`Feature flag finalization requires EXECUTED state, found ${state || 'UNKNOWN'}.`, 409);
     }
@@ -431,6 +478,7 @@ export async function executeInstitutionalFeatureFlag(
     const receiptSnapshot = await transaction.get(receiptRef);
     const eventSnapshot = await transaction.get(eventRef);
     const idempotencySnapshot = await transaction.get(eventIdempotencyRef);
+    await assertCurrentActor(transaction);
     const observed = stateFromSnapshot(flagSnapshot);
     const expected = expectedState(decision);
     if (!postconditionMatches(observed, expected)) {
@@ -456,7 +504,7 @@ export async function executeInstitutionalFeatureFlag(
       verificationResult: 'PASS',
       policyDecisionId: decisionId,
       action: ACTION,
-      actor: { principalId: input.actor.uid, role: input.actor.role },
+      actor: { principalId: actor.uid, role: actor.role },
       target: { type: 'featureFlag', id: input.flagId },
       postcondition,
       persistedAt: at,
@@ -476,7 +524,7 @@ export async function executeInstitutionalFeatureFlag(
       data: {
         enabled: observed.enabled,
         rollout: observed.rollout,
-        actorUid: input.actor.uid,
+        actorUid: actor.uid,
       },
     };
 
@@ -520,6 +568,7 @@ export async function executeInstitutionalFeatureFlag(
     return { duplicate: false };
   });
 
+  await revalidateActor();
   return {
     success: true,
     duplicate: reservation.resumed || execution.resumed || finalization.duplicate,

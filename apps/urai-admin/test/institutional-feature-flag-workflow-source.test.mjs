@@ -12,6 +12,7 @@ const workflow = await read('src/lib/admin/execute-institutional-feature-flag.ts
 assert.match(route, /requireAdminMutationSession\(request, \['owner', 'admin'\]\)/, 'feature flag mutation must require an authenticated trusted-origin mutation session');
 assert.match(route, /operationId:\s*z\.string\(\)\.uuid\(\)/, 'feature flag mutation must require a retry-stable operation ID');
 assert.match(route, /executeInstitutionalFeatureFlag/, 'feature flag route must use the institutional executor');
+assert.match(route, /revalidateActor:\s*\(\) => revalidateAdminMutationSession\(request, session, \['owner', 'admin'\]\)/, 'original session authority must stay in the private request closure and be revalidated');
 assert.match(route, /Cache-Control.*no-store/s, 'feature flag mutation responses must be non-cacheable');
 assert.doesNotMatch(route, /requireAdminSession\(/, 'feature flag mutation must not bypass the same-origin mutation guard');
 
@@ -44,6 +45,10 @@ assert.match(workflow, /stateFromSnapshot\(await flagRef\.get\(\)\)/, 'executor 
 assert.match(workflow, /verificationResult:\s*'PASS'/, 'receipt must record positive verification only after readback');
 assert.match(workflow, /replayClassification:\s*'SAFE_REPLAY'/, 'reversible idempotent feature flag event must declare safe replay semantics');
 assert.match(workflow, /requestFingerprint/, 'operation ID reuse with a different request must fail closed');
+assert.match(workflow, /actorRoleVersion:\s*actor\.roleVersion/, 'operation identity must bind the admitted authority incarnation');
+assert.match(workflow, /transaction\.get\(firestore\.collection\('adminUsers'\)/, 'current membership must participate in the effect transaction');
+assert.match(workflow, /await assertCurrentActor\(transaction\)/, 'asynchronous phases must recheck current actor authority before writes');
+assert.match(workflow, /controlled reconciliation required/, 'legacy unbound decisions must fail closed without being overwritten');
 assert.match(workflow, /eventIdempotencyRef/, 'event emission must have a durable idempotency boundary');
 assert.match(workflow, /institutionalDecisionId/, 'existing Admin audit evidence must bind the institutional decision ID');
 assert.doesNotMatch(workflow, /FIREBASE_PRIVATE_KEY|GOOGLE_APPLICATION_CREDENTIALS_JSON|credential\.cert/, 'institutional executor must not introduce long-lived credential authority');
