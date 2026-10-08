@@ -13,7 +13,8 @@ writer. A failed durable write returns 500 rather than success. Invalid JSON
 and invalid shapes return 400; responses use no-store. Error logging contains
 only a fixed description.
 
-The protected audit GET returns actual Firestore document identifiers and an
+Both the protected audit GET and the generic collection GET for auditLogs return
+actual Firestore document identifiers and an
 explicit operational field set. Legacy raw payloads, arbitrary metadata and
 sensitive credentials/transcripts are removed or redacted. It preserves safe
 role/session/mutation identifiers and before/after evidence. It does not mutate
@@ -27,21 +28,21 @@ the existing active canonical owner/admin and timestamp checks. Existing
 immutable update/delete denials remain. Admin SDK writes retain their existing
 server authority.
 
-The same 15 behavior cases run against the original source and this repair on
-Node 22.23.3. Original: 5 passed, 10 failed. Repair: 15 passed, 0 failed.
+The same 19 behavior cases run against the original source and this repair on
+Node 22.23.3. Original: 7 passed, 12 failed. Repair: 19 passed, 0 failed.
 The tests load the actual TypeScript route handlers and Firebase audit library
 with explicit synthetic SDK/session adapters. They cover session/role denial,
 cross-origin rejection, durable-write failure, invalid payload/JSON, verified
 actor attribution, recursive private-field removal, actual document identity,
-datastore failure and content-free error behavior. They are not live provider
+both audit read paths, datastore failure and content-free error behavior. They are not live provider
 or cloud lifecycle tests. The helper passes a standalone strict TypeScript
 check; the actual emulator runner passes JavaScript syntax checking.
 
 The existing native Auth/Firestore/Next runtime emulator runner adds actual
 positive/foreign-actor/forged-email create cases in each immutable collection,
 plus same-origin audit creation, cross-origin rejection, durable persisted actor
-readback and a minimized legacy audit GET. The repository app test command runs
-the 15 behavior cases. Exact candidate native CI must prove these cases using
+readback and minimized legacy records through both audit read paths. The
+repository app test command runs the 19 behavior cases. Exact candidate native CI must prove these cases using
 the repository's declared dependencies and real emulators before source
 admission. No native result is claimed by this preparation note.
 
