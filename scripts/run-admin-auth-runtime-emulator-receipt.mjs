@@ -106,6 +106,22 @@ async function firestoreRest(path, idToken, options = {}) {
   });
 }
 
+async function createImmutableAudit(collection, id, idToken, actorUid, actorEmail) {
+  const name = 'projects/' + PROJECT_ID + '/databases/(default)/documents/' + collection + '/' + id;
+  return jsonFetch('http://' + FIRESTORE_HOST + '/v1/projects/' + PROJECT_ID + '/databases/(default)/documents:commit', {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + idToken, 'content-type': 'application/json' },
+    body: JSON.stringify({ writes: [{
+      update: { name, fields: {
+        actorUid: { stringValue: actorUid }, actorEmail: { stringValue: actorEmail },
+        action: { stringValue: 'proof.client.audit' },
+      } },
+      currentDocument: { exists: false },
+      updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
+    }] }),
+  });
+}
+
 async function waitForServer() {
   const deadline = Date.now() + 90000;
   let last;
@@ -283,6 +299,38 @@ async function main() {
     ownerViewerRegistryRead: 200, outsiderInactiveDenied: 403, viewerAuditDenied: 403,
     rawTelemetryDenied: 403, clientAdminMutationDenied: 403, auditMutationDenied: 403,
   });
+
+  for (const collection of ['auditLogs', 'adminAuditLogs', 'adminOperationalEvents']) {
+    assert.equal((await createImmutableAudit(collection, 'proof-own-actor', ownerAuth.idToken, users.owner.uid, users.owner.email)).response.status, 200);
+    assert.equal((await createImmutableAudit(collection, 'proof-forged-actor', ownerAuth.idToken, users.admin.uid, users.owner.email)).response.status, 403);
+    assert.equal((await createImmutableAudit(collection, 'proof-forged-email', ownerAuth.idToken, users.owner.uid, users.admin.email)).response.status, 403);
+  }
+  pass('immutable audit actor attribution', { collections: 3, ownActor: 200, foreignActor: 403, forgedEmail: 403 });
+
+  const proofAuditPayload = {
+    action: 'proof.audit.boundary', actorUid: users.owner.uid,
+    target: { type: 'proof', id: 'safe-audit-boundary', apiKey: 'synthetic-audit-private-never-expose' },
+    metadata: { requestId: 'proof-request', role: 'admin', transcript: 'synthetic-audit-private-never-expose',
+      apiKey: 'synthetic-audit-private-never-expose', unreviewed: 'synthetic-audit-private-never-expose',
+      before: { role: 'viewer', isActive: true, accessToken: 'synthetic-audit-private-never-expose' } },
+  };
+  assert.equal((await appRequest('/api/audit', { method: 'POST', cookie: adminCookie.header, body: proofAuditPayload,
+    origin: 'https://evil.example', fetchSite: 'cross-site' })).response.status, 403);
+  const auditCreated = await appRequest('/api/audit', { method: 'POST', cookie: adminCookie.header, body: proofAuditPayload });
+  assert.equal(auditCreated.response.status, 200);
+  const persisted = await db.collection('auditLogs').where('action', '==', 'proof.audit.boundary').get();
+  assert.equal(persisted.size, 1);
+  assert.equal(persisted.docs[0].data().actorUid, users.admin.uid);
+  assert.ok(!JSON.stringify(persisted.docs[0].data()).includes('synthetic-audit-private-never-expose'));
+  await db.collection('auditLogs').doc('proof-legacy-private-audit').set({
+    actorUid: users.admin.uid, actorEmail: users.admin.email, action: 'proof.legacy.audit', createdAt: new Date(),
+    rawPayload: 'synthetic-audit-private-never-expose', metadata: { transcript: 'synthetic-audit-private-never-expose' },
+  });
+  const safeAudits = await appRequest('/api/admin/audit', { cookie: ownerCookie.header });
+  assert.equal(safeAudits.response.status, 200);
+  assert.equal(safeAudits.response.headers.get('cache-control'), 'no-store');
+  assert.ok(!JSON.stringify(safeAudits.body).includes('synthetic-audit-private-never-expose'));
+  pass('durable minimized audit route boundary', { sameOrigin: 200, crossOrigin: 403, actorDerivedFromSession: true, storedAndReadPayloadMinimized: true });
 
   const flags = await appRequest('/api/admin/collection?collection=featureFlags', { cookie: viewerCookie.header });
   assert.equal(flags.response.status, 200);
