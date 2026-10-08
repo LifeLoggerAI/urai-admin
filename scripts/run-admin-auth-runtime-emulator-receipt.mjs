@@ -324,13 +324,18 @@ async function main() {
   assert.ok(!JSON.stringify(persisted.docs[0].data()).includes('synthetic-audit-private-never-expose'));
   await db.collection('auditLogs').doc('proof-legacy-private-audit').set({
     actorUid: users.admin.uid, actorEmail: users.admin.email, action: 'proof.legacy.audit', createdAt: new Date(),
-    rawPayload: 'synthetic-audit-private-never-expose', metadata: { transcript: 'synthetic-audit-private-never-expose' },
+    rawPayload: 'synthetic-audit-private-never-expose', debug: 'synthetic-audit-private-never-expose',
+    metadata: { transcript: 'synthetic-audit-private-never-expose', unreviewed: 'synthetic-audit-private-never-expose' },
   });
   const safeAudits = await appRequest('/api/admin/audit', { cookie: ownerCookie.header });
   assert.equal(safeAudits.response.status, 200);
   assert.equal(safeAudits.response.headers.get('cache-control'), 'no-store');
   assert.ok(!JSON.stringify(safeAudits.body).includes('synthetic-audit-private-never-expose'));
-  pass('durable minimized audit route boundary', { sameOrigin: 200, crossOrigin: 403, actorDerivedFromSession: true, storedAndReadPayloadMinimized: true });
+  const safeAuditCollection = await appRequest('/api/admin/collection?collection=auditLogs', { cookie: ownerCookie.header });
+  assert.equal(safeAuditCollection.response.status, 200);
+  assert.equal(safeAuditCollection.response.headers.get('cache-control'), 'no-store');
+  assert.ok(!JSON.stringify(safeAuditCollection.body).includes('synthetic-audit-private-never-expose'));
+  pass('durable minimized audit route boundary', { sameOrigin: 200, crossOrigin: 403, actorDerivedFromSession: true, storedAndBothReadPathsMinimized: true });
 
   const flags = await appRequest('/api/admin/collection?collection=featureFlags', { cookie: viewerCookie.header });
   assert.equal(flags.response.status, 200);
