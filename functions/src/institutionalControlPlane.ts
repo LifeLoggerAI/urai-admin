@@ -281,6 +281,9 @@ export class InstitutionalControlPlaneStore {
         if (receipt.policyDecisionId !== decisionId) {
           throw new Error('evidence receipt is not bound to this decision');
         }
+        if (receipt.verificationResult !== 'PASS') {
+          throw new Error('evidence receipt is not positively verified');
+        }
       }
 
       const next: InstitutionalRecord = { ...decision };

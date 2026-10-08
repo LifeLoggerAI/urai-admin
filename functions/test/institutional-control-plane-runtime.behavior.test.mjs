@@ -115,3 +115,18 @@ test('kill switch defaults to freeze and restoration needs separate authority', 
   assert.equal((await store.readRuntimeReadiness({ projectIdentityPresent: true, revisionPresent: true })).ready, false);
   assert.equal([...db.records.keys()].filter((path) => path.startsWith('institutionalKillSwitchTransitions/')).length, 2);
 });
+
+test('a failed evidence receipt cannot satisfy the persisted-receipt transition or close the task', async () => {
+  const db = createDatabase(); const store = createInstitutionalControlPlaneStore(db); const item = decision('badreceipt');
+  await store.persistDecision(item);
+  await store.transitionDecision(item.decisionId, 'AUTHORIZED', {
+    at, approvals: [{ principalId: principalA, evidenceRef: 'review-1' }, { principalId: principalB, evidenceRef: 'review-2' }],
+  });
+  await store.transitionDecision(item.decisionId, 'EXECUTED', { at, execution: { principalId: executor, reference: 'task-1' } });
+  await store.transitionDecision(item.decisionId, 'POSTCONDITION_VERIFIED', { at, postcondition: { verified: true, reference: 'check-1' } });
+  await store.persistEvidenceReceipt({ schemaVersion: 'urai-evidence-receipt-1', evidenceId: 'evidence_failed100000', verificationResult: 'FAIL', policyDecisionId: item.decisionId });
+  const before = structuredClone([...db.records]);
+  await assert.rejects(store.transitionDecision(item.decisionId, 'RECEIPT_PERSISTED', { at, receiptId: 'evidence_failed100000' }), /not positively verified/);
+  assert.deepEqual([...db.records], before);
+  await assert.rejects(store.transitionDecision(item.decisionId, 'CLOSED', { at }), /invalid decision transition/);
+});
