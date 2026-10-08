@@ -10,8 +10,9 @@ Monitor these signals continuously after launch:
 - Login page availability: `https://www.uraiadmin.com/login`
 - Protected admin route behavior: `https://www.uraiadmin.com/admin`
 - Anonymous API blocking: `https://www.uraiadmin.com/api/admin/users` returns `401`
-- Functions health: `https://us-central1-urai-4dc1d.cloudfunctions.net/api_health`
-- Functions auth blocking: `admin_whoami` rejects anonymous access
+- Functions health: `https://us-central1-urai-4dc1d.cloudfunctions.net/health`
+- Functions readiness: `https://us-central1-urai-4dc1d.cloudfunctions.net/readiness`
+- Current session API: `/api/auth/admin-session` returns `401` anonymously
 - Firebase Hosting 4xx/5xx trends
 - Firebase Functions errors and latency
 - Firestore read/write errors
@@ -24,6 +25,7 @@ Run this command on a schedule from CI, an uptime monitor, or an operator machin
 
 ```bash
 URAI_ADMIN_BASE_URL=https://www.uraiadmin.com \
+URAI_ADMIN_EXPECTED_LIVE_SHA="REPLACE_WITH_APPROVED_40_CHARACTER_LIVE_SHA" \
 URAI_ADMIN_FUNCTIONS_BASE_URL=https://us-central1-urai-4dc1d.cloudfunctions.net \
 pnpm verify:production
 ```
@@ -33,6 +35,13 @@ Recommended frequency:
 - Every 5 minutes during launch day.
 - Every 15 minutes after launch is stable.
 - Immediately after every deploy.
+
+Replace the SHA placeholder with the current approved deployed source. The
+verifier performs public source/readiness and anonymous-denial checks only;
+authenticated role/session, audit, provider and recovery acceptance is separate.
+This runbook does not assert that a scheduled monitor, alert policy or paging
+route is already configured. Retain native policy identities and one owned,
+non-destructive test-alert acknowledgement before calling alerting operational.
 
 ## Firebase Console checks
 
@@ -103,3 +112,4 @@ URAI Admin is healthy when:
 - Functions health is ok.
 - Audit logs are written.
 - No high-severity errors appear in Firebase logs.
+
