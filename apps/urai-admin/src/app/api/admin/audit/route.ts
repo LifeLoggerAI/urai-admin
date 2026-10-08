@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { AdminAuthError, adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
 import { sanitizeAuditRecord } from '@/lib/admin/safe-audit-data';
 import { firestore } from '@/lib/firebase/admin';
 
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       },
     }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    if (error instanceof Error && 'status' in error) {
+    if (error instanceof AdminAuthError) {
       return adminAuthErrorResponse(error);
     }
     console.error('Required Admin audit read failed');
