@@ -277,7 +277,7 @@ export async function requireAdminSession(
   }
 
   const decodedToken = await auth.verifySessionCookie(sessionCookie, true)
-    .catch(error => rethrowAuthenticationFailure(error, true));
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, true));
   const role = decodedToken.role as AdminRole | undefined;
 
   if (!role || !allowedRoles.includes(role)) {
@@ -322,7 +322,7 @@ export async function revalidateAdminMutationSession(
   }
 
   const user = await auth.getUser(current.uid)
-    .catch(error => rethrowAuthenticationFailure(error, false));
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, false));
   const claims = user.customClaims ?? {};
   if (user.disabled || user.uid !== current.uid || claims.admin !== true ||
       claims.role !== current.role || readRoleVersion(claims.roleVersion) !== current.roleVersion) {
@@ -334,7 +334,7 @@ export async function revalidateAdminMutationSession(
   const sessionCookie = req.cookies.get('__session')?.value;
   if (!sessionCookie) throw new AdminAuthError('Unauthorized', 401);
   const verified = await auth.verifySessionCookie(sessionCookie, true)
-    .catch(error => rethrowAuthenticationFailure(error, true));
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, true));
   if (verified.uid !== admitted.uid || verified.admin !== true ||
       verified.role !== admitted.role || readRoleVersion(verified.roleVersion) !== admitted.roleVersion) {
     throw new AdminAuthError('Admin authority changed', 403);
