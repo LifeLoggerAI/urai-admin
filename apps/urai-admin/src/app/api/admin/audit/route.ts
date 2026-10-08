@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { sanitizeAuditRecord } from '@/lib/admin/safe-audit-data';
 import { firestore } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
       const cursorDoc = await firestore.collection('auditLogs').doc(cursor).get();
 
       if (!cursorDoc.exists) {
-        return NextResponse.json({ error: 'Invalid cursor' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid cursor' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
       }
 
       query = query.startAfter(cursorDoc);
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     const logs = pageDocs.map((doc: FirestoreDoc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...sanitizeAuditRecord(doc.data()),
     }));
 
     return NextResponse.json({
@@ -65,8 +66,12 @@ export async function GET(req: NextRequest) {
         hasMore,
         nextCursor: hasMore ? pageDocs[pageDocs.length - 1]?.id ?? null : null,
       },
-    });
+    }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    return adminAuthErrorResponse(error);
+    if (error instanceof Error && 'status' in error) {
+      return adminAuthErrorResponse(error);
+    }
+    console.error('Required Admin audit read failed');
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }
