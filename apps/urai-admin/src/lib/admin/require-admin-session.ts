@@ -44,6 +44,20 @@ function readRoleVersion(value: unknown): number {
   return value;
 }
 
+function rethrowAuthenticationFailure(error: unknown, verifyingCookie: boolean): never {
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  // Firebase Admin 13.10 reports malformed session cookies as argument-error.
+  // Only verification calls may classify that code as invalid caller input.
+  if (code === 'auth/user-disabled' || code === 'auth/user-not-found' ||
+      (verifyingCookie && (code === 'auth/argument-error' ||
+        code === 'auth/session-cookie-expired' || code === 'auth/session-cookie-revoked'))) {
+    throw new AdminAuthError('Unauthorized', 401);
+  }
+  // Service credentials, permission, transport and datastore failures must
+  // retain their backend classification instead of asking the caller to login.
+  throw error;
+}
+
 function normalizeOrigin(value: string | null | undefined): string | null {
   if (!value) return null;
 
@@ -262,9 +276,8 @@ export async function requireAdminSession(
     throw new AdminAuthError('Unauthorized', 401);
   }
 
-  const decodedToken = await auth.verifySessionCookie(sessionCookie, true).catch(() => {
-    throw new AdminAuthError('Unauthorized', 401);
-  });
+  const decodedToken = await auth.verifySessionCookie(sessionCookie, true)
+    .catch(error => rethrowAuthenticationFailure(error, true));
   const role = decodedToken.role as AdminRole | undefined;
 
   if (!role || !allowedRoles.includes(role)) {
@@ -302,34 +315,31 @@ export async function revalidateAdminMutationSession(
   admitted: AdminSession,
   allowedRoles: AdminRole[] = ['owner', 'admin'],
 ): Promise<AdminSession> {
-  try {
-    const current = await requireAdminMutationSession(req, allowedRoles);
-    if (current.uid !== admitted.uid || current.role !== admitted.role ||
-        current.roleVersion !== admitted.roleVersion) {
-      throw new AdminAuthError('Admin authority changed', 403);
-    }
-
-    const user = await auth.getUser(current.uid);
-    const claims = user.customClaims ?? {};
-    if (user.disabled || user.uid !== current.uid || claims.admin !== true ||
-        claims.role !== current.role || readRoleVersion(claims.roleVersion) !== current.roleVersion) {
-      throw new AdminAuthError('Admin authority changed', 403);
-    }
-
-    // Recheck the original request credential after the account read. It stays
-    // inside this request; it is never persisted in a decision or receipt.
-    const sessionCookie = req.cookies.get('__session')?.value;
-    if (!sessionCookie) throw new AdminAuthError('Unauthorized', 401);
-    const verified = await auth.verifySessionCookie(sessionCookie, true);
-    if (verified.uid !== admitted.uid || verified.admin !== true ||
-        verified.role !== admitted.role || readRoleVersion(verified.roleVersion) !== admitted.roleVersion) {
-      throw new AdminAuthError('Admin authority changed', 403);
-    }
-    return current;
-  } catch (error) {
-    if (error instanceof AdminAuthError) throw error;
-    throw new AdminAuthError('Unauthorized', 401);
+  const current = await requireAdminMutationSession(req, allowedRoles);
+  if (current.uid !== admitted.uid || current.role !== admitted.role ||
+      current.roleVersion !== admitted.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
   }
+
+  const user = await auth.getUser(current.uid)
+    .catch(error => rethrowAuthenticationFailure(error, false));
+  const claims = user.customClaims ?? {};
+  if (user.disabled || user.uid !== current.uid || claims.admin !== true ||
+      claims.role !== current.role || readRoleVersion(claims.roleVersion) !== current.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
+  }
+
+  // Recheck the original request credential after the account read. It stays
+  // inside this request; it is never persisted in a decision or receipt.
+  const sessionCookie = req.cookies.get('__session')?.value;
+  if (!sessionCookie) throw new AdminAuthError('Unauthorized', 401);
+  const verified = await auth.verifySessionCookie(sessionCookie, true)
+    .catch(error => rethrowAuthenticationFailure(error, true));
+  if (verified.uid !== admitted.uid || verified.admin !== true ||
+      verified.role !== admitted.role || readRoleVersion(verified.roleVersion) !== admitted.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
+  }
+  return current;
 }
 
 export function adminAuthErrorResponse(error: unknown) {

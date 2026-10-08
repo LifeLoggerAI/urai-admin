@@ -21,12 +21,24 @@ const sessionCompiled = ts.transpileModule(sessionSource, {
   reportDiagnostics: true,
 });
 assert.equal((sessionCompiled.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error).length, 0);
-const require = createRequire(import.meta.url);
+const routeSource = await readFile(new URL('../../apps/urai-admin/src/app/api/admin/set-flag/route.ts', import.meta.url), 'utf8');
+const routeCompiled = ts.transpileModule(routeSource, {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+  reportDiagnostics: true,
+});
+assert.equal((routeCompiled.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error).length, 0);
+const executorUrl = `data:text/javascript;base64,${Buffer.from(compiled.outputText).toString('base64')}`;
+const sessionUrl = `data:text/javascript;base64,${Buffer.from(sessionCompiled.outputText).toString('base64')}`;
+// Resolve the guard's declared application dependency, not a different workspace
+// Zod version that happens to be visible from the Functions test directory.
+const require = createRequire(new URL('../../apps/urai-admin/package.json', import.meta.url));
 const zodUrl = pathToFileURL(require.resolve('zod')).href;
 const hooks = registerHooks({ resolve(specifier, context, next) {
   if (specifier === '@/lib/firebase/admin') {
     return { url: 'data:text/javascript,export const firestore = globalThis.__uraiOperationalTestDatabase; export const auth = globalThis.__uraiOperationalTestAuth; export const writeRequiredAuditLog = async () => { throw new Error("unexpected audit exchange"); };', shortCircuit: true };
   }
+  if (specifier === '@/lib/admin/execute-institutional-feature-flag') return { url: executorUrl, shortCircuit: true };
+  if (specifier === '@/lib/admin/require-admin-session') return { url: sessionUrl, shortCircuit: true };
   if (specifier === 'next/server') return { url: 'data:text/javascript,export class NextRequest {}; export class NextResponse { static json(body, options) { return { body, ...options }; } }', shortCircuit: true };
   if (specifier === 'zod') return { url: zodUrl, shortCircuit: true };
   return next(specifier, context);
@@ -35,10 +47,13 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
 function database() {
   const records = new Map();
   const snapshot = (path) => ({ exists: records.has(path), data: () => records.has(path) ? structuredClone(records.get(path)) : undefined });
-  const reference = (path) => ({ path, get: async () => snapshot(path), collection: (name) => collection(`${path}/${name}`) });
+  const reference = (path) => ({ path, get: async () => {
+    if (db.readFailure && path.startsWith('adminUsers/')) throw db.readFailure;
+    return snapshot(path);
+  }, collection: (name) => collection(`${path}/${name}`) });
   const collection = (path) => ({ doc: (id) => reference(`${path}/${id}`) });
   return {
-    records, collection, transactionCount: 0, afterCommit: undefined,
+    records, collection, transactionCount: 0, afterCommit: undefined, readFailure: undefined,
     async runTransaction(callback) {
       const pending = new Map(); let writesStarted = false;
       const result = await callback({
@@ -57,20 +72,27 @@ function database() {
 }
 
 const db = database(); globalThis.__uraiOperationalTestDatabase = db;
-const sdk = { user: null, signed: null, revoked: false, afterUserRead: undefined, checks: 0 };
+const sdk = { user: null, signed: null, revoked: false, afterUserRead: undefined, checks: 0,
+  verificationFailure: undefined, verificationFailureAt: 1, accountReadFailure: undefined };
+const firebaseError = code => Object.assign(new Error('owned synthetic authentication failure'), { code });
 globalThis.__uraiOperationalTestAuth = {
   async verifySessionCookie(cookie, checkRevoked) {
     assert.equal(cookie, 'owned-local-session'); assert.equal(checkRevoked, true); sdk.checks += 1;
-    if (sdk.revoked || !sdk.user || sdk.user.disabled) throw new Error('synthetic revoked/disabled/deleted session');
+    if (sdk.verificationFailure && sdk.checks === sdk.verificationFailureAt) throw sdk.verificationFailure;
+    if (sdk.revoked) throw firebaseError('auth/session-cookie-revoked');
+    if (!sdk.user) throw firebaseError('auth/user-not-found');
+    if (sdk.user.disabled) throw firebaseError('auth/user-disabled');
     return structuredClone(sdk.signed);
   },
   async getUser(uid) {
-    if (!sdk.user || sdk.user.uid !== uid) throw new Error('synthetic missing account');
+    if (sdk.accountReadFailure) throw sdk.accountReadFailure;
+    if (!sdk.user || sdk.user.uid !== uid) throw firebaseError('auth/user-not-found');
     const user = structuredClone(sdk.user); sdk.afterUserRead?.(); return user;
   },
 };
-const { executeInstitutionalFeatureFlag } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputText).toString('base64')}`);
-const { revalidateAdminMutationSession } = await import(`data:text/javascript;base64,${Buffer.from(sessionCompiled.outputText).toString('base64')}`);
+const { executeInstitutionalFeatureFlag } = await import(executorUrl);
+const { AdminAuthError, revalidateAdminMutationSession } = await import(sessionUrl);
+const { POST } = await import(`data:text/javascript;base64,${Buffer.from(routeCompiled.outputText).toString('base64')}`);
 hooks.deregister(); delete globalThis.__uraiOperationalTestDatabase; delete globalThis.__uraiOperationalTestAuth;
 
 const request = {
@@ -86,13 +108,103 @@ const input = {
 };
 
 function reset(level) {
-  db.records.clear(); db.transactionCount = 0; db.afterCommit = undefined;
+  db.records.clear(); db.transactionCount = 0; db.afterCommit = undefined; db.readFailure = undefined;
   db.records.set('adminUsers/test-owner', { isActive: true, role: 'owner', roleVersion: 0 });
   sdk.user = { uid: 'test-owner', disabled: false, customClaims: { admin: true, role: 'owner', roleVersion: 0 } };
   sdk.signed = { uid: 'test-owner', admin: true, role: 'owner', roleVersion: 0 };
   sdk.revoked = false; sdk.afterUserRead = undefined; sdk.checks = 0;
+  sdk.verificationFailure = undefined; sdk.verificationFailureAt = 1; sdk.accountReadFailure = undefined;
   if (level) db.records.set('institutionalControlState/global', { level, version: 1 });
 }
+
+for (const code of ['auth/argument-error', 'auth/session-cookie-expired', 'auth/session-cookie-revoked', 'auth/user-disabled', 'auth/user-not-found']) {
+  test(code + ' from session verification remains a typed caller authentication failure', async () => {
+    reset('NORMAL'); sdk.verificationFailure = firebaseError(code);
+    const before = structuredClone([...db.records]);
+    await assert.rejects(executeInstitutionalFeatureFlag(input), error => error instanceof AdminAuthError && error.status === 401);
+    assert.deepEqual([...db.records], before);
+  });
+}
+
+for (const [name, fail] of [
+  ['datastore transport unavailable', () => { db.readFailure = Object.assign(new Error('owned datastore outage'), { code: 14, status: 503 }); return db.readFailure; }],
+  ['datastore status401 without an authentication code', () => { db.readFailure = Object.assign(new Error('owned datastore failure'), { status: 401 }); return db.readFailure; }],
+  ...['auth/internal-error', 'auth/insufficient-permission', 'auth/invalid-credential', 'auth/project-not-found'].map(code => [code + ' from initial verification', () => { sdk.verificationFailure = firebaseError(code); return sdk.verificationFailure; }]),
+  ['unknown verification transport failure', () => { sdk.verificationFailure = new Error('owned transport outage'); return sdk.verificationFailure; }],
+  ['auth/internal-error from final verification', () => { sdk.verificationFailure = firebaseError('auth/internal-error'); sdk.verificationFailureAt = 2; return sdk.verificationFailure; }],
+  ['auth/internal-error from current account read', () => { sdk.accountReadFailure = firebaseError('auth/internal-error'); return sdk.accountReadFailure; }],
+  ['argument-error from account read is not an invalid cookie', () => { sdk.accountReadFailure = firebaseError('auth/argument-error'); return sdk.accountReadFailure; }],
+]) {
+  test(name + ' preserves the backend error without writes', async () => {
+    reset('NORMAL'); const expected = fail(); const before = structuredClone([...db.records]);
+    await assert.rejects(executeInstitutionalFeatureFlag(input), error => error === expected);
+    assert.deepEqual([...db.records], before);
+  });
+}
+
+test('deleted account observed only during fresh account read returns a typed401 without writes', async () => {
+  reset('NORMAL'); sdk.accountReadFailure = firebaseError('auth/user-not-found');
+  const before = structuredClone([...db.records]);
+  await assert.rejects(executeInstitutionalFeatureFlag(input), error => error instanceof AdminAuthError && error.status === 401);
+  assert.deepEqual([...db.records], before);
+});
+
+test('reauthorization preserves the existing trusted-origin403', async () => {
+  reset('NORMAL');
+  const crossSite = { ...request, headers: new Headers({ origin: 'http://127.0.0.1:3000', 'sec-fetch-site': 'cross-site' }) };
+  await assert.rejects(revalidateAdminMutationSession(crossSite, input.actor), error => error instanceof AdminAuthError && error.status === 403);
+  assert.equal(sdk.checks, 0);
+});
+
+test('reauthorization preserves configured-origin service503', async () => {
+  reset('NORMAL'); const previous = process.env.URAI_ADMIN_ALLOWED_ORIGINS;
+  process.env.URAI_ADMIN_ALLOWED_ORIGINS = 'owned-invalid-origin';
+  try {
+    await assert.rejects(revalidateAdminMutationSession(request, input.actor), error => error instanceof AdminAuthError && error.status === 503);
+    assert.equal(sdk.checks, 0);
+  } finally {
+    if (previous === undefined) delete process.env.URAI_ADMIN_ALLOWED_ORIGINS;
+    else process.env.URAI_ADMIN_ALLOWED_ORIGINS = previous;
+  }
+});
+
+test('backend failure after reservation retains its exact authorized decision without flag effect', async () => {
+  reset('NORMAL'); const expected = firebaseError('auth/internal-error');
+  db.afterCommit = count => { if (count === 1) sdk.accountReadFailure = expected; };
+  await assert.rejects(executeInstitutionalFeatureFlag(input), error => error === expected);
+  assert.equal(db.records.has('featureFlags/local-test-flag'), false);
+  assert.equal([...db.records.values()].find(x => x.decisionId && x.state)?.state, 'AUTHORIZED');
+  assert.equal([...db.records.keys()].some(p => p.startsWith('auditLogs/') || p.startsWith('institutionalEvidenceReceipts/')), false);
+});
+
+for (const [name, fail] of [
+  ['datastore outage', () => { db.readFailure = Object.assign(new Error('private backend details'), { code: 14 }); }],
+  ['Auth service failure', () => { sdk.verificationFailure = firebaseError('auth/internal-error'); }],
+  ['current account service failure', () => { sdk.accountReadFailure = firebaseError('auth/internal-error'); }],
+]) {
+  test('actual consuming route returns sanitized500 for ' + name, async () => {
+    reset('NORMAL'); fail(); const before = structuredClone([...db.records]);
+    const messages = []; const original = console.error; console.error = (...args) => messages.push(args);
+    try {
+      const result = await POST({ ...request, json: async () => ({ operationId: '57591f05-ff6d-47bb-9470-2fb80c3e13c0', flagId: input.flagId, enabled: true }) });
+      assert.equal(result.status, 500);
+      assert.deepEqual(result.body, { success: false, error: 'Failed to update feature flag' });
+      assert.equal(result.headers['Cache-Control'], 'no-store');
+      assert.deepEqual(messages, [['Failed to update feature flag']]);
+      assert.deepEqual([...db.records], before);
+    } finally { console.error = original; }
+  });
+}
+
+test('actual consuming route retains revoked-session401 without backend logging', async () => {
+  reset('NORMAL'); sdk.revoked = true; const messages = []; const original = console.error;
+  console.error = (...args) => messages.push(args);
+  try {
+    const result = await POST({ ...request, json: async () => assert.fail('revoked requests never parse a mutation') });
+    assert.equal(result.status, 401); assert.equal(result.headers['Cache-Control'], 'no-store');
+    assert.deepEqual(messages, []); assert.equal(db.records.has('featureFlags/local-test-flag'), false);
+  } finally { console.error = original; }
+});
 
 test('authorized reversible task persists flag, postcondition, event and closed decision; duplicate is idempotent', async () => {
   reset('NORMAL');

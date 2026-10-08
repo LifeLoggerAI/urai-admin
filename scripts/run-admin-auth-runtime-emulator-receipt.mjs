@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -162,6 +162,14 @@ async function main() {
   assert.match(TARGET_SHA, /^[0-9a-f]{40}$/, 'TARGET_SHA must be exact');
   loopback(AUTH_HOST, 9099, 'FIREBASE_AUTH_EMULATOR_HOST');
   loopback(FIRESTORE_HOST, 8080, 'FIRESTORE_EMULATOR_HOST');
+
+  // Execute the declared source contracts in this already frozen native graph.
+  // Keep them separate from the loaded Auth/Firestore/Next runtime check count.
+  for (const script of ['test:rules', 'verify:release']) {
+    const result = spawnSync('pnpm', [script], { cwd: process.cwd(), stdio: 'inherit' });
+    assert.equal(result.status, 0, 'Declared source gate pnpm ' + script + ' must pass');
+    console.log('[PASS] Declared source gate pnpm ' + script);
+  }
 
   proofApp = initializeApp({ projectId: PROJECT_ID }, 'runtime-proof-' + Date.now());
   const auth = getAuth(proofApp);

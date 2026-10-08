@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('Failed to update feature flag:', error);
+    console.error('Failed to update feature flag');
     return jsonNoStore({ success: false, error: 'Failed to update feature flag' }, 500);
   }
 }
