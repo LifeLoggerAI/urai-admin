@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuthErrorResponse, requireAdminMutationSession } from '@/lib/admin/require-admin-session';
+import { AdminAuthError, adminAuthErrorResponse, requireAdminMutationSession } from '@/lib/admin/require-admin-session';
 import { sanitizeAuditMetadata } from '@/lib/admin/safe-audit-data';
 import { writeRequiredAuditLog } from '@/lib/firebase/admin';
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    if (error instanceof Error && 'status' in error) {
+    if (error instanceof AdminAuthError) {
       return adminAuthErrorResponse(error);
     }
 
