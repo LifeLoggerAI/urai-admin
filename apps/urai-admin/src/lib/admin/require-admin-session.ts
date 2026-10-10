@@ -9,6 +9,7 @@ export type AdminSession = {
   uid: string;
   email?: string;
   role: AdminRole;
+  roleVersion: number;
 };
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' } as const;
@@ -32,6 +33,29 @@ export class AdminAuthError extends Error {
 
 function isAdminRole(role: unknown): role is AdminRole {
   return typeof role === 'string' && ADMIN_ROLES.includes(role as AdminRole);
+}
+
+// Match the canonical membership mutation contract, including legacy version 0.
+function readRoleVersion(value: unknown): number {
+  if (value == null) return 0;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new AdminAuthError('Invalid admin authority version', 403);
+  }
+  return value;
+}
+
+function rethrowAuthenticationFailure(error: unknown, verifyingCookie: boolean): never {
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  // Firebase Admin 13.10 reports malformed session cookies as argument-error.
+  // Only verification calls may classify that code as invalid caller input.
+  if (code === 'auth/user-disabled' || code === 'auth/user-not-found' ||
+      (verifyingCookie && (code === 'auth/argument-error' ||
+        code === 'auth/session-cookie-expired' || code === 'auth/session-cookie-revoked'))) {
+    throw new AdminAuthError('Unauthorized', 401);
+  }
+  // Service credentials, permission, transport and datastore failures must
+  // retain their backend classification instead of asking the caller to login.
+  throw error;
 }
 
 function normalizeOrigin(value: string | null | undefined): string | null {
@@ -252,7 +276,8 @@ export async function requireAdminSession(
     throw new AdminAuthError('Unauthorized', 401);
   }
 
-  const decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+  const decodedToken = await auth.verifySessionCookie(sessionCookie, true)
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, true));
   const role = decodedToken.role as AdminRole | undefined;
 
   if (!role || !allowedRoles.includes(role)) {
@@ -261,8 +286,11 @@ export async function requireAdminSession(
 
   const adminUserDoc = await firestore.collection('adminUsers').doc(decodedToken.uid).get();
   const adminUser = adminUserDoc.data();
+  const roleVersion = readRoleVersion(decodedToken.roleVersion);
 
-  if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role) {
+  if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role ||
+      readRoleVersion(adminUser?.roleVersion) !== roleVersion ||
+      adminUser?.roleMutation?.id || adminUser?.activeMutation?.id) {
     throw new AdminAuthError('Forbidden', 403);
   }
 
@@ -270,6 +298,7 @@ export async function requireAdminSession(
     uid: decodedToken.uid,
     email: decodedToken.email,
     role,
+    roleVersion,
   };
 }
 
@@ -279,6 +308,38 @@ export async function requireAdminMutationSession(
 ) {
   requireSameOrigin(req);
   return requireAdminSession(req, allowedRoles);
+}
+
+export async function revalidateAdminMutationSession(
+  req: NextRequest,
+  admitted: AdminSession,
+  allowedRoles: AdminRole[] = ['owner', 'admin'],
+): Promise<AdminSession> {
+  const current = await requireAdminMutationSession(req, allowedRoles);
+  if (current.uid !== admitted.uid || current.role !== admitted.role ||
+      current.roleVersion !== admitted.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
+  }
+
+  const user = await auth.getUser(current.uid)
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, false));
+  const claims = user.customClaims ?? {};
+  if (user.disabled || user.uid !== current.uid || claims.admin !== true ||
+      claims.role !== current.role || readRoleVersion(claims.roleVersion) !== current.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
+  }
+
+  // Recheck the original request credential after the account read. It stays
+  // inside this request; it is never persisted in a decision or receipt.
+  const sessionCookie = req.cookies.get('__session')?.value;
+  if (!sessionCookie) throw new AdminAuthError('Unauthorized', 401);
+  const verified = await auth.verifySessionCookie(sessionCookie, true)
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, true));
+  if (verified.uid !== admitted.uid || verified.admin !== true ||
+      verified.role !== admitted.role || readRoleVersion(verified.roleVersion) !== admitted.roleVersion) {
+    throw new AdminAuthError('Admin authority changed', 403);
+  }
+  return current;
 }
 
 export function adminAuthErrorResponse(error: unknown) {

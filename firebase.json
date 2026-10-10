@@ -28,6 +28,7 @@
         "source": "**",
         "function": "nextServer"
       }
-    ]
+    ],
+    "target": "urai-admin-production"
   }
 }

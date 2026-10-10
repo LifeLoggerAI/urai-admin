@@ -8,14 +8,14 @@
     "start": "next start -p 3010",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx tests/smoke.test.ts"
+    "test": "node --import tsx tests/smoke.test.ts && node --test tests/rejected-ingest-privacy.test.mjs && node --import tsx --test tests/canonical-ingest-boundary.test.mjs"
   },
   "dependencies": {
     "@urai/analytics-core": "workspace:*",
     "firebase": "^10.12.3",
-    "firebase-admin": "^12.7.0",
+    "firebase-admin": "13.10.0",
     "lucide-react": "^0.363.0",
-    "next": "^14.2.35",
+    "next": "15.5.27",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.6.0",
@@ -25,8 +25,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "8.57.1",
-    "eslint-config-next": "14.2.4",
+    "eslint": "9.39.2",
+    "eslint-config-next": "15.5.27",
     "tsx": "^4.19.2",
     "typescript": "5.5.4"
   }

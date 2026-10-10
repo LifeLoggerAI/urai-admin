@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { AdminAuthError, adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { sanitizeAuditRecord } from '@/lib/admin/safe-audit-data';
 import { firestore } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -225,7 +226,9 @@ export async function GET(req: NextRequest) {
     const snapshot = await query.get();
     const records = (snapshot.docs as FirestoreDocument[]).map((doc: FirestoreDocument) => ({
       id: doc.id,
-      ...sanitizeRecord(doc.data(), 'allowedFields' in config ? config.allowedFields : undefined),
+      ...(collectionKey === 'auditLogs'
+        ? sanitizeAuditRecord(doc.data())
+        : sanitizeRecord(doc.data(), 'allowedFields' in config ? config.allowedFields : undefined)),
     }));
 
     return NextResponse.json({ collection: collectionKey, records }, { headers: { 'Cache-Control': 'no-store' } });
@@ -234,11 +237,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
     }
 
-    if (error instanceof Error && 'status' in error) {
+    if (error instanceof AdminAuthError) {
       return adminAuthErrorResponse(error);
     }
 
-    console.error('Failed to read admin collection:', error);
-    return NextResponse.json({ error: 'Failed to read admin collection' }, { status: 500 });
+    console.error('Required Admin collection read failed');
+    return NextResponse.json({ error: 'Failed to read admin collection' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }

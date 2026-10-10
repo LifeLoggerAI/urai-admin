@@ -37,6 +37,15 @@ service cloud.firestore {
         && !('updatedAt' in request.resource.data);
     }
 
+    function isAttributedImmutableCreate() {
+      return isImmutableCreate()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string
+        && request.resource.data.action.size() > 0
+        && (!('actorEmail' in request.resource.data)
+          || request.resource.data.actorEmail == request.auth.token.email);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -53,13 +62,13 @@ service cloud.firestore {
 
     match /adminAuditLogs/{logId} {
       allow read: if isOwnerOrAdmin();
-      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow create: if isOwnerOrAdmin() && isAttributedImmutableCreate();
       allow update, delete: if false;
     }
 
     match /auditLogs/{logId} {
       allow read: if isOwnerOrAdmin();
-      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow create: if isOwnerOrAdmin() && isAttributedImmutableCreate();
       allow update, delete: if false;
     }
 
@@ -97,7 +106,7 @@ service cloud.firestore {
 
     match /adminOperationalEvents/{eventId} {
       allow read: if isOwnerOrAdmin();
-      allow create: if isOwnerOrAdmin() && isImmutableCreate();
+      allow create: if isOwnerOrAdmin() && isAttributedImmutableCreate();
       allow update, delete: if false;
     }
 

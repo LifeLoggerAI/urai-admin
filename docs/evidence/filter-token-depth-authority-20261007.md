@@ -1,0 +1,15 @@
+# Direct-token depth authority repair
+
+Date: 2026-10-07
+Owner: URAI Admin
+Verdict: BLOCKED for release; bounded source repair verified locally.
+
+The installed Firebase CLI `stream-json` mitigation fork accepted one unmatched closing token followed by 129 opening arrays. Its filter input counter became negative and subsequently reached 128 while the actual stack reached 129. Arbitrarily many unmatched closes could offset the promised nesting limit. The JSON parser path rejects malformed JSON, but the fork also explicitly supports and promises protection for direct caller-supplied token streams.
+
+The repair rejects closing `endArray` or `endObject` tokens when no container is open, before decrementing the counter or entering any dynamically selected pass/skip handler. The existing fixed limit of 128, all parser/verifier/assembler bounds, own-property protections, CommonJS API, pinned graph, licenses and upstream provenance remain intact. This source is a local mitigation, not an upstream fixed release or a vulnerability waiver.
+
+Four new behavioral cases resolve the actual installed Firebase CLI Pick, Ignore, Filter and Replace consumers. Each checks both closing-token types across accepting, rejecting and regular-expression filter modes. The former installed source passes the original 13 assertions and fails all four new assertions. After a fresh declared `pnpm@9.15.0` frozen force install, the installed FilterBase bytes exactly match the reviewed vendor source (SHA-256 `ec5b9494b8db5f80e0ac2b9d9eac3cb5aa5834a71850c0a02142970f7078f664`) and all 17 cases pass on Node 22.23.3. The lockfile is unchanged. An optional re2 native build could not fetch Node headers locally; installation exited successfully without waiving scripts or changing the dependency graph, and the actual CLI consumer checks pass.
+
+The parent #86 graph had already passed all 1,174 current release-age policy entries, frozen installation, zero-finding installed audit and required source commands. The parent runtime and graph commands also completed on Node 22 with the full release:lock sequence (types, lint, unit/rules/registry/route contracts, app/analytics/Functions builds, security/WIF gates, public unauthenticated smoke and release verification). The new standalone failing regression tests were added while that sequence finished; its unchanged HEAD label is command evidence rather than an exact-source successor receipt. Those parent receipts do not certify this successor. Public smoke does not prove deployed successor parity or protected owner behavior.
+
+This successor requires fresh current-head native checks and independent review of both inherited local forks. Synthetic Auth/Firestore/Next runtime verification is tracked separately from production acceptance. No actual private account records, passive ingestion, provider/spend request, production mutation or deployment was used or performed. Golden Master and production acceptance remain blocked pending their real runtime, deployed-revision and governance evidence.

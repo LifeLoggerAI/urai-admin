@@ -9,6 +9,7 @@ import {
   AdminAuthError,
   adminAuthErrorResponse,
   requireAdminMutationSession,
+  revalidateAdminMutationSession,
 } from '@/lib/admin/require-admin-session';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
     const payload = setFlagSchema.parse(await request.json());
     const result = await executeInstitutionalFeatureFlag({
       actor: session,
+      revalidateActor: () => revalidateAdminMutationSession(request, session, ['owner', 'admin']),
       operationId: payload.operationId,
       flagId: payload.flagId,
       enabled: payload.enabled,
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('Failed to update feature flag:', error);
+    console.error('Failed to update feature flag');
     return jsonNoStore({ success: false, error: 'Failed to update feature flag' }, 500);
   }
 }

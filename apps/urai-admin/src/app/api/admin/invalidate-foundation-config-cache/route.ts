@@ -1,30 +1,39 @@
-
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase/admin';
-import { auth } from 'firebase-admin';
+import { AdminAuthError, adminAuthErrorResponse, requireAdminMutationSession } from '@/lib/admin/require-admin-session';
 
-export async function POST(req: Request) {
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
   try {
-    const { idToken } = await req.json();
-    const decodedToken = await auth().verifyIdToken(idToken);
-
-    if (!decodedToken.admin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
+    const actor = await requireAdminMutationSession(req, ['owner', 'admin']);
     const configRef = firestore.doc('foundationConfig/config');
+    const actorRef = firestore.collection('adminUsers').doc(actor.uid);
+    const auditRef = firestore.collection('auditLogs').doc();
+    const timestamp = new Date();
 
-    await configRef.update({ cacheInvalidatedAt: new Date() });
-
-    await firestore.collection('auditLogs').add({
-      uid: decodedToken.uid,
-      action: 'invalidateFoundationConfigCache',
-      ts: new Date(),
-      meta: {}, 
+    await firestore.runTransaction(async (transaction) => {
+      const actorSnapshot = await transaction.get(actorRef);
+      const canonical = actorSnapshot.data();
+      if (!actorSnapshot.exists || canonical?.isActive !== true || canonical.role !== actor.role) {
+        throw new AdminAuthError('Forbidden', 403);
+      }
+      transaction.update(configRef, { cacheInvalidatedAt: timestamp });
+      transaction.create(auditRef, {
+        actorUid: actor.uid,
+        actorEmail: actor.email ?? null,
+        actorRole: actor.role,
+        action: 'invalidateFoundationConfigCache',
+        target: { type: 'foundationConfig', id: 'config' },
+        metadata: {},
+        createdAt: timestamp,
+      });
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    if (error instanceof AdminAuthError) return adminAuthErrorResponse(error);
+    console.error('Foundation cache invalidation failed:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }

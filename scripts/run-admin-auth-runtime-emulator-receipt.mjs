@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { spawn, spawnSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -106,6 +107,22 @@ async function firestoreRest(path, idToken, options = {}) {
   });
 }
 
+async function createImmutableAudit(collection, id, idToken, actorUid, actorEmail) {
+  const name = 'projects/' + PROJECT_ID + '/databases/(default)/documents/' + collection + '/' + id;
+  return jsonFetch('http://' + FIRESTORE_HOST + '/v1/projects/' + PROJECT_ID + '/databases/(default)/documents:commit', {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + idToken, 'content-type': 'application/json' },
+    body: JSON.stringify({ writes: [{
+      update: { name, fields: {
+        actorUid: { stringValue: actorUid }, actorEmail: { stringValue: actorEmail },
+        action: { stringValue: 'proof.client.audit' },
+      } },
+      currentDocument: { exists: false },
+      updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
+    }] }),
+  });
+}
+
 async function waitForServer() {
   const deadline = Date.now() + 90000;
   let last;
@@ -146,6 +163,14 @@ async function main() {
   loopback(AUTH_HOST, 9099, 'FIREBASE_AUTH_EMULATOR_HOST');
   loopback(FIRESTORE_HOST, 8080, 'FIRESTORE_EMULATOR_HOST');
 
+  // Execute the declared source contracts in this already frozen native graph.
+  // Keep them separate from the loaded Auth/Firestore/Next runtime check count.
+  for (const script of ['test:rules', 'verify:release']) {
+    const result = spawnSync('pnpm', [script], { cwd: process.cwd(), stdio: 'inherit' });
+    assert.equal(result.status, 0, 'Declared source gate pnpm ' + script + ' must pass');
+    console.log('[PASS] Declared source gate pnpm ' + script);
+  }
+
   proofApp = initializeApp({ projectId: PROJECT_ID }, 'runtime-proof-' + Date.now());
   const auth = getAuth(proofApp);
   const db = getFirestore(proofApp);
@@ -159,6 +184,7 @@ async function main() {
     recovery: { uid: 'proof-recovery', email: 'proof-recovery@urai.invalid', role: 'viewer' },
     inactive: { uid: 'proof-inactive', email: 'proof-inactive@urai.invalid', role: 'admin' },
     outsider: { uid: 'proof-outsider', email: 'proof-outsider@urai.invalid' },
+    flagActor: { uid: 'proof-flag-actor', email: 'proof-flag-actor@urai.invalid', role: 'admin' },
   };
 
   await seedAdmin(auth, db, users.owner);
@@ -168,6 +194,7 @@ async function main() {
   await seedAdmin(auth, db, users.stale);
   await seedAdmin(auth, db, users.recovery);
   await seedAdmin(auth, db, users.inactive, { active: false, claimAdmin: true });
+  await seedAdmin(auth, db, users.flagActor);
   await auth.createUser({ uid: users.outsider.uid, email: users.outsider.email, password: PASSWORD, emailVerified: true });
 
   await db.collection('systemRegistry').doc('proof').set({
@@ -284,6 +311,43 @@ async function main() {
     rawTelemetryDenied: 403, clientAdminMutationDenied: 403, auditMutationDenied: 403,
   });
 
+  for (const collection of ['auditLogs', 'adminAuditLogs', 'adminOperationalEvents']) {
+    assert.equal((await createImmutableAudit(collection, 'proof-own-actor', ownerAuth.idToken, users.owner.uid, users.owner.email)).response.status, 200);
+    assert.equal((await createImmutableAudit(collection, 'proof-forged-actor', ownerAuth.idToken, users.admin.uid, users.owner.email)).response.status, 403);
+    assert.equal((await createImmutableAudit(collection, 'proof-forged-email', ownerAuth.idToken, users.owner.uid, users.admin.email)).response.status, 403);
+  }
+  pass('immutable audit actor attribution', { collections: 3, ownActor: 200, foreignActor: 403, forgedEmail: 403 });
+
+  const proofAuditPayload = {
+    action: 'proof.audit.boundary', actorUid: users.owner.uid,
+    target: { type: 'proof', id: 'safe-audit-boundary', apiKey: 'synthetic-audit-private-never-expose' },
+    metadata: { requestId: 'proof-request', role: 'admin', transcript: 'synthetic-audit-private-never-expose',
+      apiKey: 'synthetic-audit-private-never-expose', unreviewed: 'synthetic-audit-private-never-expose',
+      before: { role: 'viewer', isActive: true, accessToken: 'synthetic-audit-private-never-expose' } },
+  };
+  assert.equal((await appRequest('/api/audit', { method: 'POST', cookie: adminCookie.header, body: proofAuditPayload,
+    origin: 'https://evil.example', fetchSite: 'cross-site' })).response.status, 403);
+  const auditCreated = await appRequest('/api/audit', { method: 'POST', cookie: adminCookie.header, body: proofAuditPayload });
+  assert.equal(auditCreated.response.status, 200);
+  const persisted = await db.collection('auditLogs').where('action', '==', 'proof.audit.boundary').get();
+  assert.equal(persisted.size, 1);
+  assert.equal(persisted.docs[0].data().actorUid, users.admin.uid);
+  assert.ok(!JSON.stringify(persisted.docs[0].data()).includes('synthetic-audit-private-never-expose'));
+  await db.collection('auditLogs').doc('proof-legacy-private-audit').set({
+    actorUid: users.admin.uid, actorEmail: users.admin.email, action: 'proof.legacy.audit', createdAt: new Date(),
+    rawPayload: 'synthetic-audit-private-never-expose', debug: 'synthetic-audit-private-never-expose',
+    metadata: { transcript: 'synthetic-audit-private-never-expose', unreviewed: 'synthetic-audit-private-never-expose' },
+  });
+  const safeAudits = await appRequest('/api/admin/audit', { cookie: ownerCookie.header });
+  assert.equal(safeAudits.response.status, 200);
+  assert.equal(safeAudits.response.headers.get('cache-control'), 'no-store');
+  assert.ok(!JSON.stringify(safeAudits.body).includes('synthetic-audit-private-never-expose'));
+  const safeAuditCollection = await appRequest('/api/admin/collection?collection=auditLogs', { cookie: ownerCookie.header });
+  assert.equal(safeAuditCollection.response.status, 200);
+  assert.equal(safeAuditCollection.response.headers.get('cache-control'), 'no-store');
+  assert.ok(!JSON.stringify(safeAuditCollection.body).includes('synthetic-audit-private-never-expose'));
+  pass('durable minimized audit route boundary', { sameOrigin: 200, crossOrigin: 403, actorDerivedFromSession: true, storedAndBothReadPathsMinimized: true });
+
   const flags = await appRequest('/api/admin/collection?collection=featureFlags', { cookie: viewerCookie.header });
   assert.equal(flags.response.status, 200);
   const serialized = JSON.stringify(flags.body);
@@ -291,6 +355,81 @@ async function main() {
   assert.ok(!serialized.includes('secret-never-expose') && !serialized.includes('private-text'));
   assert.equal((await appRequest('/api/admin/collection?collection=analytics_events_raw_test', { cookie: ownerCookie.header })).response.status, 400);
   pass('privacy boundary and redaction', { sensitiveFieldsRedacted: true, rawCollectionNotExposed: true });
+
+  // Only this loopback emulator's disposable records participate. This proves
+  // the actual protected consuming route, not a direct helper invocation.
+  await db.collection('institutionalControlState').doc('global').set({ level: 'NORMAL', version: 1 });
+  const flagActorLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(flagActorLogin.response.status, 200);
+  const flagActorCookie = sessionCookie(flagActorLogin.response);
+  const flagBody = { operationId: randomUUID(), flagId: 'proof-institutional-flag', enabled: true };
+  assert.equal((await appRequest('/api/auth/admin-session', { cookie: flagActorCookie.header })).response.status, 200);
+
+  // Current Auth authority is withdrawn while the original signed cookie and
+  // canonical member remain unchanged. An old cookie must not authorize effect.
+  await auth.setCustomUserClaims(users.flagActor.uid, { admin: false, role: 'admin', roleVersion: 0 });
+  const withdrawnFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: flagActorCookie.header, body: flagBody });
+  assert.equal(withdrawnFlag.response.status, 403, JSON.stringify(withdrawnFlag.body));
+  assert.equal((await db.collection('featureFlags').doc(flagBody.flagId).get()).exists, false);
+  pass('institutional flag current Auth claim withdrawal', { originalSignedSessionAdmitted: true, currentClaimDenied: 403, flagUnchanged: true });
+
+  await auth.setCustomUserClaims(users.flagActor.uid, { admin: true, role: 'admin', roleVersion: 1 });
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ roleVersion: 1 }, { merge: true });
+  const staleFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: flagActorCookie.header, body: flagBody });
+  assert.equal(staleFlag.response.status, 403);
+  assert.equal((await db.collection('featureFlags').doc(flagBody.flagId).get()).exists, false);
+  pass('institutional flag same-role incarnation denial', { oldIncarnationDenied: 403, flagUnchanged: true });
+
+  const freshFlagLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(freshFlagLogin.response.status, 200);
+  const freshFlagCookie = sessionCookie(freshFlagLogin.response);
+  const currentFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: flagBody });
+  assert.equal(currentFlag.response.status, 200, JSON.stringify(currentFlag.body));
+  assert.equal(currentFlag.body?.duplicate, false);
+  const repeatedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: flagBody });
+  assert.equal(repeatedFlag.response.status, 200, JSON.stringify(repeatedFlag.body));
+  assert.equal(repeatedFlag.body?.duplicate, true);
+  const flagDecisions = await db.collection('institutionalDecisions').where('decisionId', '==', currentFlag.body.decisionId).get();
+  const flagReceipts = await db.collection('institutionalEvidenceReceipts').where('evidenceId', '==', currentFlag.body.evidenceId).get();
+  const flagAudits = await db.collection('auditLogs').where('action', '==', 'featureFlags.set').get();
+  assert.equal(flagDecisions.size, 1); assert.equal(flagDecisions.docs[0].data().state, 'CLOSED');
+  assert.equal(flagReceipts.size, 1); assert.equal(flagReceipts.docs[0].data().verificationResult, 'PASS');
+  assert.ok(flagAudits.docs.some(doc => doc.data().actorUid === users.flagActor.uid));
+  pass('institutional flag protected route durable closure and same-incarnation idempotency', { requestStatus: 200, duplicateStatus: 200, closedDecision: 1, positiveReceipt: 1, actualActorAudit: true });
+
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ isActive: false, roleMutation: { id: 'proof-pending-role' } }, { merge: true });
+  const pendingFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(pendingFlag.response.status, 403);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  await db.collection('adminUsers').doc(users.flagActor.uid).set({ isActive: true, roleMutation: null }, { merge: true });
+  pass('institutional flag pending membership mutation denial', { pendingMutationDenied: 403, flagUnchanged: true });
+
+  await auth.updateUser(users.flagActor.uid, { disabled: true });
+  const disabledFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(disabledFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  await auth.updateUser(users.flagActor.uid, { disabled: false });
+  pass('institutional flag disabled Auth account denial', { disabledDenied: 401, flagUnchanged: true });
+
+  const originalAuthTime = decodeJwt(freshFlagCookie.value).auth_time;
+  assert.equal(typeof originalAuthTime, 'number');
+  const rollover = (originalAuthTime + 1) * 1000 - Date.now();
+  if (rollover >= 0) await sleep(rollover + 50);
+  await auth.revokeRefreshTokens(users.flagActor.uid);
+  assert.ok(Date.parse((await auth.getUser(users.flagActor.uid)).tokensValidAfterTime) / 1000 > originalAuthTime);
+  const revokedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: freshFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(revokedFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  pass('institutional flag revoked original session denial', { revokedDenied: 401, realSdkRevocationReadback: true, flagUnchanged: true });
+
+  const deletableFlagLogin = await login((await signIn(users.flagActor.email)).idToken);
+  assert.equal(deletableFlagLogin.response.status, 200);
+  const deletableFlagCookie = sessionCookie(deletableFlagLogin.response);
+  await auth.deleteUser(users.flagActor.uid);
+  const deletedFlag = await appRequest('/api/admin/set-flag', { method: 'POST', cookie: deletableFlagCookie.header, body: { ...flagBody, operationId: randomUUID(), flagId: 'proof-denied-flag' } });
+  assert.equal(deletedFlag.response.status, 401);
+  assert.equal((await db.collection('featureFlags').doc('proof-denied-flag').get()).exists, false);
+  pass('institutional flag deleted Auth account denial', { deletedDenied: 401, disposableAccountOnly: true, flagUnchanged: true });
 
   assert.equal((await appRequest('/api/admin/users/' + users.owner.uid + '/role', {
     method: 'PUT', cookie: ownerCookie.header, body: { role: 'admin' },

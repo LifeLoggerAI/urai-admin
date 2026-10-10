@@ -84,11 +84,10 @@ The workflow-level checks are defense in depth. They do not replace the external
 
 Do not add a `push` trigger or inline `on: push` form to `.github/workflows/deploy.yml`. A merge to `main` is not itself production-deployment approval.
 
-Manual shell fallback is allowed only after the same approval and SHA/rollback evidence are recorded:
-
-```bash
-pnpm run deploy:production
-```
+Direct local production deployment and rollback are disabled. Use the protected
+manual workflow with the same approved current and distinct known-good rollback
+SHA, independent review and environment policy. Local ADC or a successful
+preparation command does not grant release authority.
 
 ## Post-deploy smoke checks
 
@@ -119,3 +118,4 @@ Rollback must be prepared before production deploy. At minimum, record:
 ## Unsafe scripts
 
 Do not run `urai_admin_finish.sh` as a production release path. It is labeled as a URAI Analytics finisher, writes broad Firebase/analytics changes, and contains deploy behavior that is not an admin production-readiness gate.
+

@@ -60,13 +60,16 @@ requireMatch(deployScript, /Direct local production deploy is disabled/, 'local 
 requireMatch(deployScript, /GITHUB_REF:-.*refs\/heads\/main/, 'production deploy main-context guard');
 requireMatch(deployScript, /GOOGLE_APPLICATION_CREDENTIALS/, 'production deploy temporary WIF\/ADC credential guard');
 requireMatch(deployScript, /URAI_ADMIN_TARGET_SHA/, 'production deploy exact-target guard');
+requireMatch(deployScript, /^node scripts\/validate-admin-hosting-target\.mjs --require-bound\s*$/m, 'production deploy bound Hosting target guard');
+requireMatch(deployScript, /^firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d\s*$/m, 'dedicated Admin production deploy command');
 forbidMatch(rollback, /pnpm deploy/, 'rollback guidance local production deploy shortcut');
 
 requireMatch(rollback, /GOOGLE_APPLICATION_CREDENTIALS/, 'WIF\/ADC rollback check');
 forbidMatch(rollback, /--token(?:\s|=)/, 'rollback --token authentication');
 forbidMatch(rollback, /FIREBASE_TOKEN is required/, 'rollback FIREBASE_TOKEN requirement');
 
-requireMatch(workflow, /corepack pnpm exec firebase deploy --only hosting,functions,firestore,storage -P urai-4dc1d/, 'worktree-local ADC-compatible rollback deploy command');
+requireMatch(workflow, /node "\$\{GITHUB_WORKSPACE\}\/scripts\/validate-admin-hosting-target\.mjs" --cwd "\$\{rollback_dir\}" --require-bound/, 'rollback bound Hosting target guard');
+requireMatch(workflow, /^\s*corepack pnpm exec firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d\s*$/m, 'worktree-local ADC-compatible dedicated Admin rollback deploy command');
 requireMatch(workflow, /verify-production-live\.sh/, 'post-rollback live verification');
 forbidMatch(workflow, /URAI_ADMIN_DEPLOY_MARKER=.*pnpm run deploy:production/, 'historical rollback deploy script invocation');
 

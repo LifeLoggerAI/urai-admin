@@ -10,8 +10,8 @@ const roleSchema = z.object({
   role: z.enum(['owner', 'admin', 'viewer']),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { uid: string } }) {
-  const { uid } = params;
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
+  const { uid } = await params;
 
   try {
     const actor = await requireAdminMutationSession(req, ['owner']);
@@ -40,3 +40,4 @@ export async function PUT(req: NextRequest, { params }: { params: { uid: string 
     );
   }
 }
+

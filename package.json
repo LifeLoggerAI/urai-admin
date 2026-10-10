@@ -35,21 +35,23 @@
     "smoke-test": "bash scripts/smoke-test.sh",
     "verify:production": "bash scripts/verify-production-live.sh",
     "rollback:production": "bash scripts/rollback-production.sh",
-    "receipt:admin-auth-runtime:emulator": "firebase emulators:exec --only auth,firestore --config firebase.emulator.json --project urai-admin-emulator \"node scripts/run-admin-auth-runtime-emulator-receipt.mjs\""
+    "receipt:admin-auth-runtime:emulator": "firebase emulators:exec --only auth,firestore --config firebase.emulator.json --project urai-admin-emulator \"node scripts/run-admin-auth-runtime-emulator-receipt.mjs\"",
+    "test:dependency-security": "node --test scripts/dependency-security.behavior.test.cjs",
+    "security:audit": "pnpm audit --audit-level=low"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "8.71.1",
+    "@typescript-eslint/parser": "8.71.1",
     "autoprefixer": "^10.4.23",
-    "eslint": "8.57.1",
+    "eslint": "9.39.2",
     "eslint-plugin-react-refresh": "^0.5.0",
-    "firebase-admin": "^12.7.0",
-    "firebase-tools": "^13.13.2",
-    "postcss": "^8.5.6",
+    "firebase-admin": "13.10.0",
+    "firebase-tools": "15.24.0",
+    "postcss": "8.5.29",
     "prettier": "^3.3.3",
     "tailwindcss": "^4.1.18",
     "typescript": "5.5.4"
@@ -59,11 +61,26 @@
     "@types/js-cookie": "^3.0.6",
     "class-variance-authority": "^0.7.1",
     "firebase": "^10.12.3",
-    "firebase-admin": "^12.7.0",
+    "firebase-admin": "13.10.0",
     "framer-motion": "^12.27.5",
     "js-cookie": "^3.0.5",
     "recharts": "^3.6.0",
     "zod": "^4.3.6"
   },
-  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
+  "pnpm": {
+    "overrides": {
+      "undici": "6.28.1",
+      "postcss": "8.5.29",
+      "uuid": "11.1.1",
+      "@opentelemetry/core": "2.8.0",
+      "@fastify/busboy": "3.2.2",
+      "basic-ftp": "6.2.1",
+      "postcss-selector-parser": "7.1.6",
+      "braces": "file:vendor/braces",
+      "@grpc/grpc-js": "1.14.5",
+      "csv-parse": "7.0.2",
+      "stream-json": "file:vendor/stream-json"
+    }
+  }
 }

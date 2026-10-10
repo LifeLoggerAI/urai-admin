@@ -70,6 +70,7 @@ requireTokens(adminSessionPath, [
   'tokenClaimsMatch',
   'createSessionCookie(idToken',
   'requireAdminMutationSession',
+  'noStoreHeaders',
 ]);
 forbidTokens(adminSessionPath, ['x-forwarded-host', 'x-forwarded-proto']);
 requireTokens(join(appRoot, 'api/auth/login/route.ts'), ['exchangeAdminIdToken', 'auth.login']);
@@ -191,3 +192,4 @@ if (failures.length) {
 }
 
 console.log('OK: Admin route contract passed.');
+
