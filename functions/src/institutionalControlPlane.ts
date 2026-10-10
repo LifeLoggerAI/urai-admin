@@ -438,7 +438,7 @@ export class InstitutionalControlPlaneStore {
     return this.db.runTransaction(async (tx) => {
       const eventSnapshot = await tx.get(eventRef);
       const priorAttempt = await tx.get(attemptRef);
-      const priorDeadLetter = classification === 'DEAD_LETTER' ? await tx.get(deadLetterRef) : null;
+      const priorDeadLetter = await tx.get(deadLetterRef);
       if (!eventSnapshot.exists) throw new Error('cannot record failure for unknown event');
       if (priorAttempt.exists) {
         const stored = requireObject(priorAttempt.data(), 'stored delivery attempt');

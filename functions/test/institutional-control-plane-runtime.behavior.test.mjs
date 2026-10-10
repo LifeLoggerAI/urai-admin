@@ -130,3 +130,36 @@ test('a failed evidence receipt cannot satisfy the persisted-receipt transition 
   assert.deepEqual([...db.records], before);
   await assert.rejects(store.transitionDecision(item.decisionId, 'CLOSED', { at }), /invalid decision transition/);
 });
+
+test('terminal delivery failure prevents new retries while preserving recorded-attempt idempotency', async () => {
+  const db = createDatabase(); const store = createInstitutionalControlPlaneStore(db);
+  const eventId = 'event_local_terminal_delivery';
+  await store.persistEvent({
+    specversion: '1.0', schemaVersion: 'urai-institutional-control-plane-1',
+    id: eventId, idempotencyKey: 'local-terminal-delivery', replayClassification: 'SAFE_REPLAY',
+  });
+  const failure = { eventId, attempt: 1, maxAttempts: 3, retryable: false, errorClass: 'LOCAL_TEST_FAILURE', errorReference: 'local-test-only' };
+  assert.deepEqual(await store.recordEventFailure(failure), { classification: 'DEAD_LETTER', duplicate: false });
+  const before = structuredClone([...db.records]);
+  assert.deepEqual(await store.recordEventFailure(failure), { classification: 'DEAD_LETTER', duplicate: true });
+  for (const retryable of [true, false]) {
+    await assert.rejects(store.recordEventFailure({ ...failure, attempt: 2, retryable }), /already dead-lettered/);
+    assert.deepEqual([...db.records], before, 'a terminal event cannot accumulate new delivery attempts');
+  }
+});
+
+test('ordinary bounded retries still progress to one terminal delivery record', async () => {
+  const db = createDatabase(); const store = createInstitutionalControlPlaneStore(db);
+  const eventId = 'event_local_retry_delivery';
+  await store.persistEvent({
+    specversion: '1.0', schemaVersion: 'urai-institutional-control-plane-1',
+    id: eventId, idempotencyKey: 'local-retry-delivery', replayClassification: 'SAFE_REPLAY',
+  });
+  const failure = { eventId, attempt: 1, maxAttempts: 2, retryable: true, errorClass: 'LOCAL_TEST_FAILURE', errorReference: 'local-test-only' };
+  assert.deepEqual(await store.recordEventFailure(failure), { classification: 'RETRY', duplicate: false });
+  assert.deepEqual(await store.recordEventFailure(failure), { classification: 'RETRY', duplicate: true });
+  const terminal = { ...failure, attempt: 2 };
+  assert.deepEqual(await store.recordEventFailure(terminal), { classification: 'DEAD_LETTER', duplicate: false });
+  assert.deepEqual(await store.recordEventFailure(terminal), { classification: 'DEAD_LETTER', duplicate: true });
+  assert.equal([...db.records.keys()].filter(path => path.startsWith('institutionalDeadLetters/')).length, 1);
+});
