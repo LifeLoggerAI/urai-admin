@@ -17,7 +17,9 @@ function fixture({ bound = false, config: chosenConfig = config } = {}) {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'urai-admin-hosting-boundary-'));
   const checkout = path.join(dir, 'checkout');
   mkdirSync(path.join(checkout, 'scripts'), { recursive: true });
-  writeFileSync(path.join(checkout, 'firebase.json'), JSON.stringify(chosenConfig));
+  const fixtureConfig = structuredClone(chosenConfig);
+  fixtureConfig.functions = [{ source: 'functions', runtime: 'nodejs22', codebase: 'urai-admin-functions' }];
+  writeFileSync(path.join(checkout, 'firebase.json'), JSON.stringify(fixtureConfig));
   const chosenRc = structuredClone(rc);
   chosenRc.targets = bound ? { 'urai-4dc1d': { hosting: { [ADMIN_HOSTING_TARGET]: [site] } } } : {};
   writeFileSync(path.join(checkout, '.firebaserc'), JSON.stringify(chosenRc));
@@ -70,6 +72,7 @@ function deployFixture(bound) {
   const bin = path.join(f.dir, 'bin');
   mkdirSync(bin);
   copyFileSync(path.join(root, 'scripts/deploy-production.sh'), path.join(f.checkout, 'scripts/deploy-production.sh'));
+  copyFileSync(path.join(root, 'scripts/assert-admin-functions-codebase.mjs'), path.join(f.checkout, 'scripts/assert-admin-functions-codebase.mjs'));
   const observed = path.join(f.dir, 'firebase.txt');
   writeFileSync(path.join(bin, 'git'), '#!/bin/sh\nprintf "%s\\n" "$URAI_SYNTHETIC_SHA"\n');
   writeFileSync(path.join(bin, 'pnpm'), '#!/bin/sh\nexit 0\n');
