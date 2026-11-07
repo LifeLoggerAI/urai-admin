@@ -24,9 +24,9 @@ pnpm preflight:production
 echo "--- Building production artifacts ---"
 pnpm build
 
-echo "--- Deploying Firebase hosting, functions, Firestore, and Storage to urai-4dc1d ---"
+echo "--- Deploying only Admin Hosting and Functions to urai-4dc1d; shared Firestore/Storage Rules require separate governance ---"
 node scripts/validate-admin-hosting-target.mjs --require-bound
-firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d
+firebase deploy --only hosting:urai-admin-production,functions -P urai-4dc1d
 
 mkdir -p "$(dirname "${DEPLOY_MARKER}")"
 cat > "${DEPLOY_MARKER}" <<EOF
