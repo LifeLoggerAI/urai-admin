@@ -113,7 +113,7 @@ required_pattern ".github/workflows/deploy.yml" "target_sha:"
 required_pattern ".github/workflows/deploy.yml" "persist-credentials: false"
 required_pattern ".github/workflows/deploy.yml" "git merge-base --is-ancestor"
 required_pattern "scripts/deploy-production.sh" "^[[:space:]]*node scripts/validate-admin-hosting-target.mjs --require-bound[[:space:]]*$"
-required_pattern "scripts/deploy-production.sh" "^[[:space:]]*firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d[[:space:]]*$"
+required_pattern "scripts/deploy-production.sh" "^[[:space:]]*firebase deploy --only hosting:urai-admin-production,functions -P urai-4dc1d[[:space:]]*$"
 node scripts/validate-admin-hosting-target.mjs
 required_pattern "firebase.json" '"source": "apps/urai-admin"'
 required_pattern ".firebaserc" '"default": "urai-4dc1d"'

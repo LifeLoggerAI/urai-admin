@@ -94,7 +94,7 @@ test('actual deployment shell invokes only the explicit Admin target with a matc
   const { f, result, observed } = deployFixture(true);
   try {
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(readFileSync(observed, 'utf8').trim(), 'deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d');
+    assert.equal(readFileSync(observed, 'utf8').trim(), 'deploy --only hosting:urai-admin-production,functions -P urai-4dc1d');
   } finally { f.close(); }
 });
 
@@ -149,7 +149,7 @@ function securityGateFixture() {
 }
 
 for (const gate of ['security-gate.sh', 'wif-deploy-auth-contract.mjs']) {
-  for (const change of ['reviewed-target', 'broad-hosting', 'foreign-target', 'missing-bound-guard']) {
+  for (const change of ['reviewed-target', 'broad-hosting', 'foreign-target', 'policy-publish', 'missing-bound-guard']) {
     test(`actual ${gate} ${change === 'reviewed-target' ? 'accepts' : 'rejects'} ${change} deployment contract`, () => {
       const f = securityGateFixture();
       try {
@@ -158,6 +158,7 @@ for (const gate of ['security-gate.sh', 'wif-deploy-auth-contract.mjs']) {
         let source = readFileSync(filename, 'utf8');
         if (change === 'broad-hosting') source = source.replaceAll('hosting:urai-admin-production,', 'hosting,');
         if (change === 'foreign-target') source = source.replaceAll('hosting:urai-admin-production,', 'hosting:urai-analytics,');
+        if (change === 'policy-publish') source = source.replaceAll('hosting:urai-admin-production,functions -P urai-4dc1d', 'hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d');
         if (change === 'missing-bound-guard') source = source.split('\n').filter(line => !line.includes('validate-admin-hosting-target.mjs')).join('\n');
         writeFileSync(filename, source);
         const result = spawnSync(gate.endsWith('.sh') ? 'bash' : process.execPath, [path.join(f.dir, 'scripts', gate)], { cwd: f.dir, encoding: 'utf8' });

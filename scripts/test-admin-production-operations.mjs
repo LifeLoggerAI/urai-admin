@@ -198,7 +198,7 @@ test('actual protected workflow rebuilds and verifies the approved rollback SHA 
     assert.equal(result.status,0,result.stderr+'\n'+result.stdout);
     const calls=readFileSync(corepackObserved,'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(calls.find(x=>x.args.join(' ')==='pnpm build')?.buildSha,knownGood);
-    assert.ok(calls.some(x=>x.args.join(' ')==='pnpm exec firebase deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d'));
+    assert.ok(calls.some(x=>x.args.join(' ')==='pnpm exec firebase deploy --only hosting:urai-admin-production,functions -P urai-4dc1d'));
     assert.match(readFileSync(output,'utf8'),/result=success/);
     assert.equal(existsSync(f.observed),false,'only the explicit corepack adapter was invoked');
   } finally {f.close();}
