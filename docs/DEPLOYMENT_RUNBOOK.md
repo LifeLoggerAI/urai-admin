@@ -105,6 +105,37 @@ Verify:
 
 If the canonical custom domain is not cut over yet, run the same checks against `https://urai-admin.web.app` and record custom-domain cutover as pending.
 
+## Federated Firebase policy publisher boundary (R874, 2026-11-07)
+
+URAI Admin shares the source-configured Firebase project `urai-4dc1d` with
+Spatial and RuAi. Their Firestore rules are **not interchangeable**: Spatial
+authorizes owner-only memories and Life Movies, RuAi authorizes organization
+and partner members, and Admin authorizes operator controls. Do not assume
+that Admin's `firestore.rules` and `storage.rules` can serve as the combined
+authoritative policy.
+
+The protected Admin **application release and automatic rollback** may deploy
+**only** `hosting:urai-admin-production,functions`. They must **not** deploy
+`firestore`, `storage`, Firestore indexes, a default/all Hosting site, or
+policies from Admin's locally committed rules files. The existing local rules
+remain available for source review and isolated test fixtures, not automatic
+publication. If the application depends on a policy change, pause its release
+until the separate federated policy publisher has its own owner-authorized
+source SHA, provider effective-rules readback, comprehensive owner/tenant
+positive and negative emulator tests, independent approval, and rollback proof.
+**Do not restore a stale ruleset by rolling back the Admin app.**
+
+The deploy scripts and protected workflow must keep passing
+`scripts/security-gate.sh`,
+`scripts/wif-deploy-auth-contract.mjs`,
+`scripts/test-admin-hosting-target.mjs`, and
+`scripts/test-admin-production-operations.mjs`. The latter tests use
+synthetic command adapters; they are not provider or production acceptance.
+Admin hosting binding, approved exact source SHA, WIF credentials,
+environment reviewers, source builds, and live application readback remain
+separate mandatory requirements. This R874 review change does not designate a
+new federated rules publisher or authorize any deployment.
+
 ## Rollback
 
 Rollback must be prepared before production deploy. At minimum, record:
