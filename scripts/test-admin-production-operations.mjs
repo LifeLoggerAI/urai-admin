@@ -21,12 +21,13 @@ function fixture() {
   const bin = path.join(dir, 'bin');
   mkdirSync(path.join(checkout, 'scripts'), {recursive: true});
   mkdirSync(bin);
-  for (const file of ['rollback-production.sh', 'verify-production-live.sh', 'validate-admin-hosting-target.mjs']) {
+  for (const file of ['rollback-production.sh', 'verify-production-live.sh', 'validate-admin-hosting-target.mjs', 'assert-admin-functions-codebase.mjs']) {
     copyFileSync(path.join(root, 'scripts', file), path.join(checkout, 'scripts', file));
   }
   const config = JSON.parse(readFileSync(path.join(root, 'firebase.json'), 'utf8'));
   const rc = JSON.parse(readFileSync(path.join(root, '.firebaserc'), 'utf8'));
   rc.targets = {'urai-4dc1d': {hosting: {'urai-admin-production': [site]}}};
+  config.functions = [{ source: 'functions', runtime: 'nodejs22', codebase: 'urai-admin-functions' }];
   writeFileSync(path.join(checkout, 'firebase.json'), JSON.stringify(config));
   writeFileSync(path.join(checkout, '.firebaserc'), JSON.stringify(rc));
   const credentials = path.join(dir, 'synthetic-only.json');
