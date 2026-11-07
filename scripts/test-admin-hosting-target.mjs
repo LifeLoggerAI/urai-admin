@@ -94,7 +94,7 @@ test('actual deployment shell invokes only the explicit Admin target with a matc
   const { f, result, observed } = deployFixture(true);
   try {
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(readFileSync(observed, 'utf8').trim(), 'deploy --only hosting:urai-admin-production,functions,firestore,storage -P urai-4dc1d');
+    assert.equal(readFileSync(observed, 'utf8').trim(), 'deploy --only hosting:urai-admin-production,functions -P urai-4dc1d');
   } finally { f.close(); }
 });
 
