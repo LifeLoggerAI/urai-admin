@@ -14,3 +14,7 @@
 10. Record exact new HEAD, copied source changes, accepted proofs and unresolved gates. **PRODUCTION HOLD.**
 
 No paid compute, provider mutations, legal action or live private data access authorized by this documentation handoff.
+
+## R853 — Current exact branch ancestry result
+
+[91-branch results](BRANCH_COMPARISONS_20261107.json): 58 diverged, 31 behind, 2 identical vs PR #85, all 91 compare calls returned successfully at immutable recorded branch tips. See [the source-specific triage queue](10_91_BRANCH_ANCESTRY_RECONCILIATION.md). **Next priority is semantic comparison of the 58 diverged trees, original commit graph and raw-byte hashing on a network-authorized runner.** Local container `git ls-remote` could not resolve github.com. Do not claim full history/bytes inspected or production GO.

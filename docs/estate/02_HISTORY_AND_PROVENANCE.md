@@ -12,3 +12,7 @@
 - **Historical authority shift:** older [docs/EVIDENCE_LOG.md](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/docs/EVIDENCE_LOG.md) mentions PR #75 and earlier 'live' appearances. Current [FINAL_LOCK.md](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/FINAL_LOCK.md) and #85 remain production HOLD. A prior text claim is not a current deployment receipt.
 
 **Not done:** enumerate and inspect every unique reachable Git commit and deleted ref; content-compare all 91 branch tips, historic PR patches, worker contributions, LFS/binary artifacts and all 2024–present documents. Prior worker reported 90 branch comparisons; preserve as worker-reported until original comparison table is obtained and reverified.
+
+## R853 exact 91-branch compare checkpoint
+
+All 91 currently listed branch tips were compared via GitHub against engineering PR #85 exact SHA 8313188532aef304a3b55771c5080f87e4ac71eb: **58 diverged, 31 behind, 2 identical**, and all comparisons returned successfully. Read [summary](10_91_BRANCH_ANCESTRY_RECONCILIATION.md) and [immutable result ledger](BRANCH_COMPARISONS_20261107.json) before repeating discovery. The branch-tip compare is NOT a review of every commit or a classification of 58 missing features. GitHub returned 300 paths for one historical one-file tip (possible limit). Direct local Git clone failed due container DNS; raw history-byte audit still pending. Production HOLD.

@@ -14,3 +14,7 @@
 - The prior worker's artifact ZIP and Python collectors are **not** created/installed/executed by this commit; do not claim otherwise.
 
 **Verdict:** current two-tree **Git path/size/SHA metadata coverage CONFIRMED**; current exact-head **GitHub native source/build/emulator workflow records CONFIRMED**; 2024–present all-bytes, 91-branch exhaustive semantic, Cloud/physical-device/integrated release **NOT CERTIFIED**; production **HOLD**.
+
+## R853 appended scope (2026-11-07)
+
+91/91 branch-tip comparisons succeeded against exact Admin #85 SHA. Ancestry states: 58 diverged, 31 behind, 2 identical. The [full compare ledger](BRANCH_COMPARISONS_20261107.json) and [summary](10_91_BRANCH_ANCESTRY_RECONCILIATION.md) do not establish 91-branch full object histories, patch semantics or SHA-256 readback. GitHub 300-file response cap may affect one listing. Local Git network access failed DNS, no raw-byte mirror executed. Production HOLD remains.

@@ -1,0 +1,3307 @@
+{
+  "schema": "one-urai-admin-exact-91-tip-compare-v1",
+  "recorded_date_utc": "2026-11-07",
+  "repository": "LifeLoggerAI/urai-admin",
+  "engineering_candidate_sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+  "branch_names_compared": 91,
+  "compare_successes": 91,
+  "classification_counts": {
+    "diverged": 58,
+    "behind": 31,
+    "identical": 2
+  },
+  "source": "GitHub compare_commits exact immutable branch tip SHAs; branch list GET /branches?per_page=100&page=1",
+  "limitations": [
+    "This counts ref-to-commit ancestry and GitHub-returned changed filenames; it does not inspect every reachable historical commit",
+    "One GitHub file list is at 300 entries and may be truncated",
+    "A diverged branch can have fewer current blobs than main, and does not prove unmerged useful features",
+    "No raw content bytes hashed, no independent full-patch equivalence, no live provider verification"
+  ],
+  "records": [
+    {
+      "name": "agent/bootstrap-asset-factory-wif",
+      "sha": "10b1c1346f4a736548b98bd5b027fd6bf68b640a",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 151,
+      "merge_base": "0c2986a67c0b3e89ca64932e3e1db1e755ad550a",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "audit/p0-manual-production-deploy-gate-20260706",
+      "sha": "c9ce337c33be68da56d1ecad2b68fdff9cd9d772",
+      "success": true,
+      "status": "diverged",
+      "ahead": 9,
+      "behind": 157,
+      "merge_base": "09ded3e78dd0dd1801f144e679cd443c7d97e677",
+      "reported_files": 4,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": "docs/DEPLOYMENT_RUNBOOK.md",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/deploy-production.sh",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/security-gate.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "audit-implementation",
+      "sha": "71c5e90323d40ca7ec41c09067d76ed882995793",
+      "success": true,
+      "status": "diverged",
+      "ahead": 16,
+      "behind": 574,
+      "merge_base": "20b134f3f9f9d1dd87071ee2003df1110f779bc9",
+      "reported_files": 16,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/admin/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/contact/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/hooks/useAuth.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/require-admin-session.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/tests/admin-security-contract.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "scripts/clean-app-generated.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "audit-implementation-safe",
+      "sha": "5973046e8238ab61e0bcb66696330a6265896305",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 666,
+      "merge_base": "d60a56914f5a02901eccc5fb65a35ce5822bc01f",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "canon/upstream-authority-20260924",
+      "sha": "1443e9f1a4bb3cf46fb40239540e06296ecde7b1",
+      "success": true,
+      "status": "diverged",
+      "ahead": 105,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 300,
+      "files_likely_capped": true,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "removed"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "removed"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "removed"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "removed"
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/00_EXEC_SUMMARY.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/01_ARCHITECTURE_OVERVIEW.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/02_PRODUCT_MATRIX.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/03_SECURITY_AND_PRIVACY.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/04_GOVERNANCE_AND_CONTROL.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/05_IP_AND_OWNERSHIP.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/06_DEPLOYMENT_AND_OPS.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/07_RISK_AND_EXCLUSIONS.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/08_ROADMAP_INTENTIONALITY.md",
+          "status": "removed"
+        },
+        {
+          "path": "DATA_ROOM/src/99_FINAL_ATTESTATION.md",
+          "status": "removed"
+        },
+        {
+          "path": "SECURITY.md",
+          "status": "removed"
+        },
+        {
+          "path": "admin-console/src/App.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "admin-console/src/index.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "app/security/verifyNode.ts",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/lib/firebase-admin.js",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/lib/firebase-admin.ts",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/scripts/run-next-build.mjs",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/scripts/seed_admin.js",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/scripts/seed_admin.ts",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "chatgpt/admin-hygiene-security-20260812",
+      "sha": "d3272c1ee7abdc9ef5bb74053106f2f26fd3a421",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 149,
+      "merge_base": "d3272c1ee7abdc9ef5bb74053106f2f26fd3a421",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "chatgpt/urai-product-polish-20260812",
+      "sha": "ee88dd91de71b276148fecb894691abada1e4492",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 151,
+      "merge_base": "0c2986a67c0b3e89ca64932e3e1db1e755ad550a",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "clean-launch",
+      "sha": "8f81bebae6888d8a682b237afe63e116357bee8c",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 226,
+      "merge_base": "56bd17dad68e23880d3ca66035216a9107ee870e",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/launch-lock.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "codex/harden-production-target",
+      "sha": "c6ae49a9dd766c775b23b53b5e9d03ceb5a88de2",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 331,
+      "merge_base": "c6ae49a9dd766c775b23b53b5e9d03ceb5a88de2",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "codex/spatial-admin-world-shell",
+      "sha": "a140c0a2bba6a55fe0b4c71278abd2ccf76897f3",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 316,
+      "merge_base": "a140c0a2bba6a55fe0b4c71278abd2ccf76897f3",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "cold-vault-2026-08-16",
+      "sha": "e06f8d55f0d1803098044ab53726c39cd9895e4f",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 148,
+      "merge_base": "e06f8d55f0d1803098044ab53726c39cd9895e4f",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "control/admin-integrated-runtime-successor-20260913",
+      "sha": "ea680eaad5e54a6643fe0bc863bc3ae1cf904860",
+      "success": true,
+      "status": "diverged",
+      "ahead": 17,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 35,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003046",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "control/institutional-contracts-20260912",
+      "sha": "aaf7b584cecf41a5effdcd97fed6d44c8964fc8d",
+      "success": true,
+      "status": "diverged",
+      "ahead": 4,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 4,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "scripts/institutional-control-plane-contract.mjs",
+          "status": "added"
+        },
+        {
+          "path": "scripts/test-institutional-control-plane-contract.mjs",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "converge/admin-terminal-control-plane-noindex-20260914",
+      "sha": "13c9ed5215c99f56c05aea410fa815a1aa6db9fb",
+      "success": true,
+      "status": "diverged",
+      "ahead": 28,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 42,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "design/web-universe-admin-gate-v1-20260913",
+      "sha": "fe3fc0d8e352fb4be5c71192c9b8cc65c45e60a3",
+      "success": true,
+      "status": "diverged",
+      "ahead": 26,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 42,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "docs/genesis-estate-handoff-20261106",
+      "sha": "da091970f63653e268d5fb9b4b11af6e2acf25a9",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 47,
+      "merge_base": "1cde00e69238f6a32237af2d1914a1b77339d5bc",
+      "reported_files": 12,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/estate/00_START_HERE.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/01_COMPLETE_INVENTORY.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/02_HISTORY_AND_PROVENANCE.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/03_ARCHITECTURE_AND_CONNECTIONS.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/04_IMPLEMENTED_CAPABILITIES.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/05_VERIFICATION_AND_EVIDENCE.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/06_GAPS_CONFLICTS_AND_BLOCKERS.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/07_WORKER_RECONCILIATION.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/08_NEXT_WORKER_HANDOFF.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/09_COVERAGE_AND_LIMITATIONS.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/BRANCH_REFS_20261107.json",
+          "status": "added"
+        },
+        {
+          "path": "docs/estate/MANIFEST.json",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "document-launch-runner",
+      "sha": "a70575beff1daf1f0fc937d6e47cc781cf0774de",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 230,
+      "merge_base": "57671c49a1514b45b323025373e65a46c2bce3b4",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/PRODUCTION_LAUNCH.md",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "donor/admin-audit-boundaries-20261008",
+      "sha": "707cd06fed410087cdd017293ebec456963ac5e1",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 8,
+      "merge_base": "707cd06fed410087cdd017293ebec456963ac5e1",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "donor/admin-operations-recovery-20261008",
+      "sha": "7e28faf52400ea6f24b874577c144caa766dab4b",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 25,
+      "merge_base": "7e28faf52400ea6f24b874577c144caa766dab4b",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "env-loader",
+      "sha": "958bb77f8375f57dc2629868806e28f8007d60da",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 222,
+      "merge_base": "958bb77f8375f57dc2629868806e28f8007d60da",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "evidence-status",
+      "sha": "f0c42f4f8ae6dbb0dc35482619a11899557c9059",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 227,
+      "merge_base": "d1d20b095bd77201a1f0b289cb0868643547c427",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/launch-lock.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "execution/ecosystem-completion-ledger-20260706",
+      "sha": "d56cbd82c2d7921160c57dc29432c87f82286c70",
+      "success": true,
+      "status": "diverged",
+      "ahead": 5,
+      "behind": 157,
+      "merge_base": "09ded3e78dd0dd1801f144e679cd443c7d97e677",
+      "reported_files": 4,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/ECOSYSTEM_COMPLETION_LEDGER.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/REPOSITORY_SOURCE_OF_TRUTH.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/VERSION_CERTIFICATION.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/evidence/RECEIPT_INDEX.md",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "feature/global-emotional-weather-ops-20261002",
+      "sha": "b98fc1bf0a4da89f02eff75267fa7853f044c9f2",
+      "success": true,
+      "status": "diverged",
+      "ahead": 138,
+      "behind": 59,
+      "merge_base": "5c31d1f4edb9446b54b3263869d0f15913f3ffba",
+      "reported_files": 115,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/admin-analytics-visual-proof.yml",
+          "status": "added"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/SpatialCollectionPage.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/dead-letters/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/global-emotional-weather/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/job-runs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/jobs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/privacy-requests/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/storytime-moderation/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/analytics/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/collection/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/analytics/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/dashboard/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/ingest/route.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "feature/urai-analytics-v1",
+      "sha": "4e41e6dfac81647b96e0f6f566df525aa0d55cb3",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 398,
+      "merge_base": "4e41e6dfac81647b96e0f6f566df525aa0d55cb3",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "final-launch-runbook-alignment",
+      "sha": "4fc71fd66cc282224b7706d9e05387dfd384f130",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 234,
+      "merge_base": "0f2c3534a6917334dadbabd88d2fcd874422aec5",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/PRODUCTION_LAUNCH.md",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "finish-production-system-integration",
+      "sha": "a1cae0c81df8fe5db235b50688315c3798911ab8",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 329,
+      "merge_base": "a1cae0c81df8fe5db235b50688315c3798911ab8",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/admin-auth-api-hardening",
+      "sha": "d60a56914f5a02901eccc5fb65a35ce5822bc01f",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 666,
+      "merge_base": "d60a56914f5a02901eccc5fb65a35ce5822bc01f",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/admin-completion-p0-p1",
+      "sha": "8b898d3a17a02438d2ea4329e6149c02c4e8fc29",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 436,
+      "merge_base": "8b898d3a17a02438d2ea4329e6149c02c4e8fc29",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/analytics-fixture-truth-20260914",
+      "sha": "f1cbf77ae4ce7e230007c7d0c361e048f595838a",
+      "success": true,
+      "status": "diverged",
+      "ahead": 126,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 113,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/admin-analytics-visual-proof.yml",
+          "status": "added"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/SpatialCollectionPage.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/dead-letters/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/job-runs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/jobs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/privacy-requests/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/storytime-moderation/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/analytics/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/collection/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/analytics/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/dashboard/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/ingest/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/jobs/route.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix/dynamic-api-build-warnings",
+      "sha": "1115c7276aa3c1fc9e31a2e513669f095e47ecca",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 383,
+      "merge_base": "1115c7276aa3c1fc9e31a2e513669f095e47ecca",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/phase-1-launch-blockers",
+      "sha": "dd04b594838c1a8dfe3f42a68def87df974008c5",
+      "success": true,
+      "status": "diverged",
+      "ahead": 119,
+      "behind": 459,
+      "merge_base": "fffc014f5b2d3baccc6a4bc7a5cc83bd974f5957",
+      "reported_files": 262,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/app/admin/privacy-requests/page.jsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/app/admin/privacy-requests/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/analytics/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/audit/(components)/columns.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/audit/(data)/events.json",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/calls/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/content/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/dashboard/(components)/card.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/dashboard/_components/card.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/dashboard/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/events/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/feature-flags/(components)/columns.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/feature-flags/(data)/flags.json",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/jobs/(components)/columns.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/jobs/(data)/jobs.json",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/jobs/columns.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/layout.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/layout.tsx.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/layout.tsx.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/layout.tsx.bak.20260201_225741",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/logs/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/page.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/policies/(components)/columns.tsx",
+          "status": "removed"
+        },
+        {
+          "path": "apps/urai-admin/src/app/(admin)/policies/(data)/policies.json",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix/public-48px-targets-20261005",
+      "sha": "6e1bb84ebfb6a8f65a849f25bc37d42ccd961467",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 48,
+      "merge_base": "6e1bb84ebfb6a8f65a849f25bc37d42ccd961467",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/public-contact-handoff-20261005",
+      "sha": "fe779b5787ae8e366398b5fdf651749d378e8738",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 56,
+      "merge_base": "fe779b5787ae8e366398b5fdf651749d378e8738",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/public-estate-red-team-20261005-v2",
+      "sha": "d194a292aaf28e92a721419c0c95a9a136c4ce44",
+      "success": true,
+      "status": "diverged",
+      "ahead": 29,
+      "behind": 55,
+      "merge_base": "302f600cb80eb64b328f66f4b4bb5f523d12d103",
+      "reported_files": 29,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/accessibility/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/contact/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/docs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/LoginClient.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/not-found.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/robots.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/sitemap.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/accessibility/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/api-keys/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/events/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/layout.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/reports/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/contact/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/demo/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/globals.css",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/privacy/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/robots.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/sitemap.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/terms/page.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix/public-estate-red-team-20261005",
+      "sha": "cac020dd3fce57c45440a3e05f835c488a8b7d56",
+      "success": true,
+      "status": "diverged",
+      "ahead": 29,
+      "behind": 58,
+      "merge_base": "6cb7c32a8fa6316e444b474ad1fdab2e3b6a3c12",
+      "reported_files": 29,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/accessibility/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/contact/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/docs/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/LoginClient.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/not-found.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/robots.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/sitemap.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/accessibility/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/api-keys/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/events/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/layout.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/reports/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/contact/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/demo/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/globals.css",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/privacy/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/robots.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/sitemap.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/terms/page.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix/remove-stale-admin-owner-placeholder-20261005",
+      "sha": "8c3b555923696acf402f9678bc14ec0e8aef6c4e",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 52,
+      "merge_base": "8c3b555923696acf402f9678bc14ec0e8aef6c4e",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix/system-registry-truth-20260706",
+      "sha": "1867031396c5b4db1836daa37219e74c5c4c9bca",
+      "success": true,
+      "status": "diverged",
+      "ahead": 4,
+      "behind": 157,
+      "merge_base": "09ded3e78dd0dd1801f144e679cd443c7d97e677",
+      "reported_files": 3,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/SYSTEM_OF_SYSTEMS.md",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/run-system-registry-seed.mjs",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix/system-registry-truth-rebased-20260711",
+      "sha": "f99f033ef5e04218b3fed8c7013005c2e446a043",
+      "success": true,
+      "status": "diverged",
+      "ahead": 3,
+      "behind": 154,
+      "merge_base": "7de202f6df7f173f2cf2bdb1135e1b76f86d7770",
+      "reported_files": 52,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/scripts/run-next-build.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/system/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/collection/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/users/[uid]/role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/login/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/session/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/LoginClient.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/require-admin-session.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/update-admin-role.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/admin-origin-policy.behavior.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "docs/SYSTEM_OF_SYSTEMS.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/SYSTEM_REGISTRY_EMULATOR_RECEIPT.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/release-evidence/ADMIN-SESSION-SECURITY-RECONCILIATION-20260714.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.emulator.json",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix-admin-lock-20260520",
+      "sha": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 252,
+      "merge_base": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "fix-functions-error-typing",
+      "sha": "c691b2f0d1cb4e97d35f09364b0cc4f6b33155de",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 229,
+      "merge_base": "56bd42b740b1b24258dd4f181d80a13e56ec19a3",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "functions/src/index.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix-smoke-curl-portability",
+      "sha": "c85b59ba2622236aa2214085bad9466e894bc374",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 235,
+      "merge_base": "c78ddc62a6629967525b514a1e92928b5bfe4197",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/smoke-test.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix-spatial-css-build",
+      "sha": "8034b8384897cb0570d7a0c566aa18db6a0ef482",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 236,
+      "merge_base": "1b2e8fe6f32f3a4faf6ea42d2536e4dda62a58f2",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/spatial-admin.css",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "fix-verify-curl-20260520",
+      "sha": "3984b437423494eefd1ab4538f1277bd4518d6a8",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 250,
+      "merge_base": "3984b437423494eefd1ab4538f1277bd4518d6a8",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "harden/production-admin-console",
+      "sha": "99b3e7cdf9543ac3885c082f520530d8f7b111f3",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 567,
+      "merge_base": "22869bd985512b361c79b3a68df9fd6072e11c55",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/lib/firebase-admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "hardening/admin-stacked-ci-evidence-20260914",
+      "sha": "0693929db4f4330687e46db34b2f2eac03e3493d",
+      "success": true,
+      "status": "diverged",
+      "ahead": 30,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 43,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "hardening/admin-stacked-pr-verification-20260914",
+      "sha": "9ca1b3393a27ce9b78dba9e35433de242dcbb7f8",
+      "success": true,
+      "status": "diverged",
+      "ahead": 30,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 43,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "hygiene/remove-functions-backup-residue-20260911",
+      "sha": "ce45e81c86ff67044ff3905fcfdb65b96222fb43",
+      "success": true,
+      "status": "diverged",
+      "ahead": 10,
+      "behind": 61,
+      "merge_base": "8050cf2c7d5c5cec8dc360b9f9c25719cef43a29",
+      "reported_files": 9,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003046",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.tmp",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "ignore-tsbuildinfo",
+      "sha": "99733d292cae718128a204ff32bfe6f3c1776d6f",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 225,
+      "merge_base": "ecc9ab752eb1be5f2eca03b7f69a6ca4a41d05c6",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "integration/storytime-moderation-contract-20260923",
+      "sha": "01be92c47e6ede80a67b804c4744168029b15004",
+      "success": true,
+      "status": "diverged",
+      "ahead": 64,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 76,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/admin-analytics-visual-proof.yml",
+          "status": "added"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/storytime-moderation/page.tsx",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/api-keys/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/app/settings/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/app/globals.css",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/components/app-shell.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/src/lib/demo-data.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-analytics/tests/smoke.test.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "launch-evidence",
+      "sha": "6efc3508ca26444b9e5d05c67d281266a576ffc7",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 233,
+      "merge_base": "b07be3a442986d65907cd5ea83d4bc337a61e289",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "launch-lock-script",
+      "sha": "2870bbfaaac866cfde90c4c58b72f560e4f8c968",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 231,
+      "merge_base": "3d2369361f6b1e23c54b10ae8fc7328e9c09110a",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/launch-lock.sh",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "launch-security-note",
+      "sha": "c3b323df0461465862553228b308dcc9e73a7369",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 212,
+      "merge_base": "c3b323df0461465862553228b308dcc9e73a7369",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "main",
+      "sha": "1cde00e69238f6a32237af2d1914a1b77339d5bc",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 47,
+      "merge_base": "1cde00e69238f6a32237af2d1914a1b77339d5bc",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "mind-melting-3d-login-fix",
+      "sha": "05e156d6af02103ab3534d4a4b9d3b6eade58d7c",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 324,
+      "merge_base": "05e156d6af02103ab3534d4a4b9d3b6eade58d7c",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "ops/admin-readiness-contract-20260911",
+      "sha": "2a1012f2ea05ba883073e67bc5dfc9bf7b11982e",
+      "success": true,
+      "status": "diverged",
+      "ahead": 12,
+      "behind": 61,
+      "merge_base": "8050cf2c7d5c5cec8dc360b9f9c25719cef43a29",
+      "reported_files": 11,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003046",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.tmp",
+          "status": "removed"
+        },
+        {
+          "path": "functions/src/index.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/test/source-contracts.test.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "owner-bootstrap-fix",
+      "sha": "c550cb05d98f37119506b9c6e953eb113f582852",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 240,
+      "merge_base": "67097f140657ec453bb9bfc44366e1e541b5b95f",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/bootstrap-owner.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "preflight-runbook-fix",
+      "sha": "df386d1b704d54a3a2d357e2cc0527ef4953d9b6",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 239,
+      "merge_base": "969ac89194c3c7cef290cc36a63c82a355205be1",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "docs/DEPLOYMENT_RUNBOOK.md",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "privacy-adoption-admin",
+      "sha": "747ecd6fdf3adf946c4a9d5b43c5d1df13d613b2",
+      "success": true,
+      "status": "diverged",
+      "ahead": 5,
+      "behind": 567,
+      "merge_base": "22869bd985512b361c79b3a68df9fd6072e11c55",
+      "reported_files": 5,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "privacy/PRIVACY_VERSION.md",
+          "status": "added"
+        },
+        {
+          "path": "privacy/data-inventory.yaml",
+          "status": "added"
+        },
+        {
+          "path": "privacy/feature-manifests/admin-audit-access.privacy.yaml",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "production-grade-system-lock",
+      "sha": "aeb25792b80e11073bebfca70b2984f48776bbb4",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 336,
+      "merge_base": "aeb25792b80e11073bebfca70b2984f48776bbb4",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "production-lock-admin-20260630",
+      "sha": "15ad106597e2d850b67356ee79716030f9fe4b87",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 177,
+      "merge_base": "c0c03bbca92a7fe2631d161a6447588bc672c3b7",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/urai-production-verify.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "production-lock-admin-ci-followup-20260630",
+      "sha": "2cf51782bf392d9439c87db37ffad9463f03c251",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 169,
+      "merge_base": "2cf51782bf392d9439c87db37ffad9463f03c251",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "production-verification-20260520",
+      "sha": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 252,
+      "merge_base": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "public-footprint-truth-boundary-20260903",
+      "sha": "b4457b8f5b9dfbc013e6095ba70d0f43f2341389",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 148,
+      "merge_base": "e06f8d55f0d1803098044ab53726c39cd9895e4f",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/components/marketing/CommandWorld.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "reconcile/admin-registry-adc-main-20260811",
+      "sha": "58b3a2fd7a6f2050193f3e9e4a38fda43607c836",
+      "success": true,
+      "status": "diverged",
+      "ahead": 4,
+      "behind": 61,
+      "merge_base": "8050cf2c7d5c5cec8dc360b9f9c25719cef43a29",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "reconcile/admin-session-security-into-45-20260714",
+      "sha": "0a6cf5d663549f75982b2177092d873d253e5a74",
+      "success": true,
+      "status": "diverged",
+      "ahead": 140,
+      "behind": 156,
+      "merge_base": "edb0825beb218fcf57ecea9be471106d6e28f58e",
+      "reported_files": 54,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/scripts/run-next-build.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/system/page.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/collection/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/users/[uid]/role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/login/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/session/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/LoginClient.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/require-admin-session.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/update-admin-role.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/admin-origin-policy.behavior.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "docs/PRODUCTION_TERMINAL_COMMANDS.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/SYSTEM_OF_SYSTEMS.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/SYSTEM_REGISTRY_EMULATOR_RECEIPT.md",
+          "status": "added"
+        },
+        {
+          "path": "docs/release-evidence/ADMIN-SESSION-SECURITY-RECONCILIATION-20260714.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.emulator.json",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "remove-legacy-project-gate",
+      "sha": "19653a9dc0e8b10631bf9412089a26cb7986de33",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 238,
+      "merge_base": "d04dd25e4d4dbd1e69605b9fed15efe8aa21e09d",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/preflight-production.sh",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/security-gate.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-canonical-role-route-20260912",
+      "sha": "1b59645337b02ac247921dd1e06d0390424c439c",
+      "success": true,
+      "status": "diverged",
+      "ahead": 16,
+      "behind": 61,
+      "merge_base": "8050cf2c7d5c5cec8dc360b9f9c25719cef43a29",
+      "reported_files": 14,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003046",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.tmp",
+          "status": "removed"
+        },
+        {
+          "path": "functions/src/index.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/test-admin-route-contracts.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-dedicated-target-gates-20261007",
+      "sha": "af8cb67dd7545b8de90b8511a9960308e126e282",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 39,
+      "merge_base": "af8cb67dd7545b8de90b8511a9960308e126e282",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-distinct-approval-quorum-20261008",
+      "sha": "5cbccf19f3234291b65116c2ff625a2e90057101",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 7,
+      "merge_base": "5cbccf19f3234291b65116c2ff625a2e90057101",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-flag-current-actor-20261008-92f",
+      "sha": "18f1b040683f23c0e85d3d6f1a1c80b90e86c8bf",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 1,
+      "merge_base": "18f1b040683f23c0e85d3d6f1a1c80b90e86c8bf",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-hosting-target-boundary-20261007",
+      "sha": "8328308389286a33f725f8bcfb05f23c50906a67",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 41,
+      "merge_base": "8328308389286a33f725f8bcfb05f23c50906a67",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-institutional-convergence-20261008",
+      "sha": "44854148ddc5452a65ad8ba0cb470bb0eba71d2f",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 4,
+      "merge_base": "44854148ddc5452a65ad8ba0cb470bb0eba71d2f",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-next-primary-advisories-20261007",
+      "sha": "2685168f648b5dfcf7cfd5f15bb14c838a5d8768",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 38,
+      "merge_base": "f776ea09eb3d708d76f1634aebd08d5d1748eef7",
+      "reported_files": 6,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/admin-next-maintenance-patch.yml",
+          "status": "removed"
+        },
+        {
+          "path": "docs/evidence/NEXT_PRIMARY_ADVISORY_SOURCE_REMEDIATION_20261007.md",
+          "status": "added"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-positive-receipt-closure-20261008",
+      "sha": "987ca858fca56ecdb4e5899fd4c717336d87e739",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 6,
+      "merge_base": "987ca858fca56ecdb4e5899fd4c717336d87e739",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-security-privacy-20261007",
+      "sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "success": true,
+      "status": "identical",
+      "ahead": 0,
+      "behind": 0,
+      "merge_base": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-stable-lock-validation-20261007",
+      "sha": "adc8d28b761140c5fc8421858729eb954a0a49a4",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 42,
+      "merge_base": "adc8d28b761140c5fc8421858729eb954a0a49a4",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/admin-terminal-delivery-retry-20261010",
+      "sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "success": true,
+      "status": "identical",
+      "ahead": 0,
+      "behind": 0,
+      "merge_base": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "repair/exec-estate-web-20261007-2328",
+      "sha": "0f963155bee749e8f37decd3c9e399ca381a76e7",
+      "success": true,
+      "status": "behind",
+      "ahead": 0,
+      "behind": 35,
+      "merge_base": "0f963155bee749e8f37decd3c9e399ca381a76e7",
+      "reported_files": 0,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "runtime/admin-node22-20260913-v2",
+      "sha": "83c5003fde73a9bda4b5c0a237fec6c1a3c9d4a7",
+      "success": true,
+      "status": "diverged",
+      "ahead": 21,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 38,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "runtime/admin-node22-20260913",
+      "sha": "f42099331cc556644a82eb19c6244bd601c2087f",
+      "success": true,
+      "status": "diverged",
+      "ahead": 20,
+      "behind": 60,
+      "merge_base": "f0dabca401dff4df22a68a92b5b10e996b99c748",
+      "reported_files": 37,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/urai-production-verify.yml",
+          "status": "modified"
+        },
+        {
+          "path": ".github/workflows/validate-admin.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/institutional-feature-flag-workflow-source.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "docs/INSTITUTIONAL_CONTROL_PLANE_CONTRACT.md",
+          "status": "added"
+        },
+        {
+          "path": "firebase.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+          "status": "added"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json",
+          "status": "modified"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002239",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002240",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T002645",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003045",
+          "status": "removed"
+        },
+        {
+          "path": "functions/package.json.bak.20260128T003046",
+          "status": "removed"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security/adc-only-admin-config-2026-08-11",
+      "sha": "612b5fcb85b182d85244cbb11b9a9f3f03bde3e9",
+      "success": true,
+      "status": "diverged",
+      "ahead": 6,
+      "behind": 154,
+      "merge_base": "7de202f6df7f173f2cf2bdb1135e1b76f86d7770",
+      "reported_files": 4,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/config/firebase-admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/config/firebase-admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "packages/governance-sdk/src/firebase.ts",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/wif-deploy-auth-contract.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security/env-containment-2026-08-11",
+      "sha": "f09138ad61812f31078273501f645f9750402fea",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 156,
+      "merge_base": "edb0825beb218fcf57ecea9be471106d6e28f58e",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [],
+      "too_large": null
+    },
+    {
+      "name": "security/nested-analytics-adc-2026-08-11",
+      "sha": "ff11025452f2f60b7ea5821d0738fe5b809ed1b0",
+      "success": true,
+      "status": "diverged",
+      "ahead": 2,
+      "behind": 152,
+      "merge_base": "c7c22211aa5cb1ea70575fd2aaf33238cc103e5f",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-analytics/src/lib/server/firebase-admin.ts",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security/nested-env-containment-2026-08-11",
+      "sha": "7157f9ec0696e6098b3ae69a0d763c552da7cc2e",
+      "success": true,
+      "status": "diverged",
+      "ahead": 4,
+      "behind": 153,
+      "merge_base": "1b61d542ef670beec530b5246f6af838ee25dfe6",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/wif-deploy-auth-contract.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security/p0-admin-session-coherence-20260706",
+      "sha": "5b7fe1c5da4b8485c0aba1d636b64786b785f8c6",
+      "success": true,
+      "status": "diverged",
+      "ahead": 24,
+      "behind": 156,
+      "merge_base": "edb0825beb218fcf57ecea9be471106d6e28f58e",
+      "reported_files": 14,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/admin/users/[uid]/role/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/login/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/api/auth/session/route.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/app/login/LoginClient.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/require-admin-session.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/admin/update-admin-role.ts",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/test/admin-origin-policy.behavior.test.mjs",
+          "status": "added"
+        },
+        {
+          "path": "apps/urai-admin/test/source-contracts.test.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/test-admin-route-contracts.mjs",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security/wif-deploy-auth-2026-08-11",
+      "sha": "ef14820fa424b6683174f41280bc8a233fb33f7c",
+      "success": true,
+      "status": "diverged",
+      "ahead": 19,
+      "behind": 155,
+      "merge_base": "2929516362ebbac489dbaa9e0f771e6493bfcb6e",
+      "reported_files": 15,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        },
+        {
+          "path": "apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "docs/DEPLOYMENT.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/PRODUCTION_LAUNCH.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/PRODUCTION_TERMINAL_COMMANDS.md",
+          "status": "modified"
+        },
+        {
+          "path": "docs/RELEASE_CHECKLIST.md",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/bootstrap-owner.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/preflight-production.sh",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/rollback-production.sh",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/seed-system-registry.mjs",
+          "status": "modified"
+        },
+        {
+          "path": "scripts/wif-deploy-auth-contract.mjs",
+          "status": "added"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "security-deploy-path-fix",
+      "sha": "1b841b59f17eb6c6127ed5448c71d8ff77441222",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 237,
+      "merge_base": "dd0d1c3603eda6ebb641809594d7c69bd1bc3a79",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/security-gate.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "seo/internal-noindex-20260903",
+      "sha": "6f2cd61f434c7682cf2329e2d6d0727c62f96aa9",
+      "success": true,
+      "status": "diverged",
+      "ahead": 3,
+      "behind": 61,
+      "merge_base": "8050cf2c7d5c5cec8dc360b9f9c25719cef43a29",
+      "reported_files": 2,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        },
+        {
+          "path": "functions/apps/urai-admin/src/app/layout.tsx",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "use-launch-runner",
+      "sha": "4964150f16feedf3d86cb1ef8a148f2a54cc05ed",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 229,
+      "merge_base": "56bd42b740b1b24258dd4f181d80a13e56ec19a3",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "verify-functions-fix",
+      "sha": "44453b42ec4722e666bb19b357028c4369a6f3ba",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 241,
+      "merge_base": "2f8e706a75fd8b2034bc307ff8a5673a214aeb8b",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": "scripts/verify-production-live.sh",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    },
+    {
+      "name": "workflow-default-verified-url",
+      "sha": "e47973b5a5cdee1dc158e88735f7a3fc0792fcab",
+      "success": true,
+      "status": "diverged",
+      "ahead": 1,
+      "behind": 232,
+      "merge_base": "aa7483d2f266b2dce38c14c8d77ef86b47428ade",
+      "reported_files": 1,
+      "files_likely_capped": false,
+      "selected_paths": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "status": "modified"
+        }
+      ],
+      "too_large": null
+    }
+  ]
+}
