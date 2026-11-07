@@ -114,6 +114,10 @@ if ! node scripts/validate-admin-hosting-target.mjs --require-bound; then
   missing=1
 fi
 
+if ! node scripts/assert-admin-functions-codebase.mjs; then
+  missing=1
+fi
+
 if [[ "${missing}" != "0" ]]; then
   echo "--- Production preflight failed ---" >&2
   exit 1

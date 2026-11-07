@@ -57,6 +57,9 @@ requireMatch(preflight, /GOOGLE_APPLICATION_CREDENTIALS/, 'WIF\/ADC preflight ch
 forbidMatch(preflight, /require_env\s+"FIREBASE_TOKEN"/, 'FIREBASE_TOKEN preflight requirement');
 
 requireMatch(deployScript, /Direct local production deploy is disabled/, 'local production deploy fail-closed guard');
+requireMatch(deployScript, /^node scripts\/assert-admin-functions-codebase\.mjs\s*$/m, 'Admin Functions default namespace rejection before deploy');
+requireMatch(workflow, /node scripts\/assert-admin-functions-codebase\.mjs/, 'Admin Functions early source gate in production workflow');
+requireMatch(workflow, /node "\$\{GITHUB_WORKSPACE\}\/scripts\/assert-admin-functions-codebase\.mjs" --cwd "\$\{rollback_dir\}"/, 'Admin Functions namespace validation before rollback');
 requireMatch(deployScript, /GITHUB_REF:-.*refs\/heads\/main/, 'production deploy main-context guard');
 requireMatch(deployScript, /GOOGLE_APPLICATION_CREDENTIALS/, 'production deploy temporary WIF\/ADC credential guard');
 requireMatch(deployScript, /URAI_ADMIN_TARGET_SHA/, 'production deploy exact-target guard');
