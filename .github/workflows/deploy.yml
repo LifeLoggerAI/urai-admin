@@ -101,6 +101,9 @@ jobs:
       - name: Require reviewed Admin Hosting boundary
         run: node scripts/validate-admin-hosting-target.mjs --require-bound
 
+      - name: Reject shared default Functions codebase before cloud authentication
+        run: node scripts/assert-admin-functions-codebase.mjs
+
       - name: Require WIF deploy identity
         shell: bash
         env:
@@ -177,6 +180,7 @@ jobs:
           git worktree add --detach "${rollback_dir}" "${URAI_ADMIN_ROLLBACK_SHA}"
           cd "${rollback_dir}"
           node "${GITHUB_WORKSPACE}/scripts/validate-admin-hosting-target.mjs" --cwd "${rollback_dir}" --require-bound
+          node "${GITHUB_WORKSPACE}/scripts/assert-admin-functions-codebase.mjs" --cwd "${rollback_dir}"
           node - <<'NODE'
           const fs = require('node:fs');
           const values = {
