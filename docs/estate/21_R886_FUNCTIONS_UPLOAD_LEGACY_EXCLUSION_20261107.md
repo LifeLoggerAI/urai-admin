@@ -36,3 +36,7 @@ Scope is **synthetic, local, source-matched**: no full frozen pnpm install, real
 4. Complete protected rollout, independent governance signoff, verified rollback and accessibility/device acceptance.
 
 **Production HOLD. Preserve all active workers and original #85/#99/#100–#110 history.**
+
+## R886 exact-head GitHub Actions results
+
+At PR #111 head `f8d55b9312ff0add3a61dbfbc360add93f700a96`, GitHub returned four completed **FAILURE** workflows with **zero recorded steps**: CI run `42445722724` / job `128624106783`; Validate `42445722457` / job `128624106148`; Visual Truth `42445722415` / job `128624105944`; Production Verify `42445722428` / job `128624105903`. The underlying runner admission reason was not available in this readback. These are **not** new Firebase packaging/archive validation receipts; only the 19 local synthetic source-matched tests passed. Keep production HOLD.
