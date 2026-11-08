@@ -1,13 +1,10 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { listGuardedQaSnapshotTags } from '@/lib/qa/guarded-snapshot-list.mjs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-const SNAPSHOT_FILE_PATTERN = /^urai-admin_curr_snapshot_([a-zA-Z0-9_-]{1,80})\.json$/;
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,13 +16,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Deploy artifact directory is not configured' }, { status: 500 });
     }
 
-    const logDir = path.resolve(homeDir, 'deploy_logs');
-    const files = await fs.readdir(logDir);
-    const tags = files
-      .map((file) => file.match(SNAPSHOT_FILE_PATTERN)?.[1])
-      .filter((tag): tag is string => Boolean(tag));
-
-    return NextResponse.json(tags);
+    const tags = await listGuardedQaSnapshotTags(homeDir);
+    return NextResponse.json(tags, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     if (error instanceof Error && 'status' in error) {
       return adminAuthErrorResponse(error);
