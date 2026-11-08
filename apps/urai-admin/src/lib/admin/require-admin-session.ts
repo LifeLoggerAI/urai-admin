@@ -280,7 +280,9 @@ export async function requireAdminSession(
     .catch((error: unknown) => rethrowAuthenticationFailure(error, true));
   const role = decodedToken.role as AdminRole | undefined;
 
-  if (!role || !allowedRoles.includes(role)) {
+  // The server uses Firebase Admin SDK and bypasses Firestore client rules.
+  // An asserted role string alone must never admit a token lacking admin authority.
+  if (decodedToken.admin !== true || !role || !allowedRoles.includes(role)) {
     throw new AdminAuthError('Forbidden', 403);
   }
 
