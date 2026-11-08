@@ -41,10 +41,7 @@ test('fails closed on missing or empty HOME', async () => {
   await assert.rejects(() => listGuardedQaSnapshotTags(path.join(os.tmpdir(), 'nonexistent-qa-root-20261107')));
 });
 
-test('rejects a directory with too many entries', async () => fixture(async ({ home, logs }) => {
-  // Enforce the actual cap without writing 5001 files in a unit test by
-  // testing one valid and one unrecognized entry; large-dir boundary stays
-  // a source-limit invariant for full native acceptance.
+test('ignores unrecognized snapshot filenames', async () => fixture(async ({ home, logs }) => {
   await writeFile(path.join(logs, 'not-a-snapshot.txt'), '');
   assert.deepEqual(await listGuardedQaSnapshotTags(home), []);
 }));
