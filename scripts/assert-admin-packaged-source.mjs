@@ -26,6 +26,35 @@ function filesUnder(root, relative, found) {
   for (const entry of readdirSync(location).sort()) filesUnder(root, path.join(relative, entry), found);
 }
 
+// The packager copies .next, then deliberately removes .next/cache and build
+// sourcemaps. Compare every remaining compiled byte, not just BUILD_ID, so a
+// mismatched server bundle cannot pass merely because source files agree.
+function nextFiles(root, { packaged = false } = {}) {
+  const buildDir = path.join(root, '.next');
+  const result = [];
+  function walk(relative) {
+    const location = path.join(root, relative);
+    const metadata = lstatSync(location);
+    assert.ok(!metadata.isSymbolicLink(), `Next artifact symlink is not permitted: ${relative}`);
+    if (metadata.isDirectory()) {
+      if (relative === '.next/cache') {
+        assert.ok(!packaged, 'Packaged Next cache must be absent');
+        return;
+      }
+      for (const entry of readdirSync(location).sort()) walk(path.join(relative, entry));
+      return;
+    }
+    assert.ok(metadata.isFile(), `Unexpected Next artifact type: ${relative}`);
+    if (relative.endsWith('.map') || relative.endsWith('.tsbuildinfo')) {
+      assert.ok(!packaged, `Packaged Next generated metadata must be absent: ${relative}`);
+      return;
+    }
+    result.push(relative);
+  }
+  walk('.next');
+  return result.sort();
+}
+
 function sha(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
@@ -75,7 +104,29 @@ export function verifyAdminPackagedSource({ cwd = process.cwd() } = {}) {
   const packagedBuildId = readFileSync(path.join(packaged, '.next', 'BUILD_ID'), 'utf8');
   assert.ok(sourceBuildId.trim(), 'Canonical Next BUILD_ID is missing');
   assert.equal(packagedBuildId, sourceBuildId, 'Packaged Next build must match canonical build identity');
-  return { filesVerified: canonicalFiles.length, bytesVerified, sourceSha256: aggregate.digest('hex'), nextBuildId: sourceBuildId.trim() };
+  const canonicalNext = nextFiles(app);
+  const bundledNext = nextFiles(packaged, { packaged: true });
+  assert.ok(canonicalNext.includes('.next/BUILD_ID'), 'Next build identity must be included in the audited artifact list');
+  assert.ok(canonicalNext.some((p) => p.startsWith('.next/server/')), 'Compiled Next server output is missing');
+  assert.deepEqual(bundledNext, canonicalNext, 'Packaged Next compiled artifact paths must exactly match the canonical build');
+  let compiledBytesVerified = 0;
+  const compiledAggregate = createHash('sha256');
+  for (const relative of canonicalNext) {
+    const sourceBytes = readFileSync(path.join(app, relative));
+    const bundledBytes = readFileSync(path.join(packaged, relative));
+    assert.equal(sha(bundledBytes), sha(sourceBytes), `Packaged Next compiled artifact differs: ${relative}`);
+    compiledBytesVerified += sourceBytes.byteLength;
+    compiledAggregate.update(relative).update('\0').update(sourceBytes).update('\0');
+  }
+  return {
+    filesVerified: canonicalFiles.length,
+    bytesVerified,
+    sourceSha256: aggregate.digest('hex'),
+    compiledFilesVerified: canonicalNext.length,
+    compiledBytesVerified,
+    compiledSha256: compiledAggregate.digest('hex'),
+    nextBuildId: sourceBuildId.trim(),
+  };
 }
 
 const currentFile = process.argv[1] && path.resolve(process.argv[1]);
@@ -88,7 +139,7 @@ if (currentFile === fileURLToPath(import.meta.url)) {
       cwd = path.resolve(process.argv[3]);
     }
     const result = verifyAdminPackagedSource({ cwd });
-    console.log(`Admin packaged source parity PASS: ${result.filesVerified} files, ${result.bytesVerified} bytes; source SHA256 ${result.sourceSha256}; Next build ${result.nextBuildId}`);
+    console.log(`Admin packaged source and compiled Next parity PASS: ${result.filesVerified} source files, ${result.compiledFilesVerified} compiled files; source SHA256 ${result.sourceSha256}; compiled SHA256 ${result.compiledSha256}; Next build ${result.nextBuildId}`);
   } catch (error) {
     console.error(`Admin packaged source parity HOLD: ${error.message}`);
     process.exitCode = 1;
