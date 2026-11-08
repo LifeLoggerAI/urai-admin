@@ -102,4 +102,4 @@ test('QA logs may read JSON from the logs root, but cannot use image policy', as
 test('invalid root policies and empty input are rejected', async () => fixture(async ({ home, image }) => {
   await denial(() => readGuardedQaFile({ homeDir: home, requestedPath: image, allowedDirectories: ['../'], allowedExtensions: IMAGE }));
   await denial(() => imageRead(home, ''));
-});
+}));
