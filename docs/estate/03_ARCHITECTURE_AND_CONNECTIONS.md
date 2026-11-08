@@ -1,0 +1,27 @@
+# Admin architecture, controls, and cross-system links
+
+Canonical candidate is a **pnpm / Node 22 / two Next.js apps + Firebase Functions** control plane, distinct from consumer UrAi and RuAi professional access. The [firebase.json](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/firebase.json) at #85 configures Functions nodejs22, firestore.rules/indexes, Next Hosting target **urai-admin-production**. The [candidate .firebaserc](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/.firebaserc) selects **urai-4dc1d** for default/admin and binds the Admin Hosting symbol to urai-admin. This is a source configuration, NOT verification of deployed project, IAM or effective Rules.
+
+## Source-backed primary flows
+- **Session authentication:** [require-admin-session.ts](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/apps/urai-admin/src/lib/admin/require-admin-session.ts) validates Firebase session cookie/identity, canonical adminUsers role/version, origin for mutation, revocation/recheck; owner/admin/viewer role scope. Wrong caller identity and backend transport failures are intentionally distinguished.
+- **Protected mutation:** [set-flag route](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/apps/urai-admin/src/app/api/admin/set-flag/route.ts) requires owner/admin mutation session, operation UUID, typed input and a second actor revalidation. [Institutional feature flag executor](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts) uses transactional actor/roleVersion, kill-switch, decision, audit and idempotency records.
+- **Audit / minimized reads:** [collection API](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/apps/urai-admin/src/app/api/admin/collection/route.ts) limits sensitive fields including privacyRequests, operational weather and audit records; [source receipt](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/docs/evidence/audit-boundary-source-repair-20261008.md) distinguishes tests from live data.
+- **Institutional control plane:** [Functions module](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/functions/src/institutionalControlPlane.ts) defines decision states, distinct principal quorum, executor separation, receipt PASS and terminal delivery failure. Material legal/financial authority still requires real authorized humans, not generated approvals.
+- **Analytics hard-off:** [Analytics event handler](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/apps/urai-analytics/src/app/api/v1/events/route.ts) validates identity/schema/tenant/claimed consent but returns HTTP **503** for event retention without a canonical purpose/subject/delete fence; rejected audit retains content-free metadata only. This is intentional protection, not a broken feature to forcibly enable.
+- **Hosting/rollback:** dedicated target and WIF/ADC-only scripts, candidate [operations source receipt](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/docs/evidence/operations-source-recovery-20261008.md); provider binding/readback and protected recovery remain unproven.
+- **Storytime:** [moderation contract](https://github.com/LifeLoggerAI/urai-admin/blob/8313188532aef304a3b55771c5080f87e4ac71eb/docs/evidence/storytime-moderation-admin-contract.md) says the Admin route is **Not connected**, with no approve/release action; any future bridge needs scoped server trust and redacted metadata only.
+
+## Cross-repo trust matrix
+| System | Admin may do | Still required |
+| --- | --- | --- |
+| Privacy | Govern authorized admin metadata, no raw personal memory by default | Signed canonical purpose/rights, privacy review, actual deletion and audit propagation |
+| Spatial | Present reviewed operational/release state | Never infer user life-data read access or production certification |
+| RuAi | Tenant-scoped aggregate administration only when authorized | Cross-project/Auth tenant boundaries and negative authorization |
+| Jobs/Studio | Operations metadata, restricted job status | Verified API authorization and no private media spill |
+| Analytics | Safe aggregate operational view; current ingest fails closed | Approved purpose, server-side subject consent, durable tenant/delete fence |
+| Storytime | Pending sanitized moderation contract | Production identity, scope and human reviewer authorization |
+| Foundation | Admin configuration allowed only by reviewed canonical role | No invented legal/Foundation quorum or public-benefit authority |
+| Communications/Marketing | Consent-scoped dispatch status | Real provider delivery, opt-out, audit, authorization |
+| Labs master | Share public source evidence and release restrictions | Independent steward approval and private registry review |
+
+**Shared Firebase collision**: source aliases Spatial, B2B and Admin have been observed at urai-4dc1d; actual effective Rules/IAM was not read. The presence of different Firestore rules source blobs implies possible competing publishers, not proof any specific rules are live. Coordination with Labs Rules guard #261 must stay P0 and read-only until owned review.

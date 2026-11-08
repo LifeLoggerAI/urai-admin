@@ -1,0 +1,966 @@
+{
+  "schema": "urai-admin-r888-git-tracked-functions-upload-inventory-v1",
+  "repository": "LifeLoggerAI/urai-admin",
+  "git_commit_sha": "903052be9e104c2895d99628006836768ffc9960",
+  "git_tree_sha": "903052be9e104c2895d99628006836768ffc9960",
+  "recursive_tree_truncated": false,
+  "scope": "Tracked Git files under functions/ only. Untracked files, generated .next, dependencies, linked files and actual Firebase ZIP are NOT represented. intended_ignore_legacy is inferred from proposed firebase.json patterns; exact pinned firebase-tools minimatch v3 and upload archive not executed.",
+  "counts": {
+    "tracked_functions_files": 158,
+    "tracked_functions_bytes": 353996,
+    "intended_legacy_ignored_files": 146,
+    "intended_legacy_ignored_bytes": 269865,
+    "remaining_tracked_candidates": 12,
+    "remaining_tracked_candidate_bytes": 84131
+  },
+  "files": [
+    {
+      "path": "functions/.eslintrc.cjs",
+      "git_blob_sha": "19a72f69d1e136038fc2006affb42bf120729344",
+      "git_reported_bytes": 493,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/apps/urai-admin/next.config.js",
+      "git_blob_sha": "831cb43e277a0db34a5a98d7efa5b50d966bd319",
+      "git_reported_bytes": 931,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/package.json",
+      "git_blob_sha": "c3d8fdbec8d77c06bbb4086c98e369427d1d248c",
+      "git_reported_bytes": 1657,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/postcss.config.mjs",
+      "git_blob_sha": "2ef30fcf4272e19cf6a23d07b0544027954f9627",
+      "git_reported_bytes": 157,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/public/index.html",
+      "git_blob_sha": "271b3e2d965db49473fcabec61f52c8b47f520b8",
+      "git_reported_bytes": 46,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/access-denied/page.tsx",
+      "git_blob_sha": "358e9e25c6a22e7815f2208c4b9ae8f6a4c8cf02",
+      "git_reported_bytes": 762,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/_components/AdminCollectionTable.tsx",
+      "git_blob_sha": "464a394889cd8005ca8bf0cf554f8fc7a505eba1",
+      "git_reported_bytes": 4389,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/_components/SpatialCollectionPage.tsx",
+      "git_blob_sha": "7ef6b80c9be1470caba6a554f765215fdda632ac",
+      "git_reported_bytes": 1176,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/admin-shell.tsx",
+      "git_blob_sha": "92b360e0adbb02d0af37fd14104abd93937222e0",
+      "git_reported_bytes": 835,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/audit/page.tsx",
+      "git_blob_sha": "b480a84a59a1b8721c7c6539936461bb93ed1da8",
+      "git_reported_bytes": 707,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/dead-letters/page.tsx",
+      "git_blob_sha": "0dde82ec4e8332c11b1e821d2d74dae5a7dd5ed1",
+      "git_reported_bytes": 756,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/feature-flags/FeatureFlagActions.tsx",
+      "git_blob_sha": "7245c84b5dcadab5e0a40d8d5686e5e34bbd74b0",
+      "git_reported_bytes": 4336,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/feature-flags/page.tsx",
+      "git_blob_sha": "c1e3f259867602c4c638eacf39eb7edee5a4c6ba",
+      "git_reported_bytes": 725,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/job-runs/page.tsx",
+      "git_blob_sha": "87307461cf072ae176eeb20257341767d8c8fedc",
+      "git_reported_bytes": 766,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/jobs/page.tsx",
+      "git_blob_sha": "3afe2ba7a499a3a982e4d9c62ce6ad7bf3a47d08",
+      "git_reported_bytes": 674,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/layout.tsx",
+      "git_blob_sha": "ff8cdd00fe9fbe8bc1ef93a3cd94eb039a818150",
+      "git_reported_bytes": 246,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/page.tsx",
+      "git_blob_sha": "a88631f3f92ef97453dfc9eff6758706638d2216",
+      "git_reported_bytes": 4284,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/policies/page.tsx",
+      "git_blob_sha": "3f04d45d95659f3aa57da0b37eb0d021a19d8b27",
+      "git_reported_bytes": 683,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/privacy-requests/page.tsx",
+      "git_blob_sha": "efc0022cd1f7c297eca32700def440cc455b29f1",
+      "git_reported_bytes": 751,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/projects/page.tsx",
+      "git_blob_sha": "8b00b03ce1687423324f845b51d1d6806edeb566",
+      "git_reported_bytes": 732,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/settings/page.tsx",
+      "git_blob_sha": "6d663288a0e6d99d2df846f592fb7babaa73e6e4",
+      "git_reported_bytes": 742,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/storytime-moderation/page.tsx",
+      "git_blob_sha": "1cc4568cdd8ad07805f977c1521ad1ba79ee0bf0",
+      "git_reported_bytes": 3454,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/system/page.tsx",
+      "git_blob_sha": "3af530e0ee20b6b14fbeefd9b5542294279f4219",
+      "git_reported_bytes": 1302,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/users/AdminUserActions.tsx",
+      "git_blob_sha": "1975adae09f54765675b1d66702dc1fc27ae5f99",
+      "git_reported_bytes": 7265,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/admin/users/page.tsx",
+      "git_blob_sha": "439d15619bd2f1c2324292f6ddc3d9ab324bf06e",
+      "git_reported_bytes": 721,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/analytics/route.ts",
+      "git_blob_sha": "f6eca3827de30813af2d3321d622a14981a5348c",
+      "git_reported_bytes": 2009,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/approve-access/route.ts",
+      "git_blob_sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+      "git_reported_bytes": 272,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/audit/route.ts",
+      "git_blob_sha": "43ef5d078ad456d2391d21b145c5df3b1a23c78c",
+      "git_reported_bytes": 1842,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/collection/route.ts",
+      "git_blob_sha": "6b04948f88b80f5eda400d6cab134b4d068da3bb",
+      "git_reported_bytes": 7347,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/deny-access/route.ts",
+      "git_blob_sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+      "git_reported_bytes": 272,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/invalidate-foundation-config-cache/route.ts",
+      "git_blob_sha": "89637c3a51fba4dab146967098a0d969f0e11e09",
+      "git_reported_bytes": 866,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/recover-user-mutation/route.ts",
+      "git_blob_sha": "a92101762ff00b4c025d49b00fb52c86b02de836",
+      "git_reported_bytes": 1396,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/route.ts",
+      "git_blob_sha": "14ba8648eea8c6cbfa1f14a7862725b6cbef6758",
+      "git_reported_bytes": 552,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/set-flag/route.ts",
+      "git_blob_sha": "e94a592c062166183da92bce38641563689e8416",
+      "git_reported_bytes": 1777,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/set-role/route.ts",
+      "git_blob_sha": "2192e72ce04df8d17752ddb69c41a214eba6e33e",
+      "git_reported_bytes": 232,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/set-user-active/route.ts",
+      "git_blob_sha": "62c7bbd09e92c59ed800350dd28c3e82e4cb5751",
+      "git_reported_bytes": 8561,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/update-user-role/route.ts",
+      "git_blob_sha": "3f4648beecd78bef87b239312acac1cf8d720c3e",
+      "git_reported_bytes": 1769,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/users/[uid]/role/route.ts",
+      "git_blob_sha": "36727f3016506f33eacba04512736bc48f519929",
+      "git_reported_bytes": 1345,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/admin/users/route.ts",
+      "git_blob_sha": "aae29bb3841a6481dd426dfd7d635813504c82d0",
+      "git_reported_bytes": 1403,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/analytics/route.ts",
+      "git_blob_sha": "dc61cb906d78ff43db5a941b9889976157b1f728",
+      "git_reported_bytes": 1331,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/audit/route.ts",
+      "git_blob_sha": "8f27db8b10085cc8ba29d97a6729a0ff3403a645",
+      "git_reported_bytes": 1582,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/admin-session/route.ts",
+      "git_blob_sha": "370e3de66033d45d26c3dbd71c0307feaf34be09",
+      "git_reported_bytes": 652,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/login/route.ts",
+      "git_blob_sha": "41bfa845f7819c21a8309a0bcf99f7bd4bdd0fd2",
+      "git_reported_bytes": 740,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/logout/route.ts",
+      "git_blob_sha": "11c0c7a7097012738f12cf0373ba6eab0e5c3e6c",
+      "git_reported_bytes": 343,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/session/route.ts",
+      "git_blob_sha": "e2d7e3a2e08f23438d76afe18bfa37ee0648dd24",
+      "git_reported_bytes": 1334,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/auth/verify/route.ts",
+      "git_blob_sha": "8518ec951329a0ae348a51ba12f0fbcfa599823c",
+      "git_reported_bytes": 474,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/dashboard/route.ts",
+      "git_blob_sha": "7bce49388f857aca74f82095721befca308e1266",
+      "git_reported_bytes": 757,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/health/route.ts",
+      "git_blob_sha": "314d0ed934b6e15f82d906c43521a668a64d01dd",
+      "git_reported_bytes": 930,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/ingest/route.ts",
+      "git_blob_sha": "a53b57642a25f33363874e425b857cbb95cd287e",
+      "git_reported_bytes": 825,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/jobs/route.ts",
+      "git_blob_sha": "a78d0eda7c3f6da824f52727e72ccbf60c7e01b2",
+      "git_reported_bytes": 2048,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/qa/diff/route.ts",
+      "git_blob_sha": "e46c3b92332efca1ff35568b5bf66f9231c838e0",
+      "git_reported_bytes": 3128,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/qa/image/route.ts",
+      "git_blob_sha": "ddc4cc051c140f5bb30764277dad5111909fb75f",
+      "git_reported_bytes": 2637,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/qa/logs/route.ts",
+      "git_blob_sha": "4b880b285119a6b40d4080ad0428ba7b138f3186",
+      "git_reported_bytes": 1846,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/api/qa/snapshots/route.ts",
+      "git_blob_sha": "5ab846445a87ea88b8d84727156b2c11b2195b7e",
+      "git_reported_bytes": 1216,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/contact/page.tsx",
+      "git_blob_sha": "df0a67f84f076c6dcf4da52458ea864e7d7f159b",
+      "git_reported_bytes": 2259,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/docs/page.tsx",
+      "git_blob_sha": "fc069f7285f70aad554b1eebb85e2a09c6722877",
+      "git_reported_bytes": 2788,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/features/page.tsx",
+      "git_blob_sha": "6272f73d1e42a9a91a68fa75f6ece42d09eb1d7b",
+      "git_reported_bytes": 1842,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/globals.css",
+      "git_blob_sha": "e1cf4c37849bd9e09e41a71ba99a3d33c73df79f",
+      "git_reported_bytes": 9430,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/layout.tsx",
+      "git_blob_sha": "6359613cd21a30b949bba9db5b5aa867a7d68a85",
+      "git_reported_bytes": 893,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/login/LoginClient.tsx",
+      "git_blob_sha": "0869b8bd9ee5567b71bb3832a2be1748d38f99c0",
+      "git_reported_bytes": 10578,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/login/page.tsx",
+      "git_blob_sha": "c99a168cb1bbceed9975cabc7919ce20c6688d22",
+      "git_reported_bytes": 307,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/not-authorized/page.tsx",
+      "git_blob_sha": "354e45e1fa94a54beef8381502c5c622da2457f2",
+      "git_reported_bytes": 390,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/page.tsx",
+      "git_blob_sha": "9c7a83233089ed82ec3ffd7ddc4caf7fe397de5a",
+      "git_reported_bytes": 8103,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/pricing/page.tsx",
+      "git_blob_sha": "fd4cde9da310e2e473d6995d442b6235cc0bac1a",
+      "git_reported_bytes": 2281,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/privacy/page.tsx",
+      "git_blob_sha": "ee215e6aa04e7aa21a4699a4b5b3ee5fcd99c545",
+      "git_reported_bytes": 2494,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/providers.tsx",
+      "git_blob_sha": "cbe9c32b831327ffd537010bcb2815396fcef2d9",
+      "git_reported_bytes": 1042,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/robots.ts",
+      "git_blob_sha": "0cd0275e41d36c012a8a4d299c591982218f5c80",
+      "git_reported_bytes": 461,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/security/page.tsx",
+      "git_blob_sha": "b97042dbc707fe53170c8be0285545e1906cca07",
+      "git_reported_bytes": 1745,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/sitemap.ts",
+      "git_blob_sha": "0351d51cd5cbf39622f3bea2306428a23d7ffa79",
+      "git_reported_bytes": 545,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/spatial-admin.css",
+      "git_blob_sha": "b05db465a483de425b9a4527d4c567073cc99953",
+      "git_reported_bytes": 8091,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/terms/page.tsx",
+      "git_blob_sha": "fac5e94adf5b82c670e2a5fe9ea64c0046348842",
+      "git_reported_bytes": 2306,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/app/unauthorized/page.tsx",
+      "git_blob_sha": "b9d0ca5a9708194d0dae1f1414c0120d97d3214c",
+      "git_reported_bytes": 220,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/analytics/DatePicker.tsx",
+      "git_blob_sha": "1527471326aba5a353b82e618c7135018f96bf2a",
+      "git_reported_bytes": 700,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/analytics/EventsTable.tsx",
+      "git_blob_sha": "b27350318bad128adc558520fc49a2ffad06b44d",
+      "git_reported_bytes": 1022,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/analytics/MetricCard.tsx",
+      "git_blob_sha": "ce842f07ba0ffa9a20a2d7f98b10bac60f1a0939",
+      "git_reported_bytes": 520,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/Canvas.tsx",
+      "git_blob_sha": "0a95e8eb257b24d977a0adc6d7392c84d7674e44",
+      "git_reported_bytes": 1749,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/header.tsx",
+      "git_blob_sha": "8c70f5cc170b55f48c2fd1d63223305a9dad16c4",
+      "git_reported_bytes": 588,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/layout/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/layout/header.tsx",
+      "git_blob_sha": "32d59ed7d8d9bd383cd5fb05eb614646f76151d8",
+      "git_reported_bytes": 1306,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/marketing/CommandWorld.tsx",
+      "git_blob_sha": "cd167da3e2ff471438e56566f793e84a3b164ce2",
+      "git_reported_bytes": 2577,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/Sidebar.tsx",
+      "git_blob_sha": "1d0864233b784a83a9c209ac9bd2586c282beba4",
+      "git_reported_bytes": 1667,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/SpatialAdminFrame.tsx",
+      "git_blob_sha": "d636ae0863e325c0c8dca18c690cfd5ec569dcb6",
+      "git_reported_bytes": 1851,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/badge.tsx",
+      "git_blob_sha": "b12ac16b9118e67e1880c6c393e9342a2b5e6456",
+      "git_reported_bytes": 1119,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/button.tsx",
+      "git_blob_sha": "ac8ba7fe644731a89d743474203b99617138a5ad",
+      "git_reported_bytes": 565,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/card.tsx",
+      "git_blob_sha": "c2ce4b2cd1570a9f228c01ecfbda9c5a32e1c489",
+      "git_reported_bytes": 2441,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/checkbox.tsx",
+      "git_blob_sha": "4b67a5d0066f057e77d21fb402f72d9a9983e6d6",
+      "git_reported_bytes": 1071,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/command.tsx",
+      "git_blob_sha": "48c7cf2c24560fe5eff4c3f211d686ff684d3ea6",
+      "git_reported_bytes": 4821,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/dialog.tsx",
+      "git_blob_sha": "43644bb97fd3cdd927bceebe2b7a48a45a5e63c6",
+      "git_reported_bytes": 3759,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/dropdown-menu.tsx",
+      "git_blob_sha": "e5975499b646f9488b4be9c6215a844a6bcc46f5",
+      "git_reported_bytes": 7310,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/input.tsx",
+      "git_blob_sha": "f664b6a9ffa9393b345284025e9e35c409526705",
+      "git_reported_bytes": 410,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/label.tsx",
+      "git_blob_sha": "c560d7cef05e1ad471049917fe4cf324a71942f3",
+      "git_reported_bytes": 449,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/popover.tsx",
+      "git_blob_sha": "465925f9a3da943591dfc4b828c323def0416c0d",
+      "git_reported_bytes": 1253,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/select.tsx",
+      "git_blob_sha": "95112fbadbec9b0a97714d57eee9b3ae4eddc5f6",
+      "git_reported_bytes": 5545,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/separator.tsx",
+      "git_blob_sha": "ee84f69e8388e6aa275f6eec9b458ea282f667ad",
+      "git_reported_bytes": 738,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/ui/table.tsx",
+      "git_blob_sha": "ab3401bc9341578d1f191a18e7901c62e7901c5f",
+      "git_reported_bytes": 2728,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/UserList.tsx",
+      "git_blob_sha": "410ca8d7234c992986c9f304f50a7f9a6334ba66",
+      "git_reported_bytes": 1494,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/components/withAdminAuth.tsx",
+      "git_blob_sha": "d0cdbfa06ceb7d69a72fd92db704f51aa9bd438e",
+      "git_reported_bytes": 777,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/config/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/config/firebase-admin.ts",
+      "git_blob_sha": "dc0c781f0ba3b393c5b8beb8858a6bf97e6c314a",
+      "git_reported_bytes": 167,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/config/firebase.ts",
+      "git_blob_sha": "b54924dffebe1a277c7921dad1577baf2dd81a79",
+      "git_reported_bytes": 168,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/functions/requeueDeadLetter.ts",
+      "git_blob_sha": "e87b93fdc66dc193b06dcc404876ab5278406805",
+      "git_reported_bytes": 577,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/functions/retryJob.ts",
+      "git_blob_sha": "58255606459a4e8f658ef84b24d685088b99f5c9",
+      "git_reported_bytes": 526,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/functions/setFeatureFlag.ts",
+      "git_blob_sha": "32a89f641134742780ff338c41881678c96f7c0b",
+      "git_reported_bytes": 611,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/hooks/useAuth.ts",
+      "git_blob_sha": "aec0155f846e93988456abbc7518fd02b91688b9",
+      "git_reported_bytes": 1319,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/hooks/useAuth.tsx",
+      "git_blob_sha": "ef27e489308ebbbf0b6f41786c67ee277b9d88b0",
+      "git_reported_bytes": 1735,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/hooks/useRBAC.ts",
+      "git_blob_sha": "9bd1d6351ff449e04f1daa5c191f3f05e581ae72",
+      "git_reported_bytes": 519,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/admin/execute-institutional-feature-flag.ts",
+      "git_blob_sha": "b2e5e65253113c479d373924012f890f70851516",
+      "git_reported_bytes": 19214,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/admin/recover-admin-mutation.ts",
+      "git_blob_sha": "db8f0b77e60fb7dce836668fd156f0bf6e546182",
+      "git_reported_bytes": 7730,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/admin/require-admin-session.ts",
+      "git_blob_sha": "f3b64e2235e190ec4827e7ad00cdd2707f9cad93",
+      "git_reported_bytes": 9338,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/admin/update-admin-role.ts",
+      "git_blob_sha": "21a436700480cbe65edd059b040a90d0d6db1338",
+      "git_reported_bytes": 8145,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/analytics/schema.ts",
+      "git_blob_sha": "0e6a9b897fe05c5f3be66c0025e46ac5ee772826",
+      "git_reported_bytes": 1376,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/audit-log.ts",
+      "git_blob_sha": "e1e5da7aecc89e99fdb4a3c2afc9111bdf98b03d",
+      "git_reported_bytes": 428,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/audit.ts",
+      "git_blob_sha": "39667f821f3f0278ad04286608d269cf1f3824eb",
+      "git_reported_bytes": 434,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth.ts",
+      "git_blob_sha": "4599e28dbeb3636e9005e8aa608710855b501d0c",
+      "git_reported_bytes": 137,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth/.gitkeep",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_reported_bytes": 0,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth/auth-context.tsx",
+      "git_blob_sha": "9fdaac951327d8d6d55e60209c31d317900770cd",
+      "git_reported_bytes": 342,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth/auth-provider.tsx",
+      "git_blob_sha": "8b661373f19d50fe78c4873a89307afc0ab1e549",
+      "git_reported_bytes": 1831,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth/roles.ts",
+      "git_blob_sha": "70bcd790aee4106e1ac0024eb9cd48dddc31a1d5",
+      "git_reported_bytes": 327,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/auth/with-auth.tsx",
+      "git_blob_sha": "73ab32d22a4f3f07d4e14758e6b38f6b86054431",
+      "git_reported_bytes": 540,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/collections.ts",
+      "git_blob_sha": "5e6b6b8e453e8b0a3b4f10eae0b5a652a84e7633",
+      "git_reported_bytes": 1004,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/dashboard.ts",
+      "git_blob_sha": "c1c1f4e538411ea8d9d7deb9b59dff95fd1b3e05",
+      "git_reported_bytes": 525,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebase-admin.ts",
+      "git_blob_sha": "5a49fb8b313158e71c73634808ab832937c860c3",
+      "git_reported_bytes": 231,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebase.ts",
+      "git_blob_sha": "eff0dfd7da27cc2c7db012794e13ee5775f3a9ad",
+      "git_reported_bytes": 187,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebase/admin.ts",
+      "git_blob_sha": "e1dccabaa69e03c1cea891fb21fca2f46a55cb8b",
+      "git_reported_bytes": 3218,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebase/client.ts",
+      "git_blob_sha": "591b8376305d34ff4bd4f406cfb1fd2d1805f867",
+      "git_reported_bytes": 4056,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebase/firebase.ts",
+      "git_blob_sha": "5fd3fa52f1427290b727035c5ed6edae12db60a5",
+      "git_reported_bytes": 161,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/firebaseAdmin.ts",
+      "git_blob_sha": "ff2d529db6a36b007b825c18289f4ceb1a518c70",
+      "git_reported_bytes": 178,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/organizations/current-org.ts",
+      "git_blob_sha": "2a1c44d5de835cf4a642a0d594ecce93cec3d356",
+      "git_reported_bytes": 550,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/organizations/types.ts",
+      "git_blob_sha": "28276ff56df0e393b48b15a2ba22c34e312ee861",
+      "git_reported_bytes": 887,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/types.ts",
+      "git_blob_sha": "0f45c9020815d05fa88d01740deaac71f8c1b6ea",
+      "git_reported_bytes": 1949,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/user.ts",
+      "git_blob_sha": "0f2721a9895c84e183cfed2ab92a501ae4a3905a",
+      "git_reported_bytes": 721,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/utils.ts",
+      "git_blob_sha": "d084ccade0d8b5bd77fd5174993bcef7b57644c9",
+      "git_reported_bytes": 166,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/with-auth-api.ts",
+      "git_blob_sha": "fb6ec7f93f1786d5df54d2e11482a83bef433a09",
+      "git_reported_bytes": 1691,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/lib/withAuth.ts",
+      "git_blob_sha": "681eb5b6cca992117e4298a44b1f44d0755448c0",
+      "git_reported_bytes": 637,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/middleware.ts",
+      "git_blob_sha": "d2f74856235529f60e2cda5918532e558ee9b670",
+      "git_reported_bytes": 1767,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/models/accessRequest.ts",
+      "git_blob_sha": "00b9b72b1a2140924817fab4eff002b21e99039d",
+      "git_reported_bytes": 219,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/models/auditLog.ts",
+      "git_blob_sha": "48ade556fd368bf8693a3a09a568d05da5c4cd8e",
+      "git_reported_bytes": 175,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/models/featureFlag.ts",
+      "git_blob_sha": "fb50b2ac52447f482698e3de3afbb04a8ba6ead7",
+      "git_reported_bytes": 133,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/models/systemHealth.ts",
+      "git_blob_sha": "53196eafdecf99d98496191bd806adb2e2d917a9",
+      "git_reported_bytes": 150,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/src/models/user.ts",
+      "git_blob_sha": "9ce22a2054bceab93b5afbcea2c5ff84cf7bb4f0",
+      "git_reported_bytes": 178,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/tailwind.config.js",
+      "git_blob_sha": "c8d07c59f693d6a5c29c4306150f1a6c59c41394",
+      "git_reported_bytes": 2650,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/tailwind.config.ts",
+      "git_blob_sha": "84287e82fba61c09193cc9959b08dfa00277293f",
+      "git_reported_bytes": 2179,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/apps/urai-admin/tsconfig.json",
+      "git_blob_sha": "c86ef7bfc84eca8b2e2fce518bf1eb8211791562",
+      "git_reported_bytes": 971,
+      "upload_policy_class": "intended_ignore_legacy"
+    },
+    {
+      "path": "functions/logAdminAction.ts",
+      "git_blob_sha": "a2989b4e71755a5295be5bf94d063700becea2c1",
+      "git_reported_bytes": 594,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/package.json",
+      "git_blob_sha": "1e3cab9455d501932021d565937b7f9eb7dc000b",
+      "git_reported_bytes": 907,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/src/index.ts",
+      "git_blob_sha": "f13a36b01009a4a4a79db4434f1e79f66048d060",
+      "git_reported_bytes": 7452,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/src/institutionalControlPlane.ts",
+      "git_blob_sha": "9445ae0864c9a7dca115ffeac9895bd6851c17b9",
+      "git_reported_bytes": 27710,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/src/uraiAnalyticsV1.ts",
+      "git_blob_sha": "ee6647f770fe7669717785f685aee8ed0960a998",
+      "git_reported_bytes": 4456,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/test/institutional-control-plane-runtime-source.test.mjs",
+      "git_blob_sha": "f627154311c5d7644eed72387e4cdb184531ed7e",
+      "git_reported_bytes": 4322,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/test/institutional-control-plane-runtime.behavior.test.mjs",
+      "git_blob_sha": "0af586ff80d9e7eee90b061cfc98c1e31e56514d",
+      "git_reported_bytes": 11200,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/test/institutional-feature-flag-runtime.behavior.test.mjs",
+      "git_blob_sha": "1f899a8e8fb6f7c4efdab749a0855e7197bb3d29",
+      "git_reported_bytes": 21648,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/test/source-contracts.test.mjs",
+      "git_blob_sha": "5a54534a4e59ccc633dd14564df97573821efd8e",
+      "git_reported_bytes": 4700,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/tsconfig.active.json",
+      "git_blob_sha": "f65d4f0d274a0c540f081ad92ed012bd2b98f85c",
+      "git_reported_bytes": 336,
+      "upload_policy_class": "tracked_source_candidate"
+    },
+    {
+      "path": "functions/tsconfig.json",
+      "git_blob_sha": "72c3e8568a848468ae1f9b330667c20c68539729",
+      "git_reported_bytes": 313,
+      "upload_policy_class": "tracked_source_candidate"
+    }
+  ]
+}

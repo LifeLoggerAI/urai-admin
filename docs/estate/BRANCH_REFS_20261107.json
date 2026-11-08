@@ -1,0 +1,467 @@
+{
+  "schema": "one-urai-admin-listed-branch-tip-snapshot-v1",
+  "observed_date_utc": "2026-11-07",
+  "repository": "LifeLoggerAI/urai-admin",
+  "branch_list_api": "GET /repos/LifeLoggerAI/urai-admin/branches?per_page=100&page=1",
+  "observed_branch_count": 91,
+  "completeness": "This 91-item API page had fewer than 100 entries; additional inaccessible/deleted refs/tags/PR temporary heads are not established.",
+  "compared_to_candidate_sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+  "head_tips": [
+    {
+      "branch": "agent/bootstrap-asset-factory-wif",
+      "commit_sha": "10b1c1346f4a736548b98bd5b027fd6bf68b640a",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "audit/p0-manual-production-deploy-gate-20260706",
+      "commit_sha": "c9ce337c33be68da56d1ecad2b68fdff9cd9d772",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "audit-implementation",
+      "commit_sha": "71c5e90323d40ca7ec41c09067d76ed882995793",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "audit-implementation-safe",
+      "commit_sha": "5973046e8238ab61e0bcb66696330a6265896305",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "canon/upstream-authority-20260924",
+      "commit_sha": "1443e9f1a4bb3cf46fb40239540e06296ecde7b1",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "chatgpt/admin-hygiene-security-20260812",
+      "commit_sha": "d3272c1ee7abdc9ef5bb74053106f2f26fd3a421",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "chatgpt/urai-product-polish-20260812",
+      "commit_sha": "ee88dd91de71b276148fecb894691abada1e4492",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "clean-launch",
+      "commit_sha": "8f81bebae6888d8a682b237afe63e116357bee8c",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "codex/harden-production-target",
+      "commit_sha": "c6ae49a9dd766c775b23b53b5e9d03ceb5a88de2",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "codex/spatial-admin-world-shell",
+      "commit_sha": "a140c0a2bba6a55fe0b4c71278abd2ccf76897f3",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "cold-vault-2026-08-16",
+      "commit_sha": "e06f8d55f0d1803098044ab53726c39cd9895e4f",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "control/admin-integrated-runtime-successor-20260913",
+      "commit_sha": "ea680eaad5e54a6643fe0bc863bc3ae1cf904860",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "control/institutional-contracts-20260912",
+      "commit_sha": "aaf7b584cecf41a5effdcd97fed6d44c8964fc8d",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "converge/admin-terminal-control-plane-noindex-20260914",
+      "commit_sha": "13c9ed5215c99f56c05aea410fa815a1aa6db9fb",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "design/web-universe-admin-gate-v1-20260913",
+      "commit_sha": "fe3fc0d8e352fb4be5c71192c9b8cc65c45e60a3",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "docs/genesis-estate-handoff-20261106",
+      "commit_sha": "bb24945b52b21a51f5fa24a15219eff39c583fd6",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "document-launch-runner",
+      "commit_sha": "a70575beff1daf1f0fc937d6e47cc781cf0774de",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "donor/admin-audit-boundaries-20261008",
+      "commit_sha": "707cd06fed410087cdd017293ebec456963ac5e1",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "donor/admin-operations-recovery-20261008",
+      "commit_sha": "7e28faf52400ea6f24b874577c144caa766dab4b",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "env-loader",
+      "commit_sha": "958bb77f8375f57dc2629868806e28f8007d60da",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "evidence-status",
+      "commit_sha": "f0c42f4f8ae6dbb0dc35482619a11899557c9059",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "execution/ecosystem-completion-ledger-20260706",
+      "commit_sha": "d56cbd82c2d7921160c57dc29432c87f82286c70",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "feature/global-emotional-weather-ops-20261002",
+      "commit_sha": "b98fc1bf0a4da89f02eff75267fa7853f044c9f2",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "feature/urai-analytics-v1",
+      "commit_sha": "4e41e6dfac81647b96e0f6f566df525aa0d55cb3",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "final-launch-runbook-alignment",
+      "commit_sha": "4fc71fd66cc282224b7706d9e05387dfd384f130",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "finish-production-system-integration",
+      "commit_sha": "a1cae0c81df8fe5db235b50688315c3798911ab8",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/admin-auth-api-hardening",
+      "commit_sha": "d60a56914f5a02901eccc5fb65a35ce5822bc01f",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/admin-completion-p0-p1",
+      "commit_sha": "8b898d3a17a02438d2ea4329e6149c02c4e8fc29",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/analytics-fixture-truth-20260914",
+      "commit_sha": "f1cbf77ae4ce7e230007c7d0c361e048f595838a",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/dynamic-api-build-warnings",
+      "commit_sha": "1115c7276aa3c1fc9e31a2e513669f095e47ecca",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/phase-1-launch-blockers",
+      "commit_sha": "dd04b594838c1a8dfe3f42a68def87df974008c5",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/public-48px-targets-20261005",
+      "commit_sha": "6e1bb84ebfb6a8f65a849f25bc37d42ccd961467",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/public-contact-handoff-20261005",
+      "commit_sha": "fe779b5787ae8e366398b5fdf651749d378e8738",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/public-estate-red-team-20261005-v2",
+      "commit_sha": "d194a292aaf28e92a721419c0c95a9a136c4ce44",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/public-estate-red-team-20261005",
+      "commit_sha": "cac020dd3fce57c45440a3e05f835c488a8b7d56",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/remove-stale-admin-owner-placeholder-20261005",
+      "commit_sha": "8c3b555923696acf402f9678bc14ec0e8aef6c4e",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/system-registry-truth-20260706",
+      "commit_sha": "1867031396c5b4db1836daa37219e74c5c4c9bca",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix/system-registry-truth-rebased-20260711",
+      "commit_sha": "f99f033ef5e04218b3fed8c7013005c2e446a043",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix-admin-lock-20260520",
+      "commit_sha": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix-functions-error-typing",
+      "commit_sha": "c691b2f0d1cb4e97d35f09364b0cc4f6b33155de",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix-smoke-curl-portability",
+      "commit_sha": "c85b59ba2622236aa2214085bad9466e894bc374",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix-spatial-css-build",
+      "commit_sha": "8034b8384897cb0570d7a0c566aa18db6a0ef482",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "fix-verify-curl-20260520",
+      "commit_sha": "3984b437423494eefd1ab4538f1277bd4518d6a8",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "harden/production-admin-console",
+      "commit_sha": "99b3e7cdf9543ac3885c082f520530d8f7b111f3",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "hardening/admin-stacked-ci-evidence-20260914",
+      "commit_sha": "0693929db4f4330687e46db34b2f2eac03e3493d",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "hardening/admin-stacked-pr-verification-20260914",
+      "commit_sha": "9ca1b3393a27ce9b78dba9e35433de242dcbb7f8",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "hygiene/remove-functions-backup-residue-20260911",
+      "commit_sha": "ce45e81c86ff67044ff3905fcfdb65b96222fb43",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "ignore-tsbuildinfo",
+      "commit_sha": "99733d292cae718128a204ff32bfe6f3c1776d6f",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "integration/storytime-moderation-contract-20260923",
+      "commit_sha": "01be92c47e6ede80a67b804c4744168029b15004",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "launch-evidence",
+      "commit_sha": "6efc3508ca26444b9e5d05c67d281266a576ffc7",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "launch-lock-script",
+      "commit_sha": "2870bbfaaac866cfde90c4c58b72f560e4f8c968",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "launch-security-note",
+      "commit_sha": "c3b323df0461465862553228b308dcc9e73a7369",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "main",
+      "commit_sha": "1cde00e69238f6a32237af2d1914a1b77339d5bc",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "mind-melting-3d-login-fix",
+      "commit_sha": "05e156d6af02103ab3534d4a4b9d3b6eade58d7c",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "ops/admin-readiness-contract-20260911",
+      "commit_sha": "2a1012f2ea05ba883073e67bc5dfc9bf7b11982e",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "owner-bootstrap-fix",
+      "commit_sha": "c550cb05d98f37119506b9c6e953eb113f582852",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "preflight-runbook-fix",
+      "commit_sha": "df386d1b704d54a3a2d357e2cc0527ef4953d9b6",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "privacy-adoption-admin",
+      "commit_sha": "747ecd6fdf3adf946c4a9d5b43c5d1df13d613b2",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "production-grade-system-lock",
+      "commit_sha": "aeb25792b80e11073bebfca70b2984f48776bbb4",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "production-lock-admin-20260630",
+      "commit_sha": "15ad106597e2d850b67356ee79716030f9fe4b87",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "production-lock-admin-ci-followup-20260630",
+      "commit_sha": "2cf51782bf392d9439c87db37ffad9463f03c251",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "production-verification-20260520",
+      "commit_sha": "247f895aa5a8e8a67e5225ea3e08fc98baa6f38e",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "public-footprint-truth-boundary-20260903",
+      "commit_sha": "b4457b8f5b9dfbc013e6095ba70d0f43f2341389",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "reconcile/admin-registry-adc-main-20260811",
+      "commit_sha": "58b3a2fd7a6f2050193f3e9e4a38fda43607c836",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "reconcile/admin-session-security-into-45-20260714",
+      "commit_sha": "0a6cf5d663549f75982b2177092d873d253e5a74",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "remove-legacy-project-gate",
+      "commit_sha": "19653a9dc0e8b10631bf9412089a26cb7986de33",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-canonical-role-route-20260912",
+      "commit_sha": "1b59645337b02ac247921dd1e06d0390424c439c",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-dedicated-target-gates-20261007",
+      "commit_sha": "af8cb67dd7545b8de90b8511a9960308e126e282",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-distinct-approval-quorum-20261008",
+      "commit_sha": "5cbccf19f3234291b65116c2ff625a2e90057101",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-flag-current-actor-20261008-92f",
+      "commit_sha": "18f1b040683f23c0e85d3d6f1a1c80b90e86c8bf",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-hosting-target-boundary-20261007",
+      "commit_sha": "8328308389286a33f725f8bcfb05f23c50906a67",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-institutional-convergence-20261008",
+      "commit_sha": "44854148ddc5452a65ad8ba0cb470bb0eba71d2f",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-next-primary-advisories-20261007",
+      "commit_sha": "2685168f648b5dfcf7cfd5f15bb14c838a5d8768",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-positive-receipt-closure-20261008",
+      "commit_sha": "987ca858fca56ecdb4e5899fd4c717336d87e739",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-security-privacy-20261007",
+      "commit_sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-stable-lock-validation-20261007",
+      "commit_sha": "adc8d28b761140c5fc8421858729eb954a0a49a4",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/admin-terminal-delivery-retry-20261010",
+      "commit_sha": "8313188532aef304a3b55771c5080f87e4ac71eb",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "repair/exec-estate-web-20261007-2328",
+      "commit_sha": "0f963155bee749e8f37decd3c9e399ca381a76e7",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "runtime/admin-node22-20260913-v2",
+      "commit_sha": "83c5003fde73a9bda4b5c0a237fec6c1a3c9d4a7",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "runtime/admin-node22-20260913",
+      "commit_sha": "f42099331cc556644a82eb19c6244bd601c2087f",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/adc-only-admin-config-2026-08-11",
+      "commit_sha": "612b5fcb85b182d85244cbb11b9a9f3f03bde3e9",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/env-containment-2026-08-11",
+      "commit_sha": "f09138ad61812f31078273501f645f9750402fea",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/nested-analytics-adc-2026-08-11",
+      "commit_sha": "ff11025452f2f60b7ea5821d0738fe5b809ed1b0",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/nested-env-containment-2026-08-11",
+      "commit_sha": "7157f9ec0696e6098b3ae69a0d763c552da7cc2e",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/p0-admin-session-coherence-20260706",
+      "commit_sha": "5b7fe1c5da4b8485c0aba1d636b64786b785f8c6",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security/wif-deploy-auth-2026-08-11",
+      "commit_sha": "ef14820fa424b6683174f41280bc8a233fb33f7c",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "security-deploy-path-fix",
+      "commit_sha": "1b841b59f17eb6c6127ed5448c71d8ff77441222",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "seo/internal-noindex-20260903",
+      "commit_sha": "6f2cd61f434c7682cf2329e2d6d0727c62f96aa9",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "use-launch-runner",
+      "commit_sha": "4964150f16feedf3d86cb1ef8a148f2a54cc05ed",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "verify-functions-fix",
+      "commit_sha": "44453b42ec4722e666bb19b357028c4369a6f3ba",
+      "protected_flag_as_api_returned": false
+    },
+    {
+      "branch": "workflow-default-verified-url",
+      "commit_sha": "e47973b5a5cdee1dc158e88735f7a3fc0792fcab",
+      "protected_flag_as_api_returned": false
+    }
+  ],
+  "comparison_boundary": "Only selected branches independently compared this pass; do not treat listed branch tips as fully semantically reconciled history."
+}
