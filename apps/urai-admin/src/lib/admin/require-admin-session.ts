@@ -162,7 +162,8 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
   const adminUserDoc = await adminUserRef.get();
   const adminUser = adminUserDoc.data();
 
-  if (!adminUserDoc.exists || adminUser?.isActive !== true || !isAdminRole(adminUser.role)) {
+  if (!adminUserDoc.exists || adminUser?.isActive !== true || !isAdminRole(adminUser.role) ||
+      adminUser?.roleMutation?.id || adminUser?.activeMutation?.id) {
     return NextResponse.json(
       { success: false, error: 'Admin access is not active for this account' },
       { status: 403, headers: noStoreHeaders },
@@ -172,8 +173,12 @@ export async function exchangeAdminIdToken(req: NextRequest, auditAction: string
   const role = adminUser.role;
   const userRecord = await auth.getUser(decodedToken.uid);
   const existingClaims = userRecord.customClaims ?? {};
-  const storedClaimsMatch = existingClaims.admin === true && existingClaims.role === role;
-  const tokenClaimsMatch = decodedToken.admin === true && decodedToken.role === role;
+  const canonicalRoleVersion = readRoleVersion(adminUser.roleVersion);
+  const storedClaimsMatch = !userRecord.disabled && userRecord.uid === decodedToken.uid &&
+    existingClaims.admin === true && existingClaims.role === role &&
+    readRoleVersion(existingClaims.roleVersion) === canonicalRoleVersion;
+  const tokenClaimsMatch = decodedToken.admin === true && decodedToken.role === role &&
+    readRoleVersion(decodedToken.roleVersion) === canonicalRoleVersion;
 
   if (!storedClaimsMatch) {
     // Session exchange must never repair authorization claims: doing so would

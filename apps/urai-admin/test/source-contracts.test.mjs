@@ -69,6 +69,10 @@ assert.match(requireAdminSession, /decodedToken\.auth_time/, 'session creation m
 assert.match(requireAdminSession, /ageSeconds >= -MAX_CLOCK_SKEW_SECONDS/, 'future-dated authentication must be bounded by explicit clock skew');
 assert.match(requireAdminSession, /refreshRequired:\s*true/, 'stale claims must require a refreshed ID token');
 assert.match(requireAdminSession, /tokenClaimsMatch/, 'a stale token must not mint an admin cookie');
+assert.match(requireAdminSession, /adminUser\?\.roleMutation\?\.id\s*\|\|\s*adminUser\?\.activeMutation\?\.id/, 'pending canonical admin mutation must block session exchange');
+assert.match(requireAdminSession, /canonicalRoleVersion = readRoleVersion\(adminUser\.roleVersion\)/, 'session exchange must bind to canonical role version');
+assert.match(requireAdminSession, /readRoleVersion\(existingClaims\.roleVersion\)\s*===\s*canonicalRoleVersion/, 'session exchange must check current account role version');
+assert.match(requireAdminSession, /readRoleVersion\(decodedToken\.roleVersion\)\s*===\s*canonicalRoleVersion/, 'session exchange must reject stale ID token role version');
 assert.match(requireAdminSession, /sameSite:\s*'strict'/, 'admin cookies must use strict same-site policy');
 assert.match(requireAdminSession, /writeRequiredAuditLog/, 'session exchange must use a non-swallowing audit write');
 
