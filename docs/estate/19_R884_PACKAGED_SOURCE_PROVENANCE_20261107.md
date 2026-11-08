@@ -36,3 +36,7 @@ P0: Once a supported runner/CPU is available, perform exact-head clean install/b
 ## Exact per-path Git tree inventory
 
 [Machine-readable full tracked-tree comparison](R884_ADMIN_CANONICAL_VS_LEGACY_FUNCTIONS_TREE_MANIFEST.json): **230 relative paths** across canonical and legacy trees (230 canonical, 146 legacy; 120 matching blobs, 26 SHA-different matched paths, 84 canonical-only, zero legacy-only). Includes both Git blob SHA identifiers, Git-reported byte sizes, modes, and classification for every path, all pinned to R882 source SHA. This is a file-tree metadata manifest, not decoded binary/hash-of-all-history proof or an actual generated build archive.
+
+## Exact-head GitHub Actions check
+
+At draft Admin #109 head `09c8046feac8f7d043a3cecbf9702ee6d1e3b158`, four workflows concluded FAILURE: Admin CI `42444627723` / job `128620850517`; Validate `42444627769` / job `128620850384`; Visual Truth `42444627776` / job `128620850472`; Production Verify `42444627764` / job `128620850362`. **All four jobs returned zero recorded execution steps.** No full source install, build or real package parity has run in GitHub. Failed Actions conclusions are not interpreted as proof of failed code tests; exact runner/billing reason not independently read for this head. Maintain production HOLD.
