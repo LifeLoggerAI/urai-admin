@@ -115,6 +115,9 @@ test('packaging contract keeps generated runtime outside the tracked legacy Func
     assert.equal(policy.source, 'functions');
     assert.ok(policy.ignore.includes('**/functions/apps'));
     assert.ok(policy.ignore.includes('**/functions/apps/**'));
+    assert.ok(policy.ignore.includes('**/functions/test'));
+    assert.ok(policy.ignore.includes('**/functions/test/**'));
+    assert.ok(policy.ignore.includes('**/functions/logAdminAction.ts'));
     packageShell();
     assert.ok(existsSync(path.join(root, staged, '.next/server/app/index.js')));
     assert.ok(existsSync(path.join(root, 'functions/apps/urai-admin/src/lib/admin/require-admin-session.ts')));
