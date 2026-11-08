@@ -71,6 +71,7 @@ require_file "docs/EVIDENCE_LOG.md"
 require_file "scripts/preflight-production.sh"
 require_file "scripts/deploy-production.sh"
 require_file "scripts/assert-admin-functions-codebase.mjs"
+require_file "scripts/test-admin-security-gate-contract.mjs"
 require_file "scripts/validate-admin-hosting-target.mjs"
 require_file "scripts/smoke-test.sh"
 require_file "scripts/verify-production-live.sh"
@@ -113,9 +114,9 @@ required_pattern ".github/workflows/deploy.yml" "confirmation:"
 required_pattern ".github/workflows/deploy.yml" "target_sha:"
 required_pattern ".github/workflows/deploy.yml" "persist-credentials: false"
 required_pattern ".github/workflows/deploy.yml" "git merge-base --is-ancestor"
-required_pattern "scripts/deploy-production.sh" "^[[:space:]]*required_pattern "scripts/deploy-production.sh" "node scripts/assert-admin-functions-codebase.mjs"
+required_pattern "scripts/deploy-production.sh" "^[[:space:]]*node scripts/validate-admin-hosting-target.mjs --require-bound[[:space:]]*$"
+required_pattern "scripts/deploy-production.sh" "^[[:space:]]*node scripts/assert-admin-functions-codebase.mjs[[:space:]]*$"
 required_pattern ".github/workflows/deploy.yml" "node scripts/assert-admin-functions-codebase.mjs"
-node scripts/validate-admin-hosting-target.mjs --require-bound[[:space:]]*$"
 required_pattern "scripts/deploy-production.sh" "^[[:space:]]*firebase deploy --only hosting:urai-admin-production,functions -P urai-4dc1d[[:space:]]*$"
 node scripts/validate-admin-hosting-target.mjs
 required_pattern "firebase.json" '"source": "apps/urai-admin"'
@@ -153,5 +154,7 @@ secret_pattern='-----BEGIN (RSA |EC |OPENSSH |)PRIVATE[[:space:]]+KEY-----|AI''z
 if grep -RInE "$secret_pattern" apps/urai-admin/src functions/src 2>/dev/null; then
   fail "Potential hardcoded private credential or Firebase key literal found"
 fi
+
+node --test scripts/test-admin-security-gate-contract.mjs
 
 echo "--- Security gate passed ---"
