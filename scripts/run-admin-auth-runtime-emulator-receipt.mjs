@@ -522,6 +522,24 @@ async function main() {
   assert.equal(staleFreshLogin.response.status, 200);
   assert.equal(staleFreshLogin.body?.role, 'admin');
   pass('stale token bounded refresh', { staleStatus: 409, refreshRequired: true, freshStatus: 200 });
+  
+  // Exchange authority must be unambiguous before a signed cookie is minted.
+  // No live accounts: these are disposable loopback emulator records.
+  await db.collection('adminUsers').doc(users.stale.uid).set({
+    activeMutation: { id: 'proof-pending-exchange', status: 'pending' },
+  }, { merge: true });
+  const pendingExchange = await login((await signIn(users.stale.email)).idToken);
+  assert.equal(pendingExchange.response.status, 403);
+  await db.collection('adminUsers').doc(users.stale.uid).set({ activeMutation: null }, { merge: true });
+  const validStaleAuth = await signIn(users.stale.email);
+  await db.collection('adminUsers').doc(users.stale.uid).set({ roleVersion: 2 }, { merge: true });
+  const mismatchedExchange = await login(validStaleAuth.idToken);
+  assert.equal(mismatchedExchange.response.status, 409);
+  await db.collection('adminUsers').doc(users.stale.uid).set({ roleVersion: 1 }, { merge: true });
+  pass('session exchange blocks pending mutation and mismatched canonical role version', {
+    pendingStatus: 403, versionMismatchStatus: 409, issuedSession: false,
+  });
+
 
   const deactivate = await appRequest('/api/admin/set-user-active', {
     method: 'POST', cookie: adminCookie.header, body: { uid: users.target.uid, isActive: false },
