@@ -62,3 +62,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R887 actual Next packaging script integration (2026-11-07/08 UTC)
 
 [22_R887_ACTUAL_PACKAGER_INTEGRATION_20261107.md](22_R887_ACTUAL_PACKAGER_INTEGRATION_20261107.md) records draft [Admin #112](https://github.com/LifeLoggerAI/urai-admin/pull/112), adding eight cases that invoke the source-matched real packaging shell script against disposable Next fixtures and check the generated output with the R886 parity guard. Executed local combined packaging tests **27/27 PASS** (19 guard tests plus 8 shell integration cases); no full real Next build, Firebase ZIP, provider IAM, protected user data or release certification. Production HOLD and all earlier workers preserved.
+
+## R888 exact committed packager tests and upload inventory (2026-11-08 UTC)
+
+[23_R888_EXACT_PACKAGER_AND_UPLOAD_INVENTORY_20261108.md](23_R888_EXACT_PACKAGER_AND_UPLOAD_INVENTORY_20261108.md) verifies the **exact published** Admin #112 packaging test, guard, shell and Firebase configuration Git blobs: Node 22.16.0 combined **27/27 PASS**, no Firebase provider calls. [158-file Git-tracked Functions upload inventory](R888_FUNCTIONS_GIT_TRACKED_UPLOAD_INVENTORY.json) records 146 legacy files intended for exclusion and 12 other tracked Functions files. Exact pinned firebase-tools minimatch dependency is v3 range but only local v9 was tested; actual ZIP remains uninspected. Potential runtime external dependency mismatch requires full Next build evidence. Preserve production HOLD.
