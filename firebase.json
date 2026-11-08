@@ -13,7 +13,10 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "**/functions/apps",
-        "**/functions/apps/**"
+        "**/functions/apps/**",
+        "**/functions/test",
+        "**/functions/test/**",
+        "**/functions/logAdminAction.ts"
       ],
       "runtime": "nodejs22"
     }
