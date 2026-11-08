@@ -34,3 +34,7 @@ The shared guard now reads in bounded 64 KiB chunks with a maxBytes+1 refusal ra
 P0: run new exact-head standalone/node tests + original full native source, harden directory swap handling, negative authentication/data access checks, resolve single project-wide Rules publisher and dedicated Functions codebase ownership; read-only provider inventory and deploy source mapping. P1: safe QA snapshot root listing, JSON metadata UI compatibility, log generator privacy and lifecycle, cross-system Privacy/Jobs/Studio/Analytics/Communications integration. Preserve all prior worker branches; no merges, secrets or live privileges.
 
 **R879 is a draft improvement, not Admin security certification.**
+
+## GitHub Actions exact-head update
+
+New [PR #105](https://github.com/LifeLoggerAI/urai-admin/pull/105) exact source `14bbe0c799482c6c500a14a18073bfd3d113d481` has **four completed FAILURE** workflows: Visual `42440822761`, CI `42440822720`, Validate `42440822725`, Production Verify `42440822728`. These are workflow conclusions only. GitHub logs/runner annotations are not accessible from the current connection, and no native QA tests were recorded as PASS for R879. Do not assign root cause or promote source to production.
