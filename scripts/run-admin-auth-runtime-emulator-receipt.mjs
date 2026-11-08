@@ -183,6 +183,7 @@ async function main() {
     stale: { uid: 'proof-stale', email: 'proof-stale@urai.invalid', role: 'viewer' },
     recovery: { uid: 'proof-recovery', email: 'proof-recovery@urai.invalid', role: 'viewer' },
     inactive: { uid: 'proof-inactive', email: 'proof-inactive@urai.invalid', role: 'admin' },
+    claimless: { uid: 'proof-claimless', email: 'proof-claimless@urai.invalid', role: 'viewer' },
     outsider: { uid: 'proof-outsider', email: 'proof-outsider@urai.invalid' },
     flagActor: { uid: 'proof-flag-actor', email: 'proof-flag-actor@urai.invalid', role: 'admin' },
   };
@@ -194,6 +195,7 @@ async function main() {
   await seedAdmin(auth, db, users.stale);
   await seedAdmin(auth, db, users.recovery);
   await seedAdmin(auth, db, users.inactive, { active: false, claimAdmin: true });
+  await seedAdmin(auth, db, users.claimless, { claimAdmin: false });
   await seedAdmin(auth, db, users.flagActor);
   await auth.createUser({ uid: users.outsider.uid, email: users.outsider.email, password: PASSWORD, emailVerified: true });
 
@@ -242,6 +244,7 @@ async function main() {
   const targetOldAuth = await signIn(users.target.email);
   const staleOldAuth = await signIn(users.stale.email);
   const inactiveAuth = await signIn(users.inactive.email);
+  const claimlessAuth = await signIn(users.claimless.email);
   const outsiderAuth = await signIn(users.outsider.email);
 
   const ownerPayload = decodeJwt(ownerAuth.idToken);
@@ -287,6 +290,18 @@ async function main() {
   assert.equal(viewerSession.response.status, 200);
   assert.equal(viewerSession.body?.role, 'viewer');
   pass('canonical session claims', { owner: 'owner', viewer: 'viewer' });
+
+  // A role-bearing but non-admin token must remain rejected even when a
+  // legitimate Auth SDK operation mints a signed session cookie for that user.
+  // Server-side Admin SDK reads bypass client Rules, so the admin claim is
+  // independently enforced at each protected route, not just on login.
+  assert.equal((await login(claimlessAuth.idToken)).response.status, 409);
+  const claimlessCookie = await auth.createSessionCookie(claimlessAuth.idToken, { expiresIn: 60 * 60 * 1000 });
+  const claimlessHeader = '__session=' + claimlessCookie;
+  assert.equal((await appRequest('/api/auth/admin-session', { cookie: claimlessHeader })).response.status, 403);
+  assert.equal((await appRequest('/api/admin/collection?collection=systemRegistry', { cookie: claimlessHeader })).response.status, 403);
+  assert.equal((await appRequest('/api/admin/users', { cookie: claimlessHeader })).response.status, 403);
+  pass('signed role-bearing session lacking admin claim denied', { session: 403, collection: 403, users: 403 });
 
   assert.equal((await appRequest('/api/admin/collection?collection=systemRegistry', { cookie: viewerCookie.header })).response.status, 200);
   assert.equal((await appRequest('/api/admin/users', { cookie: viewerCookie.header })).response.status, 403);
