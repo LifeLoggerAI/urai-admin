@@ -40,6 +40,18 @@ test('QA snapshot rejects malformed screenshot keys and hashes', () => {
   }
 });
 
+test('distinct screenshot keys cannot alias the same generated image filename', () => {
+  const aliased = { 'a/b': sha('a'), 'a_b': sha('b') };
+  assert.throws(
+    () => parseQaSnapshot(snapshot({ screenshots: aliased })),
+    /Ambiguous QA screenshot filename/,
+  );
+  const safe = parseQaSnapshot(snapshot({
+    screenshots: { a_b: sha('a'), a_c: sha('b') },
+  }));
+  assert.equal(safe.screenshots.length, 2);
+});
+
 test('QA snapshot rejects invalid structure and excessive entries', () => {
   for (const obj of [null, [], { links: [] }, { console: {} }]) {
     assert.throws(() => parseQaSnapshot(Buffer.from(JSON.stringify(obj))));
