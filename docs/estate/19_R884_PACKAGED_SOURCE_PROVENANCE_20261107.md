@@ -32,3 +32,7 @@ Local Node.js `v22.16.0`, no paid compute. `node --check` both new MJS files PAS
 P0: Once a supported runner/CPU is available, perform exact-head clean install/build, verify generated source SHA256 after packaging, inspect inclusion/exclusion of the older `functions/apps` mirror in actual Firebase deployment bundle and `nextServer` runtime, and check `functions/.generated` security headers and role routes. Require all original native checks and Auth/Firestore emulators; no weakening codebase/Rules publishing holds. P0: effective shared Firebase IAM/Rules, private memory/media/consent denial, approved dedicated Functions codebase and signed source-bound rollback. P1: consider removing/archiving legacy mirror only with explicit architecture owner approval, audit duplicate authority references and QA residuals.
 
 **R884 is a draft source integrity improvement, not a production deployment, not full build certification.**
+
+## Exact per-path Git tree inventory
+
+[Machine-readable full tracked-tree comparison](R884_ADMIN_CANONICAL_VS_LEGACY_FUNCTIONS_TREE_MANIFEST.json): **230 relative paths** across canonical and legacy trees (230 canonical, 146 legacy; 120 matching blobs, 26 SHA-different matched paths, 84 canonical-only, zero legacy-only). Includes both Git blob SHA identifiers, Git-reported byte sizes, modes, and classification for every path, all pinned to R882 source SHA. This is a file-tree metadata manifest, not decoded binary/hash-of-all-history proof or an actual generated build archive.
