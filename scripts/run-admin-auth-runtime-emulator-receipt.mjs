@@ -371,6 +371,23 @@ async function main() {
   assert.equal((await appRequest('/api/admin/collection?collection=analytics_events_raw_test', { cookie: ownerCookie.header })).response.status, 400);
   pass('privacy boundary and redaction', { sensitiveFieldsRedacted: true, rawCollectionNotExposed: true });
 
+  // No token revocation or canonical Firestore role change: a withdrawn
+  // current Firebase Auth claim must independently deny an already-signed
+  // viewer cookie at the protected server read boundary.
+  await auth.setCustomUserClaims(users.viewer.uid, { admin: false, role: 'viewer', roleVersion: 0 });
+  const staleViewerSession = await appRequest('/api/auth/admin-session', { cookie: viewerCookie.header });
+  const staleViewerCollection = await appRequest('/api/admin/collection?collection=systemRegistry', { cookie: viewerCookie.header });
+  assert.equal(staleViewerSession.response.status, 403, JSON.stringify(staleViewerSession.body));
+  assert.equal(staleViewerCollection.response.status, 403, JSON.stringify(staleViewerCollection.body));
+  assert.equal((await db.collection('adminUsers').doc(users.viewer.uid).get()).data()?.isActive, true);
+  pass('protected reads reject current Auth claim withdrawal without token revocation', {
+    currentClaimDenied: 403,
+    staleSessionDenied: 403,
+    staleCollectionDenied: 403,
+    canonicalMemberUnchanged: true,
+  });
+
+
   // Only this loopback emulator's disposable records participate. This proves
   // the actual protected consuming route, not a direct helper invocation.
   await db.collection('institutionalControlState').doc('global').set({ level: 'NORMAL', version: 1 });
