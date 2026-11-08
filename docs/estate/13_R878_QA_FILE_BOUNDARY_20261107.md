@@ -30,3 +30,7 @@ Node 22.16.0 local synthetic filesystem test: **12/12 PASS**, exit 0. Syntax che
 P0: Original engineering #85 remains unmerged. Preserve #100 Firestore/Storage Rules publishing fence and #101 shared-default Functions namespace HOLD; #102 source-contract repair, #103 signed admin claim and #104 QA reader remain draft. Confirm IAM and effective Firebase Rules, deployed SHA/Functions codebase, actual owner/admin/viewer negative private-data permissions, real provider receipt and source-bound rollback; none are established by this patch. P1: Parent symlink swap hardening, audit of QA logs/diff/snapshot path handling, audit minimization and cross-system Privacy/Jobs/Studio/RuAi/Analytics/Communications integration. No production changes, account permissions, secrets, live user data or paid resources touched.
 
 **Decision: SOURCE-VERIFIED NARROW FIX + LOCAL SYNTHETIC TESTS; GLOBAL PRODUCTION HOLD.**
+
+## Exact PR #104 CI readback
+
+GitHub Actions at head `ba074d27e0e45b277a3692fdee38f17ed6204109` returned **four completed FAILURE** workflows: Production Verify `42439430657`, Validate `42439430694`, Visual Proof `42439430683`, CI `42439430674`. This supersedes the initial no-runs-at-creation observation but does not establish which script/test failed. Do not promote the 12 synthetic local passes to full native certification; exact-head native source CI remains blocked, production HOLD.
