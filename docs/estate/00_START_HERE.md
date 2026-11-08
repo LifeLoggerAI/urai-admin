@@ -18,3 +18,7 @@
 ## R876 security reconciliation addendum (2026-11-07)
 
 Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md) before acting on release authority. It records source-level RBAC and privileged SDK boundaries, the shared Firebase Rules and default Functions namespace collision (#100/#101), current GitHub exact-SHA CI failures on both security branches, and a separately proposed repair for a malformed security gate assertion. Production HOLD; live IAM, private-data access, deployed SHA, provider tests and protected owner sessions are not certified.
+
+## R877 protected-session invariant (2026-11-07/08 UTC)
+
+[R877 Admin claim and CI continuation](12_R877_ADMIN_CLAIM_AND_CI_CONTINUATION_20261107.md) records a new unmerged defense-in-depth repair in [Admin PR #103](https://github.com/LifeLoggerAI/urai-admin/pull/103): require the explicit signed `admin:true` claim even when canonical role/active record matches; add role-bearing non-admin signed-cookie denial test in isolated emulator runner. PR #102 had four failed exact-head workflows with empty step lists; there is no new installed/full-build/emulator PASS or live production permission proof. Preserve shared Rules/Functions production HOLD.
