@@ -33,7 +33,7 @@ export function parseQaSnapshot(bytes) {
     const candidate = new URL(url);
     const route = candidate.pathname;
     if (!route.startsWith('/') || route.length > 160 ||
-        !Number.isInteger(status) || status < 100 || status > 599) {
+        !(Number.isInteger(status) && status >= 100 && status <= 599) && status !== 'NAV_ERR') {
       throw new Error('Invalid QA link record');
     }
     return { path: route, status };
@@ -64,7 +64,15 @@ export function qaDiffSummary(previous, current, prevTag, currTag) {
   const earlier = new Map(previous.screenshots.map(({ key, digest }) => [key, digest]));
   const changes = current.screenshots
     .filter(({ key, digest }) => earlier.has(key) && earlier.get(key) !== digest)
-    .map(({ key }) => ({ key: key.replace(/[^a-zA-Z0-9_-]/g, '_') }));
+    .map(({ key }) => {
+      const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      return {
+        key,
+        diff: `deploy_diffs/urai-admin_${currTag}/${safeKey}_diff.png`,
+        prev: `deploy_screenshots/urai-admin_${prevTag}/${safeKey}.png`,
+        curr: `deploy_screenshots/urai-admin_${currTag}/${safeKey}.png`,
+      };
+    });
   // Return an opaque, caller-addressable QA image locator, never the server's
   // absolute file system paths.
   return { visualRegressions: changes, previousTag: prevTag, currentTag: currTag };
