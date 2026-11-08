@@ -20,7 +20,7 @@ function fixture(run) {
   put('functions/src/index.ts', runtime);
   put('functions/tsconfig.active.json', JSON.stringify({ files: ['src/index.ts'] }));
   put('functions/package.json', JSON.stringify({ main: 'lib/index.js' }));
-  put('firebase.json', JSON.stringify({ hosting: { source: 'apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] } }));
+  put('firebase.json', JSON.stringify({ functions: [{ source: 'functions', codebase: 'default', runtime: 'nodejs22', ignore: ['node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log', '**/functions/apps', '**/functions/apps/**'] }], hosting: { source: 'apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] } }));
   put(canonical + 'package.json', JSON.stringify(appPkg));
   put(packaged + 'package.json', JSON.stringify({ ...appPkg, scripts: { ...appPkg.scripts, build: 'next build' } }));
   for (const p of [canonical, packaged]) {
@@ -75,8 +75,35 @@ test('Functions entrypoint reverting to tracked legacy mirror is rejected', () =
 }));
 
 test('Firebase Hosting source redirection is rejected', () => fixture(({ root, put }) => {
-  put('firebase.json', JSON.stringify({ hosting: { source: 'functions/apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] } }));
+  put('firebase.json', JSON.stringify({ functions: [{ source: 'functions', codebase: 'default', runtime: 'nodejs22', ignore: ['node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log', '**/functions/apps', '**/functions/apps/**'] }], hosting: { source: 'functions/apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] } }));
   assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /canonical Admin source/);
+}));
+
+test('missing legacy Functions mirror exclusion blocks upload provenance', () => fixture(({ root, put }) => {
+  put('firebase.json', JSON.stringify({
+    functions: [{ source: 'functions', codebase: 'default', runtime: 'nodejs22',
+      ignore: ['node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log'] }],
+    hosting: { source: 'apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] },
+  }));
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /legacy tracked Admin mirror/);
+}));
+
+test('Functions upload ignores must retain exact directory and file-level exclusions', () => fixture(({ root, put }) => {
+  put('firebase.json', JSON.stringify({
+    functions: [{ source: 'functions', codebase: 'default', runtime: 'nodejs22',
+      ignore: ['node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log', 'apps/**', '**/functions/apps/**'] }],
+    hosting: { source: 'apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] },
+  }));
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /legacy tracked Admin mirror/);
+}));
+
+test('Functions source relocation to tracked legacy directory is rejected', () => fixture(({ root, put }) => {
+  put('firebase.json', JSON.stringify({
+    functions: [{ source: 'functions/apps/urai-admin', codebase: 'default', runtime: 'nodejs22',
+      ignore: ['node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log', '**/functions/apps', '**/functions/apps/**'] }],
+    hosting: { source: 'apps/urai-admin', rewrites: [{ source: '**', function: 'nextServer' }] },
+  }));
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /Functions upload must use functions/);
 }));
 
 test('packaged symlinked source file is rejected', () => fixture(({ root, packaged }) => {
