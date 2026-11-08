@@ -35,3 +35,7 @@ At R879 base head `4be53e9` all four workflows failed: CI `42440946266`, Product
 P0: actual Actions execution diagnostics, frozen full install/typecheck/tests/build/emulators on merged candidate; current effective shared Firebase Rules and dedicated Functions publisher ownership, read-only IAM/server SDK scope, revoked/downgraded owner/admin/viewer and cross-user/tenant private memory/media/consent negative acceptance, exact deployed SHA and rollback authority. P1: TOCTOU/parent directory swap hardening for QA path and snapshot listing, concurrent file modifications, producer-generated screenshot filename collision avoidance, browser interface compatibility and raw artifact retention/minimization, cross-system connections and accessibility testing.
 
 **No release GO.** Preserve prior workers' branches and original source history.
+
+## R880 exact-head GitHub workflows — final readback
+
+At new R880 head `f4d4232c041154562da0a0ce2c7bf8fc510a54d2`, GitHub reports four completed workflow **FAILURE** conclusions: CI `42441506898`, Production Verify `42441506935`, Visual Proof `42441506879`, Validate `42441506889`. Each associated job returned **0 steps**. These do not negate the independent locally executed 24/24 isolated native QA tests, but they cannot be represented as green full repository CI. Cause of the GitHub run failures remains unverified; request authorized owner-side runner/billing/check diagnostics, without initiating paid resources or production changes. **Production HOLD.**
