@@ -286,9 +286,21 @@ export async function requireAdminSession(
     throw new AdminAuthError('Forbidden', 403);
   }
 
+  // The cookie alone must not preserve stale privileges after a governed
+  // Auth claim change. Revocation verification covers revoked session cookies,
+  // but a changed current account claim is an independent authority boundary.
+  const currentAccount = await auth.getUser(decodedToken.uid)
+    .catch((error: unknown) => rethrowAuthenticationFailure(error, false));
+  const currentClaims = currentAccount.customClaims ?? {};
+  const roleVersion = readRoleVersion(decodedToken.roleVersion);
+  if (currentAccount.disabled || currentAccount.uid !== decodedToken.uid ||
+      currentClaims.admin !== true || currentClaims.role !== role ||
+      readRoleVersion(currentClaims.roleVersion) !== roleVersion) {
+    throw new AdminAuthError('Forbidden', 403);
+  }
+
   const adminUserDoc = await firestore.collection('adminUsers').doc(decodedToken.uid).get();
   const adminUser = adminUserDoc.data();
-  const roleVersion = readRoleVersion(decodedToken.roleVersion);
 
   if (!adminUserDoc.exists || adminUser?.isActive !== true || adminUser?.role !== role ||
       readRoleVersion(adminUser?.roleVersion) !== roleVersion ||
