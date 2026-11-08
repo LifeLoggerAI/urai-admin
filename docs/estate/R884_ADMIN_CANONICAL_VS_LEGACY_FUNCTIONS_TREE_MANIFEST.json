@@ -1,0 +1,2900 @@
+{
+  "schemaVersion": "urai-admin-r884-tree-parity-1",
+  "sourceCommit": "67a48d342627524d384b15771723321abff73e20",
+  "treeTruncated": false,
+  "notes": "Tracked Git blobs only, not generated or deployed artifacts; same-path differences are not proof that old mirror ran in production.",
+  "counts": {
+    "canonical_app_files": 230,
+    "legacy_mirror_files": 146,
+    "identical": 120,
+    "different": 26,
+    "canonical_only": 84,
+    "mirror_only": 0
+  },
+  "files": [
+    {
+      "path": ".env.example",
+      "canonical": {
+        "sha": "81e698fc8aef6697c1bf9c8b0cf559c9c79fc478",
+        "bytes": 956,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": ".env.production",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": ".eslintignore",
+      "canonical": {
+        "sha": "83c51d48bcca91ede0d6439bb740561eeeab70dc",
+        "bytes": 116,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": ".gitignore",
+      "canonical": {
+        "sha": "0b61be0485d84130559be0335339030c1f9a4eb4",
+        "bytes": 428,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "README.md",
+      "canonical": {
+        "sha": "fff59c4e51784cacb7186f43af2083181a6a295d",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "components.json",
+      "canonical": {
+        "sha": "556d973dc845698edd9430b624ae1b1efcec7830",
+        "bytes": 328,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "lib/firebase-admin.js",
+      "canonical": {
+        "sha": "ab1cc65caf037aa487648e9a72cd3c99e15b1a98",
+        "bytes": 126,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "lib/firebase-admin.ts",
+      "canonical": {
+        "sha": "8de3f21ce59a5a3d6941afc85352eba9a89f098e",
+        "bytes": 128,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "next.config.js",
+      "canonical": {
+        "sha": "ea03fd8551ba5ebc6706d5eb1ca73a67720102bd",
+        "bytes": 1460,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "831cb43e277a0db34a5a98d7efa5b50d966bd319",
+        "bytes": 931,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "next.config.js.bak.20260201_201219",
+      "canonical": {
+        "sha": "c8f20cfd5b0275abb3b06408374b93bf323b9f58",
+        "bytes": 237,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json",
+      "canonical": {
+        "sha": "11e422a70e8c0ca348282916e17c69feac2cef88",
+        "bytes": 2120,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c3d8fdbec8d77c06bbb4086c98e369427d1d248c",
+        "bytes": 1657,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "package.json.bak.1769477569",
+      "canonical": {
+        "sha": "1fbdef3b49ae1dd0449cdbb3d63369c6c0a84dbe",
+        "bytes": 1209,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260128T002239",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260128T002240",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260128T002645",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260128T003045",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260128T003046",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.bak.20260129T084230",
+      "canonical": {
+        "sha": "383eea59a9bb7547d5941beb389cc0cd363088c0",
+        "bytes": 1335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "package.json.tmp",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "playwright.config.js",
+      "canonical": {
+        "sha": "9c7730125d68032a3d5a4a7026101a19904e78b8",
+        "bytes": 842,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "playwright.config.ts",
+      "canonical": {
+        "sha": "d98c413fbfd292fa1dafb017051f7c14eb273dfa",
+        "bytes": 407,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "postcss.config.mjs",
+      "canonical": {
+        "sha": "2ef30fcf4272e19cf6a23d07b0544027954f9627",
+        "bytes": 157,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "2ef30fcf4272e19cf6a23d07b0544027954f9627",
+        "bytes": 157,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "public/index.html",
+      "canonical": {
+        "sha": "271b3e2d965db49473fcabec61f52c8b47f520b8",
+        "bytes": 46,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "271b3e2d965db49473fcabec61f52c8b47f520b8",
+        "bytes": 46,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "scripts/run-next-build.mjs",
+      "canonical": {
+        "sha": "9c3b2a28f804d635be3b77299b92b063eada58fd",
+        "bytes": 485,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "scripts/seed_admin.js",
+      "canonical": {
+        "sha": "50e0b8849c792de60e4426b9c4645e774643ceb3",
+        "bytes": 3849,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "scripts/seed_admin.ts",
+      "canonical": {
+        "sha": "6e1f8b6a22767b45f86512adba6ddab3b4d9dca3",
+        "bytes": 791,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/access-denied/page.tsx",
+      "canonical": {
+        "sha": "358e9e25c6a22e7815f2208c4b9ae8f6a4c8cf02",
+        "bytes": 762,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "358e9e25c6a22e7815f2208c4b9ae8f6a4c8cf02",
+        "bytes": 762,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/accessibility/page.tsx",
+      "canonical": {
+        "sha": "95cc79581f4dbd6e214b8d0f732b4d331a786be9",
+        "bytes": 2047,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/admin/_components/AdminCollectionTable.tsx",
+      "canonical": {
+        "sha": "6c77f1fb9945956906af3cf081697432fa084322",
+        "bytes": 4451,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "464a394889cd8005ca8bf0cf554f8fc7a505eba1",
+        "bytes": 4389,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/admin/_components/SpatialCollectionPage.tsx",
+      "canonical": {
+        "sha": "7ef6b80c9be1470caba6a554f765215fdda632ac",
+        "bytes": 1176,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "7ef6b80c9be1470caba6a554f765215fdda632ac",
+        "bytes": 1176,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/admin-shell.tsx",
+      "canonical": {
+        "sha": "92b360e0adbb02d0af37fd14104abd93937222e0",
+        "bytes": 835,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "92b360e0adbb02d0af37fd14104abd93937222e0",
+        "bytes": 835,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/audit/page.tsx",
+      "canonical": {
+        "sha": "b480a84a59a1b8721c7c6539936461bb93ed1da8",
+        "bytes": 707,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b480a84a59a1b8721c7c6539936461bb93ed1da8",
+        "bytes": 707,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/dead-letters/page.tsx",
+      "canonical": {
+        "sha": "0dde82ec4e8332c11b1e821d2d74dae5a7dd5ed1",
+        "bytes": 756,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0dde82ec4e8332c11b1e821d2d74dae5a7dd5ed1",
+        "bytes": 756,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/feature-flags/FeatureFlagActions.tsx",
+      "canonical": {
+        "sha": "7245c84b5dcadab5e0a40d8d5686e5e34bbd74b0",
+        "bytes": 4336,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "7245c84b5dcadab5e0a40d8d5686e5e34bbd74b0",
+        "bytes": 4336,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/feature-flags/page.tsx",
+      "canonical": {
+        "sha": "c1e3f259867602c4c638eacf39eb7edee5a4c6ba",
+        "bytes": 725,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c1e3f259867602c4c638eacf39eb7edee5a4c6ba",
+        "bytes": 725,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/global-emotional-weather/page.tsx",
+      "canonical": {
+        "sha": "93a056e4635933dd671ed841b2a0725ab06e4032",
+        "bytes": 3660,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/admin/job-runs/page.tsx",
+      "canonical": {
+        "sha": "87307461cf072ae176eeb20257341767d8c8fedc",
+        "bytes": 766,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "87307461cf072ae176eeb20257341767d8c8fedc",
+        "bytes": 766,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/jobs/page.tsx",
+      "canonical": {
+        "sha": "3afe2ba7a499a3a982e4d9c62ce6ad7bf3a47d08",
+        "bytes": 674,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "3afe2ba7a499a3a982e4d9c62ce6ad7bf3a47d08",
+        "bytes": 674,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/layout.tsx",
+      "canonical": {
+        "sha": "ff8cdd00fe9fbe8bc1ef93a3cd94eb039a818150",
+        "bytes": 246,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ff8cdd00fe9fbe8bc1ef93a3cd94eb039a818150",
+        "bytes": 246,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/page.tsx",
+      "canonical": {
+        "sha": "42793409b204a212f72e98bc754d994805dad70c",
+        "bytes": 4503,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "a88631f3f92ef97453dfc9eff6758706638d2216",
+        "bytes": 4284,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/admin/policies/page.tsx",
+      "canonical": {
+        "sha": "3f04d45d95659f3aa57da0b37eb0d021a19d8b27",
+        "bytes": 683,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "3f04d45d95659f3aa57da0b37eb0d021a19d8b27",
+        "bytes": 683,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/privacy-requests/page.tsx",
+      "canonical": {
+        "sha": "efc0022cd1f7c297eca32700def440cc455b29f1",
+        "bytes": 751,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "efc0022cd1f7c297eca32700def440cc455b29f1",
+        "bytes": 751,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/projects/page.tsx",
+      "canonical": {
+        "sha": "8b00b03ce1687423324f845b51d1d6806edeb566",
+        "bytes": 732,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "8b00b03ce1687423324f845b51d1d6806edeb566",
+        "bytes": 732,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/settings/page.tsx",
+      "canonical": {
+        "sha": "6d663288a0e6d99d2df846f592fb7babaa73e6e4",
+        "bytes": 742,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "6d663288a0e6d99d2df846f592fb7babaa73e6e4",
+        "bytes": 742,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/storytime-moderation/page.tsx",
+      "canonical": {
+        "sha": "1cc4568cdd8ad07805f977c1521ad1ba79ee0bf0",
+        "bytes": 3454,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "1cc4568cdd8ad07805f977c1521ad1ba79ee0bf0",
+        "bytes": 3454,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/system/page.tsx",
+      "canonical": {
+        "sha": "3af530e0ee20b6b14fbeefd9b5542294279f4219",
+        "bytes": 1302,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "3af530e0ee20b6b14fbeefd9b5542294279f4219",
+        "bytes": 1302,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/users/AdminUserActions.tsx",
+      "canonical": {
+        "sha": "1975adae09f54765675b1d66702dc1fc27ae5f99",
+        "bytes": 7265,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "1975adae09f54765675b1d66702dc1fc27ae5f99",
+        "bytes": 7265,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/admin/users/page.tsx",
+      "canonical": {
+        "sha": "439d15619bd2f1c2324292f6ddc3d9ab324bf06e",
+        "bytes": 721,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "439d15619bd2f1c2324292f6ddc3d9ab324bf06e",
+        "bytes": 721,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/analytics/route.ts",
+      "canonical": {
+        "sha": "f6eca3827de30813af2d3321d622a14981a5348c",
+        "bytes": 2009,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "f6eca3827de30813af2d3321d622a14981a5348c",
+        "bytes": 2009,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/approve-access/route.ts",
+      "canonical": {
+        "sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+        "bytes": 272,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+        "bytes": 272,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/audit/route.ts",
+      "canonical": {
+        "sha": "d306e6faf0c0ac14d19ea869e52f5a8ae632fb31",
+        "bytes": 2265,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "43ef5d078ad456d2391d21b145c5df3b1a23c78c",
+        "bytes": 1842,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/admin/collection/route.ts",
+      "canonical": {
+        "sha": "646496bfade4c3f93695b3981a3848f656930ba1",
+        "bytes": 8398,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "6b04948f88b80f5eda400d6cab134b4d068da3bb",
+        "bytes": 7347,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/admin/deny-access/route.ts",
+      "canonical": {
+        "sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+        "bytes": 272,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "4b97d35d403b31b6dd161b8d6e95f773834af188",
+        "bytes": 272,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/invalidate-foundation-config-cache/route.ts",
+      "canonical": {
+        "sha": "d2b9b68f659dcdec00a4c7b18150f621c5b85255",
+        "bytes": 1747,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "89637c3a51fba4dab146967098a0d969f0e11e09",
+        "bytes": 866,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/admin/recover-user-mutation/route.ts",
+      "canonical": {
+        "sha": "a92101762ff00b4c025d49b00fb52c86b02de836",
+        "bytes": 1396,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "a92101762ff00b4c025d49b00fb52c86b02de836",
+        "bytes": 1396,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/route.ts",
+      "canonical": {
+        "sha": "14ba8648eea8c6cbfa1f14a7862725b6cbef6758",
+        "bytes": 552,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "14ba8648eea8c6cbfa1f14a7862725b6cbef6758",
+        "bytes": 552,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/set-flag/route.ts",
+      "canonical": {
+        "sha": "ea539b956c3bcd089598c029447998715e7058b1",
+        "bytes": 1902,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e94a592c062166183da92bce38641563689e8416",
+        "bytes": 1777,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/admin/set-role/route.ts",
+      "canonical": {
+        "sha": "2192e72ce04df8d17752ddb69c41a214eba6e33e",
+        "bytes": 232,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "2192e72ce04df8d17752ddb69c41a214eba6e33e",
+        "bytes": 232,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/set-user-active/route.ts",
+      "canonical": {
+        "sha": "62c7bbd09e92c59ed800350dd28c3e82e4cb5751",
+        "bytes": 8561,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "62c7bbd09e92c59ed800350dd28c3e82e4cb5751",
+        "bytes": 8561,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/update-user-role/route.ts",
+      "canonical": {
+        "sha": "3f4648beecd78bef87b239312acac1cf8d720c3e",
+        "bytes": 1769,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "3f4648beecd78bef87b239312acac1cf8d720c3e",
+        "bytes": 1769,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/admin/users/[uid]/role/route.ts",
+      "canonical": {
+        "sha": "b2c001357d0d27b965a4d9d59a329bf2ac0d6b8c",
+        "bytes": 1361,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "36727f3016506f33eacba04512736bc48f519929",
+        "bytes": 1345,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/admin/users/route.ts",
+      "canonical": {
+        "sha": "aae29bb3841a6481dd426dfd7d635813504c82d0",
+        "bytes": 1403,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "aae29bb3841a6481dd426dfd7d635813504c82d0",
+        "bytes": 1403,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/analytics/route.ts",
+      "canonical": {
+        "sha": "dc61cb906d78ff43db5a941b9889976157b1f728",
+        "bytes": 1331,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "dc61cb906d78ff43db5a941b9889976157b1f728",
+        "bytes": 1331,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/audit/route.ts",
+      "canonical": {
+        "sha": "eec08b5b71dc9fe0c116e05665deb81a05d87f59",
+        "bytes": 2505,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "8f27db8b10085cc8ba29d97a6729a0ff3403a645",
+        "bytes": 1582,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/auth/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/auth/admin-session/route.ts",
+      "canonical": {
+        "sha": "370e3de66033d45d26c3dbd71c0307feaf34be09",
+        "bytes": 652,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "370e3de66033d45d26c3dbd71c0307feaf34be09",
+        "bytes": 652,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/auth/login/route.ts",
+      "canonical": {
+        "sha": "41bfa845f7819c21a8309a0bcf99f7bd4bdd0fd2",
+        "bytes": 740,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "41bfa845f7819c21a8309a0bcf99f7bd4bdd0fd2",
+        "bytes": 740,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/auth/logout/route.ts",
+      "canonical": {
+        "sha": "11c0c7a7097012738f12cf0373ba6eab0e5c3e6c",
+        "bytes": 343,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "11c0c7a7097012738f12cf0373ba6eab0e5c3e6c",
+        "bytes": 343,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/auth/session/route.ts",
+      "canonical": {
+        "sha": "e2d7e3a2e08f23438d76afe18bfa37ee0648dd24",
+        "bytes": 1334,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e2d7e3a2e08f23438d76afe18bfa37ee0648dd24",
+        "bytes": 1334,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/auth/verify/route.ts",
+      "canonical": {
+        "sha": "8518ec951329a0ae348a51ba12f0fbcfa599823c",
+        "bytes": 474,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "8518ec951329a0ae348a51ba12f0fbcfa599823c",
+        "bytes": 474,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/dashboard/route.ts",
+      "canonical": {
+        "sha": "7bce49388f857aca74f82095721befca308e1266",
+        "bytes": 757,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "7bce49388f857aca74f82095721befca308e1266",
+        "bytes": 757,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/health/route.ts",
+      "canonical": {
+        "sha": "314d0ed934b6e15f82d906c43521a668a64d01dd",
+        "bytes": 930,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "314d0ed934b6e15f82d906c43521a668a64d01dd",
+        "bytes": 930,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/ingest/route.ts",
+      "canonical": {
+        "sha": "a53b57642a25f33363874e425b857cbb95cd287e",
+        "bytes": 825,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "a53b57642a25f33363874e425b857cbb95cd287e",
+        "bytes": 825,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/jobs/route.ts",
+      "canonical": {
+        "sha": "a78d0eda7c3f6da824f52727e72ccbf60c7e01b2",
+        "bytes": 2048,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "a78d0eda7c3f6da824f52727e72ccbf60c7e01b2",
+        "bytes": 2048,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/api/qa/diff/route.ts",
+      "canonical": {
+        "sha": "698a125c7b7fe7cbb9197b5e75111ab27072fad6",
+        "bytes": 1998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e46c3b92332efca1ff35568b5bf66f9231c838e0",
+        "bytes": 3128,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/qa/image/route.ts",
+      "canonical": {
+        "sha": "f3ae39c80acaf34828dd564221bb3a2ed3bc87dd",
+        "bytes": 2089,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ddc4cc051c140f5bb30764277dad5111909fb75f",
+        "bytes": 2637,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/qa/logs/route.ts",
+      "canonical": {
+        "sha": "36516b26e8577b49ef8fabb84530de7aa6447eb9",
+        "bytes": 1638,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "4b880b285119a6b40d4080ad0428ba7b138f3186",
+        "bytes": 1846,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/api/qa/snapshots/route.ts",
+      "canonical": {
+        "sha": "09e81cac09caddcf9a4b6c7dc65e4d3f22fa4e5c",
+        "bytes": 1020,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "5ab846445a87ea88b8d84727156b2c11b2195b7e",
+        "bytes": 1216,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/contact/page.tsx",
+      "canonical": {
+        "sha": "07c9283decee7f860a2bf2b3eff80a078bcc5a32",
+        "bytes": 2742,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "df0a67f84f076c6dcf4da52458ea864e7d7f159b",
+        "bytes": 2259,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/docs/page.tsx",
+      "canonical": {
+        "sha": "fe3e72973d718fb1979208fea7e23c9ed0257675",
+        "bytes": 2325,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "fc069f7285f70aad554b1eebb85e2a09c6722877",
+        "bytes": 2788,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/features/page.tsx",
+      "canonical": {
+        "sha": "6272f73d1e42a9a91a68fa75f6ece42d09eb1d7b",
+        "bytes": 1842,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "6272f73d1e42a9a91a68fa75f6ece42d09eb1d7b",
+        "bytes": 1842,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/globals.css",
+      "canonical": {
+        "sha": "49645022d016e1e96315bd2c2df25174aa53ff46",
+        "bytes": 9974,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e1cf4c37849bd9e09e41a71ba99a3d33c73df79f",
+        "bytes": 9430,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "canonical": {
+        "sha": "6359613cd21a30b949bba9db5b5aa867a7d68a85",
+        "bytes": 893,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "6359613cd21a30b949bba9db5b5aa867a7d68a85",
+        "bytes": 893,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/layout.tsx.bak.1769993475",
+      "canonical": {
+        "sha": "f815a12876a6fbd4a32af14ce6fd084929619121",
+        "bytes": 695,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/layout.tsx.bak.20260129T084230",
+      "canonical": {
+        "sha": "8c4b024af3456fbf5c07553b1d6efd157eab3c26",
+        "bytes": 533,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/layout.tsx.bak.20260201_201215",
+      "canonical": {
+        "sha": "8c4b024af3456fbf5c07553b1d6efd157eab3c26",
+        "bytes": 533,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/login/LoginClient.tsx",
+      "canonical": {
+        "sha": "e6449c82ed5f2f8d45fda01db217024fccd9d78d",
+        "bytes": 9778,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0869b8bd9ee5567b71bb3832a2be1748d38f99c0",
+        "bytes": 10578,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/login/page.tsx",
+      "canonical": {
+        "sha": "c99a168cb1bbceed9975cabc7919ce20c6688d22",
+        "bytes": 307,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c99a168cb1bbceed9975cabc7919ce20c6688d22",
+        "bytes": 307,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/not-authorized/page.tsx",
+      "canonical": {
+        "sha": "354e45e1fa94a54beef8381502c5c622da2457f2",
+        "bytes": 390,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "354e45e1fa94a54beef8381502c5c622da2457f2",
+        "bytes": 390,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/not-found.tsx",
+      "canonical": {
+        "sha": "26e6cf4d7fd6bcf91b9ead2e7e3dee014da15cb2",
+        "bytes": 1047,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/app/page.tsx",
+      "canonical": {
+        "sha": "c34bd046c0d0103ec92c12f23fa3a7db259e6114",
+        "bytes": 8339,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "9c7a83233089ed82ec3ffd7ddc4caf7fe397de5a",
+        "bytes": 8103,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/pricing/page.tsx",
+      "canonical": {
+        "sha": "fd4cde9da310e2e473d6995d442b6235cc0bac1a",
+        "bytes": 2281,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "fd4cde9da310e2e473d6995d442b6235cc0bac1a",
+        "bytes": 2281,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/privacy/page.tsx",
+      "canonical": {
+        "sha": "ee215e6aa04e7aa21a4699a4b5b3ee5fcd99c545",
+        "bytes": 2494,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ee215e6aa04e7aa21a4699a4b5b3ee5fcd99c545",
+        "bytes": 2494,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/providers.tsx",
+      "canonical": {
+        "sha": "cbe9c32b831327ffd537010bcb2815396fcef2d9",
+        "bytes": 1042,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "cbe9c32b831327ffd537010bcb2815396fcef2d9",
+        "bytes": 1042,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/robots.ts",
+      "canonical": {
+        "sha": "e0c883306fcea07be4487ef3ff0f7554cc1e88c4",
+        "bytes": 238,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0cd0275e41d36c012a8a4d299c591982218f5c80",
+        "bytes": 461,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/security/page.tsx",
+      "canonical": {
+        "sha": "b97042dbc707fe53170c8be0285545e1906cca07",
+        "bytes": 1745,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b97042dbc707fe53170c8be0285545e1906cca07",
+        "bytes": 1745,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/sitemap.ts",
+      "canonical": {
+        "sha": "0a9b6c373045a0ea8de9c04fc0e42a275e4fac72",
+        "bytes": 335,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0351d51cd5cbf39622f3bea2306428a23d7ffa79",
+        "bytes": 545,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/app/spatial-admin.css",
+      "canonical": {
+        "sha": "b05db465a483de425b9a4527d4c567073cc99953",
+        "bytes": 8091,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b05db465a483de425b9a4527d4c567073cc99953",
+        "bytes": 8091,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/terms/page.tsx",
+      "canonical": {
+        "sha": "fac5e94adf5b82c670e2a5fe9ea64c0046348842",
+        "bytes": 2306,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "fac5e94adf5b82c670e2a5fe9ea64c0046348842",
+        "bytes": 2306,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/app/unauthorized/page.tsx",
+      "canonical": {
+        "sha": "b9d0ca5a9708194d0dae1f1414c0120d97d3214c",
+        "bytes": 220,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b9d0ca5a9708194d0dae1f1414c0120d97d3214c",
+        "bytes": 220,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/Canvas.tsx",
+      "canonical": {
+        "sha": "0a95e8eb257b24d977a0adc6d7392c84d7674e44",
+        "bytes": 1749,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0a95e8eb257b24d977a0adc6d7392c84d7674e44",
+        "bytes": 1749,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/Sidebar.tsx",
+      "canonical": {
+        "sha": "1d0864233b784a83a9c209ac9bd2586c282beba4",
+        "bytes": 1667,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "1d0864233b784a83a9c209ac9bd2586c282beba4",
+        "bytes": 1667,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/Sidebar.tsx.bak.20260201_221515",
+      "canonical": {
+        "sha": "966dff167536abb0fa132255189fed8a26bc939a",
+        "bytes": 1558,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/components/Sidebar.tsx.bak.20260201_225216",
+      "canonical": {
+        "sha": "478b3d87e52d33c674109845cb9005f8ed17a6d4",
+        "bytes": 1217,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/components/Sidebar.tsx.bak.20260201_225217",
+      "canonical": {
+        "sha": "478b3d87e52d33c674109845cb9005f8ed17a6d4",
+        "bytes": 1217,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/components/SpatialAdminFrame.tsx",
+      "canonical": {
+        "sha": "d636ae0863e325c0c8dca18c690cfd5ec569dcb6",
+        "bytes": 1851,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "d636ae0863e325c0c8dca18c690cfd5ec569dcb6",
+        "bytes": 1851,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/UserList.tsx",
+      "canonical": {
+        "sha": "410ca8d7234c992986c9f304f50a7f9a6334ba66",
+        "bytes": 1494,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "410ca8d7234c992986c9f304f50a7f9a6334ba66",
+        "bytes": 1494,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/analytics/DatePicker.tsx",
+      "canonical": {
+        "sha": "1527471326aba5a353b82e618c7135018f96bf2a",
+        "bytes": 700,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "1527471326aba5a353b82e618c7135018f96bf2a",
+        "bytes": 700,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/analytics/EventsTable.tsx",
+      "canonical": {
+        "sha": "b27350318bad128adc558520fc49a2ffad06b44d",
+        "bytes": 1022,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b27350318bad128adc558520fc49a2ffad06b44d",
+        "bytes": 1022,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/analytics/MetricCard.tsx",
+      "canonical": {
+        "sha": "ce842f07ba0ffa9a20a2d7f98b10bac60f1a0939",
+        "bytes": 520,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ce842f07ba0ffa9a20a2d7f98b10bac60f1a0939",
+        "bytes": 520,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/header.tsx",
+      "canonical": {
+        "sha": "8c70f5cc170b55f48c2fd1d63223305a9dad16c4",
+        "bytes": 588,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "8c70f5cc170b55f48c2fd1d63223305a9dad16c4",
+        "bytes": 588,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/layout/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/layout/header.tsx",
+      "canonical": {
+        "sha": "32d59ed7d8d9bd383cd5fb05eb614646f76151d8",
+        "bytes": 1306,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "32d59ed7d8d9bd383cd5fb05eb614646f76151d8",
+        "bytes": 1306,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/layout/header.tsx.bak.20260201_225522",
+      "canonical": {
+        "sha": "1d6566a4538b67a2047e417ccf4e4dae134c31d7",
+        "bytes": 745,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/components/layout/header.tsx.bak.20260201_225523",
+      "canonical": {
+        "sha": "1d6566a4538b67a2047e417ccf4e4dae134c31d7",
+        "bytes": 745,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/components/marketing/CommandWorld.tsx",
+      "canonical": {
+        "sha": "54a088e299576cdcf2eb949d7d097dcd5ee4cae3",
+        "bytes": 2646,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "cd167da3e2ff471438e56566f793e84a3b164ce2",
+        "bytes": 2577,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/components/ui/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/badge.tsx",
+      "canonical": {
+        "sha": "b12ac16b9118e67e1880c6c393e9342a2b5e6456",
+        "bytes": 1119,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b12ac16b9118e67e1880c6c393e9342a2b5e6456",
+        "bytes": 1119,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "canonical": {
+        "sha": "ac8ba7fe644731a89d743474203b99617138a5ad",
+        "bytes": 565,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ac8ba7fe644731a89d743474203b99617138a5ad",
+        "bytes": 565,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "canonical": {
+        "sha": "c2ce4b2cd1570a9f228c01ecfbda9c5a32e1c489",
+        "bytes": 2441,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c2ce4b2cd1570a9f228c01ecfbda9c5a32e1c489",
+        "bytes": 2441,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "canonical": {
+        "sha": "4b67a5d0066f057e77d21fb402f72d9a9983e6d6",
+        "bytes": 1071,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "4b67a5d0066f057e77d21fb402f72d9a9983e6d6",
+        "bytes": 1071,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/command.tsx",
+      "canonical": {
+        "sha": "b35d507570dde70d7eaf897ce965a614dabdc581",
+        "bytes": 4808,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "48c7cf2c24560fe5eff4c3f211d686ff684d3ea6",
+        "bytes": 4821,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "canonical": {
+        "sha": "43644bb97fd3cdd927bceebe2b7a48a45a5e63c6",
+        "bytes": 3759,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "43644bb97fd3cdd927bceebe2b7a48a45a5e63c6",
+        "bytes": 3759,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "canonical": {
+        "sha": "e5975499b646f9488b4be9c6215a844a6bcc46f5",
+        "bytes": 7310,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e5975499b646f9488b4be9c6215a844a6bcc46f5",
+        "bytes": 7310,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "canonical": {
+        "sha": "bd81bc3ef348cacb75704414ed5f6e6c037df706",
+        "bytes": 397,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "f664b6a9ffa9393b345284025e9e35c409526705",
+        "bytes": 410,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/components/ui/label.tsx",
+      "canonical": {
+        "sha": "c560d7cef05e1ad471049917fe4cf324a71942f3",
+        "bytes": 449,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c560d7cef05e1ad471049917fe4cf324a71942f3",
+        "bytes": 449,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "canonical": {
+        "sha": "465925f9a3da943591dfc4b828c323def0416c0d",
+        "bytes": 1253,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "465925f9a3da943591dfc4b828c323def0416c0d",
+        "bytes": 1253,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "canonical": {
+        "sha": "95112fbadbec9b0a97714d57eee9b3ae4eddc5f6",
+        "bytes": 5545,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "95112fbadbec9b0a97714d57eee9b3ae4eddc5f6",
+        "bytes": 5545,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/separator.tsx",
+      "canonical": {
+        "sha": "ee84f69e8388e6aa275f6eec9b458ea282f667ad",
+        "bytes": 738,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ee84f69e8388e6aa275f6eec9b458ea282f667ad",
+        "bytes": 738,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "canonical": {
+        "sha": "ab3401bc9341578d1f191a18e7901c62e7901c5f",
+        "bytes": 2728,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ab3401bc9341578d1f191a18e7901c62e7901c5f",
+        "bytes": 2728,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/components/withAdminAuth.tsx",
+      "canonical": {
+        "sha": "d0cdbfa06ceb7d69a72fd92db704f51aa9bd438e",
+        "bytes": 777,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "d0cdbfa06ceb7d69a72fd92db704f51aa9bd438e",
+        "bytes": 777,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/config/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/config/firebase-admin.ts",
+      "canonical": {
+        "sha": "dc0c781f0ba3b393c5b8beb8858a6bf97e6c314a",
+        "bytes": 167,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "dc0c781f0ba3b393c5b8beb8858a6bf97e6c314a",
+        "bytes": 167,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/config/firebase.ts",
+      "canonical": {
+        "sha": "b54924dffebe1a277c7921dad1577baf2dd81a79",
+        "bytes": 168,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b54924dffebe1a277c7921dad1577baf2dd81a79",
+        "bytes": 168,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/framework-env.d.ts",
+      "canonical": {
+        "sha": "7222afe4d7a701688612334325ec12ec1da2c2d9",
+        "bytes": 242,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/functions/requeueDeadLetter.ts",
+      "canonical": {
+        "sha": "e87b93fdc66dc193b06dcc404876ab5278406805",
+        "bytes": 577,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e87b93fdc66dc193b06dcc404876ab5278406805",
+        "bytes": 577,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/functions/retryJob.ts",
+      "canonical": {
+        "sha": "58255606459a4e8f658ef84b24d685088b99f5c9",
+        "bytes": 526,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "58255606459a4e8f658ef84b24d685088b99f5c9",
+        "bytes": 526,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/functions/setFeatureFlag.ts",
+      "canonical": {
+        "sha": "32a89f641134742780ff338c41881678c96f7c0b",
+        "bytes": 611,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "32a89f641134742780ff338c41881678c96f7c0b",
+        "bytes": 611,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/hooks/useAuth.ts",
+      "canonical": {
+        "sha": "aec0155f846e93988456abbc7518fd02b91688b9",
+        "bytes": 1319,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "aec0155f846e93988456abbc7518fd02b91688b9",
+        "bytes": 1319,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/hooks/useAuth.tsx",
+      "canonical": {
+        "sha": "ef27e489308ebbbf0b6f41786c67ee277b9d88b0",
+        "bytes": 1735,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ef27e489308ebbbf0b6f41786c67ee277b9d88b0",
+        "bytes": 1735,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/hooks/useRBAC.ts",
+      "canonical": {
+        "sha": "9bd1d6351ff449e04f1daa5c191f3f05e581ae72",
+        "bytes": 519,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "9bd1d6351ff449e04f1daa5c191f3f05e581ae72",
+        "bytes": 519,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/admin/execute-institutional-feature-flag.ts",
+      "canonical": {
+        "sha": "0fddaeed131b288ed53c339cfafba40c158726bd",
+        "bytes": 21555,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "b2e5e65253113c479d373924012f890f70851516",
+        "bytes": 19214,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/lib/admin/recover-admin-mutation.ts",
+      "canonical": {
+        "sha": "db8f0b77e60fb7dce836668fd156f0bf6e546182",
+        "bytes": 7730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "db8f0b77e60fb7dce836668fd156f0bf6e546182",
+        "bytes": 7730,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/admin/require-admin-session.ts",
+      "canonical": {
+        "sha": "9d3fc6ba9d873f8b964032a57a52116a60e60b44",
+        "bytes": 13567,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "f3b64e2235e190ec4827e7ad00cdd2707f9cad93",
+        "bytes": 9338,
+        "mode": "100644"
+      },
+      "status": "different"
+    },
+    {
+      "path": "src/lib/admin/safe-audit-data.ts",
+      "canonical": {
+        "sha": "60d17e4b3b7a3fb8cc11e66d46f829844ddbe485",
+        "bytes": 2727,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/lib/admin/update-admin-role.ts",
+      "canonical": {
+        "sha": "21a436700480cbe65edd059b040a90d0d6db1338",
+        "bytes": 8145,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "21a436700480cbe65edd059b040a90d0d6db1338",
+        "bytes": 8145,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/analytics/schema.ts",
+      "canonical": {
+        "sha": "0e6a9b897fe05c5f3be66c0025e46ac5ee772826",
+        "bytes": 1376,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0e6a9b897fe05c5f3be66c0025e46ac5ee772826",
+        "bytes": 1376,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/audit-log.ts",
+      "canonical": {
+        "sha": "e1e5da7aecc89e99fdb4a3c2afc9111bdf98b03d",
+        "bytes": 428,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e1e5da7aecc89e99fdb4a3c2afc9111bdf98b03d",
+        "bytes": 428,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/audit.ts",
+      "canonical": {
+        "sha": "39667f821f3f0278ad04286608d269cf1f3824eb",
+        "bytes": 434,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "39667f821f3f0278ad04286608d269cf1f3824eb",
+        "bytes": 434,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth.ts",
+      "canonical": {
+        "sha": "4599e28dbeb3636e9005e8aa608710855b501d0c",
+        "bytes": 137,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "4599e28dbeb3636e9005e8aa608710855b501d0c",
+        "bytes": 137,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth/.gitkeep",
+      "canonical": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "bytes": 0,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth/auth-context.tsx",
+      "canonical": {
+        "sha": "9fdaac951327d8d6d55e60209c31d317900770cd",
+        "bytes": 342,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "9fdaac951327d8d6d55e60209c31d317900770cd",
+        "bytes": 342,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth/auth-provider.tsx",
+      "canonical": {
+        "sha": "8b661373f19d50fe78c4873a89307afc0ab1e549",
+        "bytes": 1831,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "8b661373f19d50fe78c4873a89307afc0ab1e549",
+        "bytes": 1831,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth/roles.ts",
+      "canonical": {
+        "sha": "70bcd790aee4106e1ac0024eb9cd48dddc31a1d5",
+        "bytes": 327,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "70bcd790aee4106e1ac0024eb9cd48dddc31a1d5",
+        "bytes": 327,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/auth/with-auth.tsx",
+      "canonical": {
+        "sha": "73ab32d22a4f3f07d4e14758e6b38f6b86054431",
+        "bytes": 540,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "73ab32d22a4f3f07d4e14758e6b38f6b86054431",
+        "bytes": 540,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/collections.ts",
+      "canonical": {
+        "sha": "5e6b6b8e453e8b0a3b4f10eae0b5a652a84e7633",
+        "bytes": 1004,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "5e6b6b8e453e8b0a3b4f10eae0b5a652a84e7633",
+        "bytes": 1004,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/dashboard.ts",
+      "canonical": {
+        "sha": "c1c1f4e538411ea8d9d7deb9b59dff95fd1b3e05",
+        "bytes": 525,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c1c1f4e538411ea8d9d7deb9b59dff95fd1b3e05",
+        "bytes": 525,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebase-admin.ts",
+      "canonical": {
+        "sha": "5a49fb8b313158e71c73634808ab832937c860c3",
+        "bytes": 231,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "5a49fb8b313158e71c73634808ab832937c860c3",
+        "bytes": 231,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebase.ts",
+      "canonical": {
+        "sha": "eff0dfd7da27cc2c7db012794e13ee5775f3a9ad",
+        "bytes": 187,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "eff0dfd7da27cc2c7db012794e13ee5775f3a9ad",
+        "bytes": 187,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebase/admin.ts",
+      "canonical": {
+        "sha": "e1dccabaa69e03c1cea891fb21fca2f46a55cb8b",
+        "bytes": 3218,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "e1dccabaa69e03c1cea891fb21fca2f46a55cb8b",
+        "bytes": 3218,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebase/client.ts",
+      "canonical": {
+        "sha": "591b8376305d34ff4bd4f406cfb1fd2d1805f867",
+        "bytes": 4056,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "591b8376305d34ff4bd4f406cfb1fd2d1805f867",
+        "bytes": 4056,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebase/firebase.ts",
+      "canonical": {
+        "sha": "5fd3fa52f1427290b727035c5ed6edae12db60a5",
+        "bytes": 161,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "5fd3fa52f1427290b727035c5ed6edae12db60a5",
+        "bytes": 161,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/firebaseAdmin.ts",
+      "canonical": {
+        "sha": "ff2d529db6a36b007b825c18289f4ceb1a518c70",
+        "bytes": 178,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "ff2d529db6a36b007b825c18289f4ceb1a518c70",
+        "bytes": 178,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/organizations/current-org.ts",
+      "canonical": {
+        "sha": "2a1c44d5de835cf4a642a0d594ecce93cec3d356",
+        "bytes": 550,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "2a1c44d5de835cf4a642a0d594ecce93cec3d356",
+        "bytes": 550,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/organizations/types.ts",
+      "canonical": {
+        "sha": "28276ff56df0e393b48b15a2ba22c34e312ee861",
+        "bytes": 887,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "28276ff56df0e393b48b15a2ba22c34e312ee861",
+        "bytes": 887,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/qa/guarded-artifact-read.mjs",
+      "canonical": {
+        "sha": "3dfa47f1b2715076ad8e372afe3a01dddc8f7572",
+        "bytes": 3666,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/lib/qa/guarded-snapshot-list.mjs",
+      "canonical": {
+        "sha": "ee2ad5bef6eb1fe174d75d39f8fb2730fbbe76a2",
+        "bytes": 1364,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/lib/qa/safe-snapshot-summary.mjs",
+      "canonical": {
+        "sha": "7c5042270181b6ba5a2ce5d54756b30da432dbae",
+        "bytes": 3931,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/lib/types.ts",
+      "canonical": {
+        "sha": "0f45c9020815d05fa88d01740deaac71f8c1b6ea",
+        "bytes": 1949,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0f45c9020815d05fa88d01740deaac71f8c1b6ea",
+        "bytes": 1949,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/user.ts",
+      "canonical": {
+        "sha": "0f2721a9895c84e183cfed2ab92a501ae4a3905a",
+        "bytes": 721,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "0f2721a9895c84e183cfed2ab92a501ae4a3905a",
+        "bytes": 721,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "canonical": {
+        "sha": "d084ccade0d8b5bd77fd5174993bcef7b57644c9",
+        "bytes": 166,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "d084ccade0d8b5bd77fd5174993bcef7b57644c9",
+        "bytes": 166,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/with-auth-api.ts",
+      "canonical": {
+        "sha": "fb6ec7f93f1786d5df54d2e11482a83bef433a09",
+        "bytes": 1691,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "fb6ec7f93f1786d5df54d2e11482a83bef433a09",
+        "bytes": 1691,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/lib/withAuth.ts",
+      "canonical": {
+        "sha": "681eb5b6cca992117e4298a44b1f44d0755448c0",
+        "bytes": 637,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "681eb5b6cca992117e4298a44b1f44d0755448c0",
+        "bytes": 637,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/middleware.ts",
+      "canonical": {
+        "sha": "d2f74856235529f60e2cda5918532e558ee9b670",
+        "bytes": 1767,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "d2f74856235529f60e2cda5918532e558ee9b670",
+        "bytes": 1767,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769497870",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498092",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498093",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498094",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498095",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498096",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498097",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498098",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498099",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498216",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498433",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769498555",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769499509",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769499510",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769499776",
+      "canonical": {
+        "sha": "4408cd0ad1397149e3b10c3d9d67b1616b444bc1",
+        "bytes": 998,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769994549",
+      "canonical": {
+        "sha": "b06117a747392ff08ff56815970223dcc2e53948",
+        "bytes": 2137,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.1769996719",
+      "canonical": {
+        "sha": "22314a73fb9ce1b77bfe92b446cd4535ce515229",
+        "bytes": 2522,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260128T002239",
+      "canonical": {
+        "sha": "63d21451dc304608e2dda1cc0825300b3b1f7b8b",
+        "bytes": 1221,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260128T002240",
+      "canonical": {
+        "sha": "63d21451dc304608e2dda1cc0825300b3b1f7b8b",
+        "bytes": 1221,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260128T002645",
+      "canonical": {
+        "sha": "63d21451dc304608e2dda1cc0825300b3b1f7b8b",
+        "bytes": 1221,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260128T003045",
+      "canonical": {
+        "sha": "45b4bbd2da3816ae96425dcec232066a453ef54d",
+        "bytes": 1236,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260128T003046",
+      "canonical": {
+        "sha": "45b4bbd2da3816ae96425dcec232066a453ef54d",
+        "bytes": 1236,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260201_221101",
+      "canonical": {
+        "sha": "6ff1f866297dade6426c6595b4edad23281044fa",
+        "bytes": 2375,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/middleware.ts.bak.20260201_224140",
+      "canonical": {
+        "sha": "a978ad9759fdb5efb505b0b5c6f2023599befceb",
+        "bytes": 3159,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "src/models/accessRequest.ts",
+      "canonical": {
+        "sha": "00b9b72b1a2140924817fab4eff002b21e99039d",
+        "bytes": 219,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "00b9b72b1a2140924817fab4eff002b21e99039d",
+        "bytes": 219,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/models/auditLog.ts",
+      "canonical": {
+        "sha": "48ade556fd368bf8693a3a09a568d05da5c4cd8e",
+        "bytes": 175,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "48ade556fd368bf8693a3a09a568d05da5c4cd8e",
+        "bytes": 175,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/models/featureFlag.ts",
+      "canonical": {
+        "sha": "fb50b2ac52447f482698e3de3afbb04a8ba6ead7",
+        "bytes": 133,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "fb50b2ac52447f482698e3de3afbb04a8ba6ead7",
+        "bytes": 133,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/models/systemHealth.ts",
+      "canonical": {
+        "sha": "53196eafdecf99d98496191bd806adb2e2d917a9",
+        "bytes": 150,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "53196eafdecf99d98496191bd806adb2e2d917a9",
+        "bytes": 150,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "src/models/user.ts",
+      "canonical": {
+        "sha": "9ce22a2054bceab93b5afbcea2c5ff84cf7bb4f0",
+        "bytes": 178,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "9ce22a2054bceab93b5afbcea2c5ff84cf7bb4f0",
+        "bytes": 178,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "tailwind.config.js",
+      "canonical": {
+        "sha": "c8d07c59f693d6a5c29c4306150f1a6c59c41394",
+        "bytes": 2650,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c8d07c59f693d6a5c29c4306150f1a6c59c41394",
+        "bytes": 2650,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "canonical": {
+        "sha": "84287e82fba61c09193cc9959b08dfa00277293f",
+        "bytes": 2179,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "84287e82fba61c09193cc9959b08dfa00277293f",
+        "bytes": 2179,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "test/accessibility-contract.test.mjs",
+      "canonical": {
+        "sha": "10bb545b16947a18b308ad95462a7a671d367e44",
+        "bytes": 1454,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/admin-current-auth-claims.behavior.test.mjs",
+      "canonical": {
+        "sha": "bdbc302bbc527b6d9c351d300e375c158d3c2491",
+        "bytes": 5616,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/admin-origin-policy.behavior.test.mjs",
+      "canonical": {
+        "sha": "0fce0a81e36a803b6361bdb8e45cd7c91e14a05b",
+        "bytes": 7437,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/admin-session-exchange-authority.behavior.test.mjs",
+      "canonical": {
+        "sha": "4d874b5dc9736aa2954f105f1f13a8dc7dfae86c",
+        "bytes": 4649,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/audit-boundary.behavior.test.mjs",
+      "canonical": {
+        "sha": "572720ef45a3c491d43284ae9007d40d837a9188",
+        "bytes": 9351,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/foundation-cache-authority.behavior.test.mjs",
+      "canonical": {
+        "sha": "50dc1a822e7f823a200f69d8c484c4695834eb92",
+        "bytes": 4068,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/institutional-feature-flag-workflow-source.test.mjs",
+      "canonical": {
+        "sha": "e36bd5e2d2d465786177fc1675409eb10eea1f78",
+        "bytes": 4925,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/qa-artifact-boundary.behavior.test.mjs",
+      "canonical": {
+        "sha": "e5fb42c4238d4e166f053c070e57a1c629115466",
+        "bytes": 4916,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/qa-snapshot-list.behavior.test.mjs",
+      "canonical": {
+        "sha": "f022e265817029096709f26d027bffe8371a4433",
+        "bytes": 2165,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/qa-snapshot-summary.behavior.test.mjs",
+      "canonical": {
+        "sha": "1fbc7899c62fb312a705f4121f0f0d10d9573138",
+        "bytes": 3022,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "test/source-contracts.test.mjs",
+      "canonical": {
+        "sha": "19004fc10d3883c06166f1a2eea132d0889fac63",
+        "bytes": 24932,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tests/auth.spec.js",
+      "canonical": {
+        "sha": "59378a7a8b679d9f1f3ec64b4d2486afe1bb7cc1",
+        "bytes": 4493,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tests/auth.spec.ts",
+      "canonical": {
+        "sha": "1ecbba7296ebb638345e268f6878cff359dcb45f",
+        "bytes": 734,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tests/login-screen.spec.js",
+      "canonical": {
+        "sha": "5aafbfe74f6f5ef6a78b423dd2d5cd7b6e7a22ca",
+        "bytes": 3067,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tests/login-screen.spec.ts",
+      "canonical": {
+        "sha": "89feeba030e87d55a719a6dfeb68b3d3283510e7",
+        "bytes": 199,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json",
+      "canonical": {
+        "sha": "c86ef7bfc84eca8b2e2fce518bf1eb8211791562",
+        "bytes": 971,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": {
+        "sha": "c86ef7bfc84eca8b2e2fce518bf1eb8211791562",
+        "bytes": 971,
+        "mode": "100644"
+      },
+      "status": "identical"
+    },
+    {
+      "path": "tsconfig.json.bak.20260128T002239",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json.bak.20260128T002240",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json.bak.20260128T002645",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json.bak.20260128T003045",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json.bak.20260128T003046",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.json.bak.20260129T084230",
+      "canonical": {
+        "sha": "d3002be494819efc5b9d9fe63b1ce6db31b1b00e",
+        "bytes": 730,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    },
+    {
+      "path": "tsconfig.prod.json",
+      "canonical": {
+        "sha": "74574fc43e0dad1696d23afa583ca73a6c2d69a1",
+        "bytes": 187,
+        "mode": "100644"
+      },
+      "legacy_functions_mirror": null,
+      "status": "canonical_only"
+    }
+  ]
+}
