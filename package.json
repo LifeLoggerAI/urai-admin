@@ -12,7 +12,7 @@
     "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm analytics:typecheck && pnpm --dir functions typecheck",
     "check:types": "pnpm typecheck",
     "test:institutional-control-plane": "node scripts/test-institutional-control-plane-contract.mjs",
-    "test": "pnpm security:gate && pnpm test:institutional-control-plane && pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
+    "test": "pnpm security:gate && pnpm test:packaged-source && pnpm test:institutional-control-plane && pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
     "test:unit": "pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
     "test:rules": "node scripts/test-firestore-rules-contract.mjs",
     "test:e2e": "node scripts/test-admin-route-contracts.mjs",
