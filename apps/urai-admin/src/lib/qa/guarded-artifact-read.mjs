@@ -1,6 +1,7 @@
 import { constants } from 'node:fs';
 import { open, realpath } from 'node:fs/promises';
 import path from 'node:path';
+import { Buffer } from 'node:buffer';
 
 const KNOWN_QA_DIRECTORIES = new Set(['deploy_screenshots', 'deploy_diffs', 'deploy_logs']);
 const DEFAULT_MAX_BYTES = 32 * 1024 * 1024;
@@ -29,12 +30,14 @@ export async function readGuardedQaFile({
     throw new Error('QA artifact roots are not allowlisted');
   }
   if (!Array.isArray(allowedExtensions) || allowedExtensions.length === 0 ||
-      !Number.isSafeInteger(maxBytes) || maxBytes < 1) {
+      !Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > DEFAULT_MAX_BYTES) {
     throw new Error('QA artifact type or size policy is invalid');
   }
 
   const home = path.resolve(homeDir);
-  const candidate = path.resolve(requestedPath);
+  // Accept canonical HOME-relative references from the diff API, while keeping
+  // absolute legacy image paths contained by the same policy.
+  const candidate = path.resolve(home, requestedPath);
   const allowed = allowedDirectories.some((directory) =>
     isStrictDescendant(path.join(home, directory), candidate));
   if (!allowed) throw new Error('QA artifact is outside allowed directories');
@@ -59,9 +62,19 @@ export async function readGuardedQaFile({
     const stat = await file.stat();
     if (!stat.isFile()) throw new Error('QA artifact is not a regular file');
     if (stat.size > maxBytes) throw new Error('QA artifact exceeds size limit');
-    const bytes = await file.readFile();
-    if (bytes.byteLength > maxBytes) throw new Error('QA artifact exceeds size limit');
-    return { bytes, extension };
+    // A file can grow after fstat(). Never call readFile() without a hard
+    // independent byte cap: read at most maxBytes + 1, even under append races.
+    const chunks = [];
+    let length = 0;
+    while (true) {
+      const chunk = Buffer.allocUnsafe(Math.min(65536, maxBytes - length + 1));
+      const { bytesRead } = await file.read(chunk, 0, chunk.length, null);
+      if (bytesRead === 0) break;
+      length += bytesRead;
+      if (length > maxBytes) throw new Error('QA artifact exceeds size limit');
+      chunks.push(chunk.subarray(0, bytesRead));
+    }
+    return { bytes: Buffer.concat(chunks, length), extension };
   } finally {
     await file.close();
   }

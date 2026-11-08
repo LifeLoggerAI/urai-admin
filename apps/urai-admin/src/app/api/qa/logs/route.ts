@@ -1,8 +1,8 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { readGuardedQaFile } from '@/lib/qa/guarded-artifact-read.mjs';
+import { parseQaSnapshot, qaLogSummary } from '@/lib/qa/safe-snapshot-summary.mjs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,25 +26,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Log directory is not configured' }, { status: 500 });
     }
 
-    const snapshotFile = path.resolve(homeDir, 'deploy_logs', `urai-admin_curr_snapshot_${tag}.json`);
-    const allowedDir = path.resolve(homeDir, 'deploy_logs');
-
-    if (!snapshotFile.startsWith(`${allowedDir}${path.sep}`)) {
-      return NextResponse.json({ error: 'Invalid log path' }, { status: 400 });
-    }
-
-    const snapshotStr = await fs.readFile(snapshotFile, 'utf-8');
-    const snapshot = JSON.parse(snapshotStr) as {
-      links?: Record<string, number>;
-      console?: unknown[];
-    };
-
-    return NextResponse.json({
-      brokenLinks: Object.entries(snapshot.links ?? {})
-        .filter(([, status]) => status !== 200)
-        .map(([url, status]) => ({ url, status })),
-      consoleErrors: snapshot.console ?? [],
+    const snapshotFile = `deploy_logs/urai-admin_curr_snapshot_${tag}.json`;
+    const { bytes } = await readGuardedQaFile({
+      homeDir,
+      requestedPath: snapshotFile,
+      allowedDirectories: ['deploy_logs'],
+      allowedExtensions: ['.json'],
+      maxBytes: 1024 * 1024,
     });
+    const summary = qaLogSummary(parseQaSnapshot(bytes));
+    return NextResponse.json(summary, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     if (error instanceof Error && 'status' in error) {
       return adminAuthErrorResponse(error);
