@@ -54,3 +54,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R885 compiled Next bundle parity (2026-11-07/08 UTC)
 
 [20_R885_COMPILED_NEXT_ARTIFACT_PARITY_20261107.md](20_R885_COMPILED_NEXT_ARTIFACT_PARITY_20261107.md) records review-only [Admin #110](https://github.com/LifeLoggerAI/urai-admin/pull/110) stacked on R884 #109. The original source parity guard checked copied source and Next BUILD_ID but not compiled server/client files; R885 now checks complete retained `.next` file-path and SHA256 byte parity after intentional removal of cache/maps. Native synthetic packaging tests **16/16 PASS**, exact GitHub-tested MJS blobs matched. No full actual Next build, generated Functions archive, provider identity or authenticated Firebase acceptance. Production HOLD.
+
+## R886 Firebase Functions upload containment (2026-11-07/08 UTC)
+
+[21_R886_FUNCTIONS_UPLOAD_LEGACY_EXCLUSION_20261107.md](21_R886_FUNCTIONS_UPLOAD_LEGACY_EXCLUSION_20261107.md) documents draft [Admin PR #111](https://github.com/LifeLoggerAI/urai-admin/pull/111) stacked on #110. Existing package parity checks did not prevent 146 tracked legacy `functions/apps/urai-admin` files from entering the Firebase Functions source upload; added precise `firebase.json` ignores and pinned them in guard/tests. Local exact-blob Node packaging suite **19/19 PASS**; actual Firebase ZIP/deployed package and private-data permissions are NOT certified. Shared Functions default codebase/Rules and CI runner remain production HOLD.
