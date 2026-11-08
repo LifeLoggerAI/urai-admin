@@ -22,3 +22,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R877 protected-session invariant (2026-11-07/08 UTC)
 
 [R877 Admin claim and CI continuation](12_R877_ADMIN_CLAIM_AND_CI_CONTINUATION_20261107.md) records a new unmerged defense-in-depth repair in [Admin PR #103](https://github.com/LifeLoggerAI/urai-admin/pull/103): require the explicit signed `admin:true` claim even when canonical role/active record matches; add role-bearing non-admin signed-cookie denial test in isolated emulator runner. PR #102 had four failed exact-head workflows with empty step lists; there is no new installed/full-build/emulator PASS or live production permission proof. Preserve shared Rules/Functions production HOLD.
+
+## R878 QA artifact file containment (2026-11-07/08 UTC)
+
+[13_R878_QA_FILE_BOUNDARY_20261107.md](13_R878_QA_FILE_BOUNDARY_20261107.md) documents a source-confirmed symlink-following risk in owner-only QA image reads, the independent review fix [Admin PR #104](https://github.com/LifeLoggerAI/urai-admin/pull/104), and 12/12 locally passing synthetic filesystem tests. The fix is draft, not deployed. Full workspace native CI and protected runtime remain unverified; directory-swap TOCTOU and other QA routes still need independent review. Production HOLD remains.
