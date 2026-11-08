@@ -36,3 +36,7 @@ P0: full no-cost clean/frozen source install and native app/Functions builds, ru
 P0: read-only `urai-4dc1d` effective IAM, Rules and Functions publisher inventory; dedicated codebase migration review and authenticated real emulator/private memories/media/consent cross-user denial. Production authorization and rollback remain unverified.
 
 **DO NOT DECLARE ADMIN SECURE OR RELEASE GO.** Preserve other workers and the master registry.
+
+## Exact-head R887 GitHub Actions
+
+At Admin draft PR #112 SHA `903052be9e104c2895d99628006836768ffc9960`, four workflow conclusions were **FAILURE** with **zero recorded job steps**: Admin CI run `42446291941` / job `128625811408`; Validate run `42446291828` / job `128625811072`; Visual Truth run `42446291844` / job `128625811272`; Production Verify run `42446291768` / job `128625810955`. No GitHub build or test run can be inferred from those failures. Root cause is not authenticated by an exact-head annotation. Preserve the 27 local synthetic/integrated PASS as separate evidence and keep production HOLD.
