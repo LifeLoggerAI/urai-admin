@@ -30,3 +30,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R879 QA JSON privacy minimization (2026-11-07/08 UTC)
 
 [14_R879_QA_JSON_AND_LOG_MINIMIZATION_20261107.md](14_R879_QA_JSON_AND_LOG_MINIMIZATION_20261107.md) records independent draft [Admin PR #105](https://github.com/LifeLoggerAI/urai-admin/pull/105), addressing previously unbounded symlink-following QA log/diff snapshot reads and sensitive raw console/query data in responses. Six paths changed; new source tests registered, not yet executed against an exact native workspace. Original QA snapshots root and parent-directory TOCTOU require separate review. All prior security, Firebase Rules/Functions and deployment gates remain production HOLD.
+
+## R880 QA native verification and collision repair (2026-11-07/08 UTC)
+
+[15_R880_QA_NATIVE_VALIDATION_AND_COLLISION_REPAIR_20261107.md](15_R880_QA_NATIVE_VALIDATION_AND_COLLISION_REPAIR_20261107.md) records draft [Admin #106](https://github.com/LifeLoggerAI/urai-admin/pull/106) atop #105. The checked-in R879 QA artifact test had an actual Node syntax failure; the snapshot diff mapper accepted distinct keys that collapsed to identical image filenames. Both now repaired and **24/24 locally executed isolated Node tests PASS on exact Git-blob-matched sources**. No complete monorepo native build, GitHub green CI, IAM, Auth emulator or deployed-source proof. Preserve production HOLD.
