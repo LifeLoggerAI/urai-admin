@@ -70,3 +70,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R889 frozen Firebase minimatch3.1.5 upload policy (2026-11-08 UTC)
 
 [24_R889_LOCKED_FIREBASE_MINIMATCH_UPLOAD_POLICY_20261108.md](24_R889_LOCKED_FIREBASE_MINIMATCH_UPLOAD_POLICY_20261108.md) resolves the v9-v3 matcher discrepancy using frozen `pnpm-lock.yaml` SHA `e36f5624094a014f94754fc70fd845d487f05379`: pinned Firebase CLI 15.24.0 resolves minimatch **3.1.5**. Published matcher v3.0.4, v3.1.2 and exact locked v3.1.5 all excluded **146/146 legacy files**, excluded **0/12 other tracked files**, matched the legacy parent directory and preserved generated runtime paths across four absolute POSIX workspace prefixes. Actual Firebase CLI archive and full Next build remain unverified. Production HOLD; no new application PR.
+
+## R890 Functions test/orphan upload minimization (2026-11-08 UTC)
+
+[25_R890_FUNCTIONS_UPLOAD_MINIMIZATION_20261108.md](25_R890_FUNCTIONS_UPLOAD_MINIMIZATION_20261108.md) records draft [Admin PR #113](https://github.com/LifeLoggerAI/urai-admin/pull/113) stacked after #112. It preserves tracked source history while excluding four CI test files and an unreferenced old callable from Functions uploads, on top of 146 pre-excluded legacy Admin mirror files. Exact frozen minimatch 3.1.5 source evaluation: **151/151 intended files excluded, 0/7 remaining tracked candidates excluded**; local exact-blob Node packaging suites **30/30 PASS**. Real Firebase ZIP/build and IAM/Privacy denial remain pending; production HOLD.
