@@ -23,3 +23,7 @@ Added source contract assertions and an Auth/Firestore emulator regression that 
 P0: actual Actions runner diagnostics (prior failed jobs have zero recorded steps), frozen full native build and verified emulator, effective `urai-4dc1d` IAM+project-wide Firestore/Storage rule owner, dedicated Functions namespace migration, protected owner/admin/viewer cross-user private media/memory/consent negative tests, exact deployed source and verified rollback. P1: QA parent-directory TOCTOU and artifact storage minimization, audit integrity, production request cost/latency of per-read Auth account verification, cross-product data ownership (Privacy/Jobs/Studio/Analytics/Communications/RuAi). No live admin/roles/rules/deploy changes authorized.
 
 **R882 review branch only; One UrAi Genesis production HOLD.**
+
+## Exact-head R882 GitHub Actions readback
+
+At #108 head `67a48d342627524d384b15771723321abff73e20`, four completed workflow **FAILURE** conclusions: Validate `42442711289`, CI `42442711268`, Visual `42442711299`, Production Verify `42442711257`. Each workflow's returned job record contained **zero steps**. Failure cause cannot be established from accessible metadata; no installed full source CI/build/Firebase emulator PASS is claimed. The local 17/17 isolated native source tests are separate evidence. **Production HOLD.**
