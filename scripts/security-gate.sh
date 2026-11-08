@@ -113,9 +113,9 @@ required_pattern ".github/workflows/deploy.yml" "confirmation:"
 required_pattern ".github/workflows/deploy.yml" "target_sha:"
 required_pattern ".github/workflows/deploy.yml" "persist-credentials: false"
 required_pattern ".github/workflows/deploy.yml" "git merge-base --is-ancestor"
-required_pattern "scripts/deploy-production.sh" "^[[:space:]]*required_pattern "scripts/deploy-production.sh" "node scripts/assert-admin-functions-codebase.mjs"
+required_pattern "scripts/deploy-production.sh" "^[[:space:]]*node scripts/validate-admin-hosting-target.mjs --require-bound[[:space:]]*$"
+required_pattern "scripts/deploy-production.sh" "^[[:space:]]*node scripts/assert-admin-functions-codebase.mjs[[:space:]]*$"
 required_pattern ".github/workflows/deploy.yml" "node scripts/assert-admin-functions-codebase.mjs"
-node scripts/validate-admin-hosting-target.mjs --require-bound[[:space:]]*$"
 required_pattern "scripts/deploy-production.sh" "^[[:space:]]*firebase deploy --only hosting:urai-admin-production,functions -P urai-4dc1d[[:space:]]*$"
 node scripts/validate-admin-hosting-target.mjs
 required_pattern "firebase.json" '"source": "apps/urai-admin"'
