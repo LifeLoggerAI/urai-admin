@@ -26,3 +26,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R878 QA artifact file containment (2026-11-07/08 UTC)
 
 [13_R878_QA_FILE_BOUNDARY_20261107.md](13_R878_QA_FILE_BOUNDARY_20261107.md) documents a source-confirmed symlink-following risk in owner-only QA image reads, the independent review fix [Admin PR #104](https://github.com/LifeLoggerAI/urai-admin/pull/104), and 12/12 locally passing synthetic filesystem tests. The fix is draft, not deployed. Full workspace native CI and protected runtime remain unverified; directory-swap TOCTOU and other QA routes still need independent review. Production HOLD remains.
+
+## R879 QA JSON privacy minimization (2026-11-07/08 UTC)
+
+[14_R879_QA_JSON_AND_LOG_MINIMIZATION_20261107.md](14_R879_QA_JSON_AND_LOG_MINIMIZATION_20261107.md) records independent draft [Admin PR #105](https://github.com/LifeLoggerAI/urai-admin/pull/105), addressing previously unbounded symlink-following QA log/diff snapshot reads and sensitive raw console/query data in responses. Six paths changed; new source tests registered, not yet executed against an exact native workspace. Original QA snapshots root and parent-directory TOCTOU require separate review. All prior security, Firebase Rules/Functions and deployment gates remain production HOLD.
