@@ -27,3 +27,7 @@ P0: resolve effective `urai-4dc1d` project-wide Firestore/Storage Rules owner an
 P1: QA directory-swap TOCTOU hardening, log retention, audit and cross-system lifecycle, device/accessibility verification. The parity guard proves only selected local build input/output file relationships after packaging; **not** remote deployment identity or full dependency/supply-chain provenance.
 
 **No production GO.**
+
+## Exact-head R885 GitHub Actions readback
+
+Draft #110 source SHA `d6b0bd7e6865b55004a5483b3c7be99d9ae3d27d` triggered four completed workflow **FAILURE** conclusions: CI run `42445241122` / job `128622669731`; Validate `42445241210` / job `128622670178`; Visual Truth `42445241184` / job `128622669854`; Production Verify `42445241133` / job `128622669700`. Each returned job has **zero recorded steps**. Thus no complete source install, Next build, real generated package parity or Firebase emulator run was demonstrated in GitHub. Billing/runner admission remains a plausible external blocker from prior estate evidence, but exact R885 job-level root cause is unverified. Preserve the 16/16 local synthetic PASS as separate, limited evidence and maintain HOLD.
