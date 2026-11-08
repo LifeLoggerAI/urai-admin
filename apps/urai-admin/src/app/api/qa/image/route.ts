@@ -1,30 +1,12 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { adminAuthErrorResponse, requireAdminSession } from '@/lib/admin/require-admin-session';
+import { readGuardedQaFile } from '@/lib/qa/guarded-artifact-read.mjs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
-
-function resolveAllowedImagePath(homeDir: string, requestedPath: string) {
-  const candidate = path.resolve(requestedPath);
-  const allowedRoots = [
-    path.resolve(homeDir, 'deploy_screenshots'),
-    path.resolve(homeDir, 'deploy_diffs'),
-  ];
-
-  const insideAllowedRoot = allowedRoots.some(
-    (root) => candidate === root || candidate.startsWith(`${root}${path.sep}`),
-  );
-  if (!insideAllowedRoot) throw new Error('Image path is outside the authorized QA artifact roots');
-
-  const extension = path.extname(candidate).toLowerCase();
-  if (!IMAGE_EXTENSIONS.has(extension)) throw new Error('Unsupported QA image type');
-  return { candidate, extension };
-}
 
 function contentType(extension: string) {
   if (extension === '.jpg' || extension === '.jpeg') return 'image/jpeg';
@@ -47,18 +29,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'QA artifact directory is not configured' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
     }
 
-    let resolved;
+    let guarded;
     try {
-      resolved = resolveAllowedImagePath(homeDir, imagePath);
+      guarded = await readGuardedQaFile({
+        homeDir,
+        requestedPath: imagePath,
+        allowedDirectories: ['deploy_screenshots', 'deploy_diffs'],
+        allowedExtensions: [...IMAGE_EXTENSIONS],
+      });
     } catch {
-      return NextResponse.json({ error: 'Invalid QA image path' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json({ error: 'Invalid or unavailable QA image' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const imageBuffer = await fs.readFile(resolved.candidate);
-    return new NextResponse(imageBuffer, {
+    return new NextResponse(guarded.bytes, {
       status: 200,
       headers: {
-        'Content-Type': contentType(resolved.extension),
+        'Content-Type': contentType(guarded.extension),
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
       },
