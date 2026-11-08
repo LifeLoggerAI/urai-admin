@@ -38,3 +38,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R881 protected read authority versus current Firebase Auth (2026-11-07/08 UTC)
 
 [16_R881_CURRENT_AUTH_CLAIMS_20261107.md](16_R881_CURRENT_AUTH_CLAIMS_20261107.md) records separate [Admin draft PR #107](https://github.com/LifeLoggerAI/urai-admin/pull/107), a defense-in-depth guard requiring current Firebase Auth account claim/role/version to match the signed session and canonical active Firestore member. Added real-source test and emulator regression *source*, plus 10/10 local synthetic extracted-function checks, not a full exact-source native build or Firebase emulator PASS. All shared Rules, default Functions namespace, IAM, privacy and deployment certification remain PRODUCTION HOLD.
+
+## R882 session exchange authority (2026-11-07/08 UTC)
+
+[17_R882_SESSION_EXCHANGE_AUTHORITY_20261107.md](17_R882_SESSION_EXCHANGE_AUTHORITY_20261107.md) documents [Admin draft PR #108](https://github.com/LifeLoggerAI/urai-admin/pull/108), an unmerged guard checking pending canonical role/active mutations and matching current Auth/token/canonical role versions before issuing admin cookies. Exact-Git-blob-matched production source with synthetic dependencies: combined native authorization tests **17/17 PASS** (Node 22.16.0), distinct from unexecuted Firebase emulator and blocked full GitHub CI. Preserve provider IAM and global Rules/Functions release HOLD.
