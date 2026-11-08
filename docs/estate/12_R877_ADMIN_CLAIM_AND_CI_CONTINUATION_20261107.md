@@ -33,3 +33,7 @@ R877 modifies the session function's role gate to reject `decodedToken.admin !==
 6. Resolve single federated Rules publisher and dedicated Functions codebase migration only under reviewed owner authority; then protected release and rollback source pin, device/accessibility acceptance and independent review.
 
 No production deployment, cloud mutation, secret disclosure or paid compute performed.
+
+## New exact R877 CI readback
+
+At new PR #103 head `b0bb890fe8ca268341453c324bc849b014d1d020`, GitHub reports four completed **FAILURE** runs: Visual `42436396621`, CI `42436396620`, Production Verify `42436396633`, Validate `42436396645`. No positive exact-head workflow or installed emulator run was obtained. As with predecessor runs, the failure mechanism requires authorized run/check annotations and job diagnostics; do not treat source-only patches as operationally certified.
