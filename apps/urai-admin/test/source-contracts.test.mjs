@@ -54,6 +54,9 @@ assert.match(requireAdminSession, /isActive\s*!==\s*true/, 'inactive admin users
 assert.match(requireAdminSession, /adminUser\?\.role\s*!==\s*role/, 'custom claim role must match adminUsers role');
 assert.match(requireAdminSession, /allowedRoles\.includes\(role\)/, 'admin sessions must enforce route-specific allowed roles');
 assert.match(requireAdminSession, /decodedToken\.admin\s*!==\s*true/, 'protected sessions must require signed admin claim even with a valid role and active record');
+assert.match(requireAdminSession, /auth\.getUser\(decodedToken\.uid\)/, 'protected reads must check current Firebase Auth account');
+assert.match(requireAdminSession, /currentClaims\.admin\s*!==\s*true/, 'protected reads must reject current Auth claim withdrawal');
+assert.match(requireAdminSession, /readRoleVersion\(currentClaims\.roleVersion\)\s*!==\s*roleVersion/, 'protected reads must reject changed Auth role incarnation');
 assert.match(requireAdminSession, /__session/, 'admin sessions must be based on the hardened Firebase session cookie');
 assert.match(requireAdminSession, /requireSameOrigin/, 'admin mutations must reject untrusted origins');
 assert.match(requireAdminSession, /URAI_ADMIN_ALLOWED_ORIGINS/, 'production origin authority must come from explicit configuration');
