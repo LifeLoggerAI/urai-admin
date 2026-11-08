@@ -58,3 +58,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R886 Firebase Functions upload containment (2026-11-07/08 UTC)
 
 [21_R886_FUNCTIONS_UPLOAD_LEGACY_EXCLUSION_20261107.md](21_R886_FUNCTIONS_UPLOAD_LEGACY_EXCLUSION_20261107.md) documents draft [Admin PR #111](https://github.com/LifeLoggerAI/urai-admin/pull/111) stacked on #110. Existing package parity checks did not prevent 146 tracked legacy `functions/apps/urai-admin` files from entering the Firebase Functions source upload; added precise `firebase.json` ignores and pinned them in guard/tests. Local exact-blob Node packaging suite **19/19 PASS**; actual Firebase ZIP/deployed package and private-data permissions are NOT certified. Shared Functions default codebase/Rules and CI runner remain production HOLD.
+
+## R887 actual Next packaging script integration (2026-11-07/08 UTC)
+
+[22_R887_ACTUAL_PACKAGER_INTEGRATION_20261107.md](22_R887_ACTUAL_PACKAGER_INTEGRATION_20261107.md) records draft [Admin #112](https://github.com/LifeLoggerAI/urai-admin/pull/112), adding eight cases that invoke the source-matched real packaging shell script against disposable Next fixtures and check the generated output with the R886 parity guard. Executed local combined packaging tests **27/27 PASS** (19 guard tests plus 8 shell integration cases); no full real Next build, Firebase ZIP, provider IAM, protected user data or release certification. Production HOLD and all earlier workers preserved.
