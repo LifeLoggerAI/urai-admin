@@ -38,11 +38,19 @@ export function parseQaSnapshot(bytes) {
     }
     return { path: route, status };
   });
+  const filenameStems = new Set();
   const screenshotRecords = Object.entries(screenshots).map(([key, digest]) => {
     if (!SAFE_KEY.test(key) || key.includes('..') ||
         typeof digest !== 'string' || !/^[a-f0-9]{64}$/i.test(digest)) {
       throw new Error('Invalid QA screenshot record');
     }
+    // The historical screenshot writer and diff reader collapse '/', and
+    // several other characters, into '_'. Two distinct keys must never resolve
+    // to one evidence filename; refuse the whole snapshot rather than silently
+    // misattribute screenshots or fabricate a visual comparison.
+    const stem = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+    if (filenameStems.has(stem)) throw new Error('Ambiguous QA screenshot filename');
+    filenameStems.add(stem);
     return { key, digest };
   });
   // Console entries may contain secrets, tokens, private data or arbitrary JS.
