@@ -71,6 +71,17 @@ export function verifyAdminPackagedSource({ cwd = process.cwd() } = {}) {
   assert.deepEqual(activeConfig.files, ['src/index.ts'], 'Active Functions entrypoint must remain explicit');
   assert.equal(readJson(path.join(root, 'functions', 'package.json')).main, 'lib/index.js');
   const firebase = readJson(path.join(root, 'firebase.json'));
+  const functionEntries = Array.isArray(firebase.functions) ? firebase.functions : [firebase.functions];
+  assert.equal(functionEntries.length, 1, 'Exactly one Admin Functions source package is permitted');
+  assert.equal(functionEntries[0]?.source, 'functions', 'Admin Functions upload must use functions/ as source');
+  // firebase-tools v15.24.0 enumerates the whole Functions source tree for the
+  // upload archive. Only functions/.generated contains the canonical Next app;
+  // tracked functions/apps/urai-admin is obsolete and must be excluded at the
+  // directory traversal boundary (and for file-level defense in depth).
+  assert.deepEqual(functionEntries[0]?.ignore, [
+    'node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log',
+    '**/functions/apps', '**/functions/apps/**',
+  ], 'Functions ignore policy must exclude the legacy tracked Admin mirror without excluding the generated runtime');
   assert.equal(firebase.hosting?.source, 'apps/urai-admin', 'Firebase Hosting must use canonical Admin source');
   assert.ok(firebase.hosting?.rewrites?.some((r) => r.source === '**' && r.function === 'nextServer'), 'Firebase Hosting must rewrite to canonical packaged nextServer');
   const sourcePackage = readJson(path.join(app, 'package.json'));
