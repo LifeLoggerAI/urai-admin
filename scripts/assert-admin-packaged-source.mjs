@@ -78,10 +78,14 @@ export function verifyAdminPackagedSource({ cwd = process.cwd() } = {}) {
   // upload archive. Only functions/.generated contains the canonical Next app;
   // tracked functions/apps/urai-admin is obsolete and must be excluded at the
   // directory traversal boundary (and for file-level defense in depth).
+  // The tracked functions/test files are CI-only, and logAdminAction.ts is
+  // outside tsconfig.active and imports a missing ./auth module; neither is
+  // a legitimate deployment artifact. Keep them tracked for review, not upload.
   assert.deepEqual(functionEntries[0]?.ignore, [
     'node_modules', '.git', 'firebase-debug.log', 'firebase-debug.*.log',
     '**/functions/apps', '**/functions/apps/**',
-  ], 'Functions ignore policy must exclude the legacy tracked Admin mirror without excluding the generated runtime');
+    '**/functions/test', '**/functions/test/**', '**/functions/logAdminAction.ts',
+  ], 'Functions ignore policy must exclude legacy tracked Admin mirror, unused tests and orphan callable without excluding the generated runtime');
   assert.equal(firebase.hosting?.source, 'apps/urai-admin', 'Firebase Hosting must use canonical Admin source');
   assert.ok(firebase.hosting?.rewrites?.some((r) => r.source === '**' && r.function === 'nextServer'), 'Firebase Hosting must rewrite to canonical packaged nextServer');
   const sourcePackage = readJson(path.join(app, 'package.json'));
