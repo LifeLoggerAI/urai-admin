@@ -34,3 +34,7 @@ Read [11_R876_ADMIN_SECURITY_RECONCILIATION_20261107.md](11_R876_ADMIN_SECURITY_
 ## R880 QA native verification and collision repair (2026-11-07/08 UTC)
 
 [15_R880_QA_NATIVE_VALIDATION_AND_COLLISION_REPAIR_20261107.md](15_R880_QA_NATIVE_VALIDATION_AND_COLLISION_REPAIR_20261107.md) records draft [Admin #106](https://github.com/LifeLoggerAI/urai-admin/pull/106) atop #105. The checked-in R879 QA artifact test had an actual Node syntax failure; the snapshot diff mapper accepted distinct keys that collapsed to identical image filenames. Both now repaired and **24/24 locally executed isolated Node tests PASS on exact Git-blob-matched sources**. No complete monorepo native build, GitHub green CI, IAM, Auth emulator or deployed-source proof. Preserve production HOLD.
+
+## R881 protected read authority versus current Firebase Auth (2026-11-07/08 UTC)
+
+[16_R881_CURRENT_AUTH_CLAIMS_20261107.md](16_R881_CURRENT_AUTH_CLAIMS_20261107.md) records separate [Admin draft PR #107](https://github.com/LifeLoggerAI/urai-admin/pull/107), a defense-in-depth guard requiring current Firebase Auth account claim/role/version to match the signed session and canonical active Firestore member. Added real-source test and emulator regression *source*, plus 10/10 local synthetic extracted-function checks, not a full exact-source native build or Firebase emulator PASS. All shared Rules, default Functions namespace, IAM, privacy and deployment certification remain PRODUCTION HOLD.
