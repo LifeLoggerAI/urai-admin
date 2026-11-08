@@ -12,7 +12,7 @@
     "typecheck": "pnpm clean:legacy && pnpm --dir apps/urai-admin typecheck && pnpm analytics:typecheck && pnpm --dir functions typecheck",
     "check:types": "pnpm typecheck",
     "test:institutional-control-plane": "node scripts/test-institutional-control-plane-contract.mjs",
-    "test": "pnpm security:gate && pnpm test:packaged-source && pnpm test:institutional-control-plane && pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
+    "test": "pnpm security:gate && pnpm test:packaged-source && pnpm test:packaging-integration && pnpm test:institutional-control-plane && pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
     "test:unit": "pnpm --dir apps/urai-admin test && pnpm analytics:test && pnpm --dir functions test",
     "test:rules": "node scripts/test-firestore-rules-contract.mjs",
     "test:e2e": "node scripts/test-admin-route-contracts.mjs",
@@ -38,7 +38,8 @@
     "receipt:admin-auth-runtime:emulator": "firebase emulators:exec --only auth,firestore --config firebase.emulator.json --project urai-admin-emulator \"node scripts/run-admin-auth-runtime-emulator-receipt.mjs\"",
     "test:dependency-security": "node --test scripts/dependency-security.behavior.test.cjs",
     "security:audit": "pnpm audit --audit-level=low",
-    "test:packaged-source": "node --test scripts/test-admin-packaged-source.mjs"
+    "test:packaged-source": "node --test scripts/test-admin-packaged-source.mjs",
+    "test:packaging-integration": "node --test scripts/test-admin-packaging-integration.mjs"
   },
   "workspaces": [
     "apps/*",
