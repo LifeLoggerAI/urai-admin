@@ -71,6 +71,7 @@ require_file "docs/EVIDENCE_LOG.md"
 require_file "scripts/preflight-production.sh"
 require_file "scripts/deploy-production.sh"
 require_file "scripts/assert-admin-functions-codebase.mjs"
+require_file "scripts/test-admin-security-gate-contract.mjs"
 require_file "scripts/validate-admin-hosting-target.mjs"
 require_file "scripts/smoke-test.sh"
 require_file "scripts/verify-production-live.sh"
@@ -153,5 +154,7 @@ secret_pattern='-----BEGIN (RSA |EC |OPENSSH |)PRIVATE[[:space:]]+KEY-----|AI''z
 if grep -RInE "$secret_pattern" apps/urai-admin/src functions/src 2>/dev/null; then
   fail "Potential hardcoded private credential or Firebase key literal found"
 fi
+
+node --test scripts/test-admin-security-gate-contract.mjs
 
 echo "--- Security gate passed ---"
