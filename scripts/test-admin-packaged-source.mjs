@@ -28,6 +28,8 @@ function fixture(run) {
     put(p + 'src/app/api/admin/collection/route.ts', 'filtered collection fixture');
     put(p + 'next.config.js', 'module.exports = { reactStrictMode: true }');
     put(p + '.next/BUILD_ID', 'fake-next-build');
+    put(p + '.next/server/app/index.js', 'compiled-renderer');
+    put(p + '.next/static/chunks/main.js', 'compiled-client');
   }
   try { return run({ root, put, canonical, packaged }); }
   finally { rmSync(root, { recursive: true, force: true }); }
@@ -38,6 +40,8 @@ test('identical canonical and generated source verifies without requiring legacy
   const result = verifyAdminPackagedSource({ cwd: root });
   assert.equal(result.filesVerified, 3);
   assert.ok(result.bytesVerified > 0);
+  assert.equal(result.compiledFilesVerified, 3);
+  assert.ok(result.compiledBytesVerified > 0);
 }));
 
 test('modified packaged Admin authority is rejected', () => fixture(({ root, put, packaged }) => {
@@ -86,4 +90,47 @@ test('packaged symlinked source file is rejected', () => fixture(({ root, packag
 test('unexpected packaged package.json scripts or dependencies are rejected', () => fixture(({ root, put, packaged }) => {
   put(packaged + 'package.json', JSON.stringify({ name: 'fixture-admin', scripts: { build: 'next build' }, dependencies: { next: 'bad-version' } }));
   assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /package.json must differ only/);
+}));
+
+
+test('tampered packaged Next server JavaScript is rejected even with matching BUILD_ID', () => fixture(({ root, put, packaged }) => {
+  put(packaged + '.next/server/app/index.js', 'different compiled admin authority');
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /compiled artifact differs/);
+}));
+
+test('tampered packaged Next client chunks are rejected', () => fixture(({ root, put, packaged }) => {
+  put(packaged + '.next/static/chunks/main.js', 'different client bundle');
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /compiled artifact differs/);
+}));
+
+test('missing and additional packaged compiled files are rejected', () => fixture(({ root, put, packaged }) => {
+  rmSync(path.join(root, packaged, '.next/server/app/index.js'));
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /artifact paths must exactly match/);
+  put(packaged + '.next/server/app/index.js', 'compiled-renderer');
+  put(packaged + '.next/server/app/unauthorized.js', 'stale compiled bundle');
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /artifact paths must exactly match/);
+}));
+
+test('Next artifact symlink is rejected independently of source match', () => fixture(({ root, packaged }) => {
+  const target = path.join(root, packaged, '.next/server/app/index.js');
+  rmSync(target);
+  symlinkSync(path.join(root, 'apps/urai-admin/.next/server/app/index.js'), target);
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /Next artifact symlink/);
+}));
+
+test('removed cache and sourcemaps are excluded, but packaged remnants fail closed', () => fixture(({ root, put, canonical, packaged }) => {
+  put(canonical + '.next/cache/webpack/build.bin', 'source cache intentionally excluded');
+  put(canonical + '.next/server/app/index.js.map', 'source map intentionally stripped');
+  assert.ok(verifyAdminPackagedSource({ cwd: root }).compiledFilesVerified > 0);
+  put(packaged + '.next/cache/webpack/build.bin', 'stale cache should be missing');
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /Packaged Next cache/);
+  rmSync(path.join(root, packaged, '.next/cache'), { recursive: true, force: true });
+  put(packaged + '.next/server/app/index.js.map', 'stripped map should be absent');
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /Packaged Next generated metadata/);
+}));
+
+test('compiled Next server output is mandatory', () => fixture(({ root, canonical, packaged }) => {
+  rmSync(path.join(root, canonical, '.next/server'), { recursive: true, force: true });
+  rmSync(path.join(root, packaged, '.next/server'), { recursive: true, force: true });
+  assert.throws(() => verifyAdminPackagedSource({ cwd: root }), /Compiled Next server output is missing/);
 }));
