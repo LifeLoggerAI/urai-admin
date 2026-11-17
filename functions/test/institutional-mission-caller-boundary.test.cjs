@@ -72,6 +72,22 @@ current={...principal};let toggled=false;
 const revocable=await createMissionSession({...opts(),verifyCredential:async()=>toggled?null:principal});
 toggled=true;
 await deny('revoked credential denied on next call',()=>revocable.readTask('task_safe'));
+// Pin trust configuration even when server-owned options object is later mutated.
+current={...principal};
+const mutableIssuer=opts();
+const issuerSession=await createMissionSession(mutableIssuer);
+mutableIssuer.issuer='attacker-issuer';
+current={...principal,issuer:'attacker-issuer'};
+await deny('mutated issuer never widens session authority',()=>issuerSession.readTask('task_safe'));
+current={...principal};
+const mutableVerifier=opts();
+const verifierSession=await createMissionSession(mutableVerifier);
+mutableVerifier.verifyCredential=async()=>({...principal});
+await pass('mutated verifier cannot replace trusted callback',async()=>{
+ const before=verificationCalls;
+ await verifierSession.readTask('task_safe');
+ assert.ok(verificationCalls>before);
+});
 assert.equal(transactionCalls,0);
 console.log('RESULT',JSON.stringify({checks,passed:checks,reads,verificationCalls,transactions:transactionCalls,realProviderIam:false,realHostedFirestore:false}));
 })().catch(e=>{console.error(e.stack);process.exitCode=2});
