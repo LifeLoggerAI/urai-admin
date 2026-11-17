@@ -62,8 +62,14 @@ class FakeFirestore {
 const db = new FakeFirestore();
 let time = 1794905500000;
 const permitted = async () => true;
-const store = new InstitutionalMissionCoordination(db, permitted);
+db.data.set('r1474SyntheticGrants/review_fixture', { active: true });
+const fence = async (tx) => {
+  const grant = await tx.get(db.collection('r1474SyntheticGrants').doc('review_fixture'));
+  if (!grant.exists || grant.data()?.active !== true) throw Error('DENY: transaction grant revoked');
+};
+const store = new InstitutionalMissionCoordination(db, permitted, fence);
 const deny = new InstitutionalMissionCoordination(db);
+const noFence = new InstitutionalMissionCoordination(db, permitted);
 const git = 'https://github.com/LifeLoggerAI/urai-admin/pull/114';
 const rev = 'a'.repeat(40), hash = 'b'.repeat(64);
 const taskA = {
@@ -75,6 +81,15 @@ async function check(label, fn) { await fn(); count++; console.log('PASS', Strin
 
 await check('absent authorization denies even read', async () => {
   await assert.rejects(deny.readTask('worker_alpha', taskA.taskId), /DENY/);
+});
+await check('missing transaction fence denies all six mutating actions', async () => {
+  const expected = /DENY: transaction-authoritative revocation fence required/;
+  await assert.rejects(noFence.registerWorker('admin_principal','worker_alpha',['SOURCE_AUDIT']),expected);
+  await assert.rejects(noFence.registerTask('admin_principal',taskA),expected);
+  await assert.rejects(noFence.claimTask('worker_alpha',taskA.taskId,10),expected);
+  await assert.rejects(noFence.heartbeat('worker_alpha',taskA.taskId,1,10),expected);
+  await assert.rejects(noFence.submitEvidence('worker_alpha',taskA.taskId,1,git,hash),expected);
+  await assert.rejects(noFence.verifyEvidence('worker_validator',taskA.taskId,rev,hash,'PASS'),expected);
 });
 await check('registration of approved capabilities', async () => {
   await store.registerWorker('admin_principal', 'worker_alpha', ['SOURCE_AUDIT']);
