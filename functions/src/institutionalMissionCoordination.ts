@@ -260,6 +260,7 @@ export class InstitutionalMissionCoordination {
       const task = current.data() || {};
       const now = authoritativeTimeMs(current);
       if (!worker.exists || worker.data()?.status !== 'ACTIVE' ||
+          !worker.data()?.taskClasses?.includes(task.taskClass) ||
           task.state !== 'CLAIMED' || task.leaseOwner !== workerId ||
           task.leaseEpoch !== leaseEpoch || task.leaseExpiresAtMs < now) return false;
       tx.update(ref, {
@@ -280,7 +281,8 @@ export class InstitutionalMissionCoordination {
       const snapshot = await tx.get(ref), worker = await tx.get(workerRef);
       const task = snapshot.data() || {};
       const now = authoritativeTimeMs(snapshot);
-      if (!worker.exists || worker.data()?.status !== 'ACTIVE' || task.state !== 'CLAIMED' ||
+      if (!worker.exists || worker.data()?.status !== 'ACTIVE' ||
+          !worker.data()?.taskClasses?.includes(task.taskClass) || task.state !== 'CLAIMED' ||
           task.leaseOwner !== workerId || task.leaseEpoch !== leaseEpoch ||
           task.leaseExpiresAtMs < now) return false;
       const receiptRef = ref.collection('receipts').doc('execution');
