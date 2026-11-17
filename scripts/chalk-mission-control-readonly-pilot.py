@@ -3,7 +3,7 @@
 
 This is a review-only bridge to the existing urai-admin institutional control plane.
 It is NOT a second production approval authority. Python 3.11+ standard library.
-SQLite WAL is local-only for this pilot: never share its database over NFS/multi-host mounts.
+SQLite WAL is local-only for this pilot: never share its database over NFS/multi-host mounts.\nClaims carry generation fencing; expiry is not approval of old worker side effects.\nExisting v1 pilot SQLite files are not upgraded silently: this review schema v2 fails closed.
 The real coordinator requires the existing Admin RBAC and transactional Firestore authority.
 """
 import argparse
@@ -19,7 +19,7 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 WORKFLOW = ("DISCOVERED", "TRIAGED", "READY", "CLAIMED", "RUNNING", "VERIFYING", "ACCEPTED", "INTEGRATED", "CLOSED")
 EXCEPTIONAL = ("BLOCKED", "FAILED", "SUPERSEDED", "CANCELLED", "NEEDS_APPROVAL")
 RELEASE_HOLD = True
@@ -45,7 +45,8 @@ def connect(path):
         id TEXT PRIMARY KEY, dedupe_key TEXT UNIQUE NOT NULL,
         source TEXT NOT NULL, source_sha TEXT NOT NULL, title TEXT NOT NULL,
         state TEXT NOT NULL, priority TEXT NOT NULL DEFAULT 'P0',
-        lease_owner TEXT, lease_until TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        lease_owner TEXT, lease_until TEXT, lease_epoch INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
         evidence_url TEXT NOT NULL, private_write_allowed INTEGER NOT NULL DEFAULT 0)""")
     db.execute("""CREATE TABLE IF NOT EXISTS events(
         id TEXT PRIMARY KEY, dedupe_key TEXT UNIQUE NOT NULL, task_id TEXT NOT NULL,
@@ -106,17 +107,86 @@ def fetch_public_pr():
             raise RuntimeError("GitHub source fetch failed closed")
         return json.load(response)
 
-def claim(db, task_id, owner, lease_seconds=60):
-    if not isinstance(owner, str) or not owner.strip() or len(owner) > 128 or any(ord(c) < 32 for c in owner) or not isinstance(lease_seconds, int) or not 1 <= lease_seconds <= 300:
+def claim_lease(db, task_id, owner, lease_seconds=60):
+    """Atomically claim READY work or recover an expired CLAIMED lease.
+
+    Return a fencing generation required for heartbeat and completion. This
+    local SQLite implementation is a review-only reference; the approved
+    Admin/Firestore service must enforce the same CAS contract.
+    """
+    if (not isinstance(owner, str) or not owner.strip() or len(owner) > 128 or
+            any(ord(c) < 32 for c in owner) or
+            not isinstance(lease_seconds, int) or not 1 <= lease_seconds <= 300):
         raise ValueError("invalid owner or unbounded lease")
     stamp = utcnow()
     until = (dt.datetime.now(dt.timezone.utc) +
              dt.timedelta(seconds=lease_seconds)).isoformat(timespec="seconds")
     db.execute("BEGIN IMMEDIATE")
     try:
-        changed = db.execute("""UPDATE tasks SET lease_owner=?,lease_until=?,state='CLAIMED',updated_at=?
-            WHERE id=? AND state='READY' AND (lease_until IS NULL OR lease_until<?)""",
-            (owner, until, stamp, task_id, stamp)).rowcount
+        changed = db.execute("""UPDATE tasks SET
+            lease_owner=?,lease_until=?,lease_epoch=lease_epoch+1,
+            state='CLAIMED',updated_at=?
+            WHERE id=? AND
+              ((state='READY' AND (lease_until IS NULL OR lease_until<?))
+               OR (state='CLAIMED' AND lease_until<?))""",
+            (owner, until, stamp, task_id, stamp, stamp)).rowcount
+        record = db.execute(
+            "SELECT lease_epoch, lease_until FROM tasks WHERE id=? AND lease_owner=? AND state='CLAIMED'",
+            (task_id, owner)).fetchone() if changed == 1 else None
+        db.execute("COMMIT")
+        if changed != 1:
+            return None
+        return {"task_id": task_id, "owner": owner, "epoch": record[0], "until": record[1]}
+    except Exception:
+        db.execute("ROLLBACK")
+        raise
+
+
+def claim(db, task_id, owner, lease_seconds=60):
+    """Legacy boolean review-only helper; effectful work must use claim_lease."""
+    return claim_lease(db, task_id, owner, lease_seconds) is not None
+
+
+def heartbeat(db, task_id, owner, epoch, lease_seconds=60):
+    """Renew only the current, unexpired worker's fencing generation."""
+    if not isinstance(epoch, int) or epoch < 1 or not 1 <= lease_seconds <= 300:
+        return False
+    stamp = utcnow()
+    until = (dt.datetime.now(dt.timezone.utc) +
+             dt.timedelta(seconds=lease_seconds)).isoformat(timespec="seconds")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        changed = db.execute("""UPDATE tasks SET lease_until=?,updated_at=?
+            WHERE id=? AND state='CLAIMED' AND lease_owner=? AND lease_epoch=?
+            AND lease_until>=?""",
+            (until, stamp, task_id, owner, epoch, stamp)).rowcount
+        db.execute("COMMIT")
+        return changed == 1
+    except Exception:
+        db.execute("ROLLBACK")
+        raise
+
+
+def submit_evidence(db, task_id, owner, epoch, evidence_url, evidence_digest):
+    """Fail closed on stale receipts. Moves to VERIFYING, not ACCEPTED."""
+    if (not isinstance(epoch, int) or epoch < 1 or
+            not isinstance(evidence_url, str) or not evidence_url.startswith("https://") or
+            not isinstance(evidence_digest, str) or len(evidence_digest) != 64 or
+            not all(c in "0123456789abcdef" for c in evidence_digest)):
+        return False
+    stamp = utcnow()
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        changed = db.execute("""UPDATE tasks SET state='VERIFYING',
+            evidence_url=?,lease_owner=NULL,lease_until=NULL,updated_at=?
+            WHERE id=? AND state='CLAIMED' AND lease_owner=? AND lease_epoch=?
+            AND lease_until>=?""",
+            (evidence_url, stamp, task_id, owner, epoch, stamp)).rowcount
+        if changed:
+            db.execute("""INSERT INTO attempts(id,task_id,recorded_at,outcome,detail)
+                VALUES(?,?,?,?,?)""",
+                (str(uuid.uuid4()), task_id, stamp, "EVIDENCE_SUBMITTED",
+                 json.dumps({"sha256": evidence_digest, "owner": owner, "epoch": epoch})))
         db.execute("COMMIT")
         return changed == 1
     except Exception:
@@ -160,6 +230,21 @@ def selftest(db):
     second = ingest_pr(db, fixture)
     assert not second["new_event"]
     assert not claim(db, first["task_id"], "worker-a")
+    # Synthetic lease/restart test uses only the selftest's ephemeral in-memory DB.
+    db.execute("UPDATE tasks SET state='READY' WHERE id=?", (first["task_id"],))
+    worker_a = claim_lease(db, first["task_id"], "worker-a", 60)
+    assert worker_a and worker_a["epoch"] == 1
+    assert claim_lease(db, first["task_id"], "worker-b") is None
+    assert heartbeat(db, first["task_id"], "worker-a", worker_a["epoch"], 60)
+    db.execute("UPDATE tasks SET lease_until='2000-01-01T00:00:00+00:00' WHERE id=?", (first["task_id"],))
+    worker_b = claim_lease(db, first["task_id"], "worker-b", 60)
+    assert worker_b and worker_b["epoch"] == worker_a["epoch"] + 1
+    digest = hashlib.sha256(b"synthetic-evidence").hexdigest()
+    assert not submit_evidence(db, first["task_id"], "worker-a", worker_a["epoch"],
+                               "https://github.com/LifeLoggerAI/urai-admin/pull/114", digest)
+    assert submit_evidence(db, first["task_id"], "worker-b", worker_b["epoch"],
+                           "https://github.com/LifeLoggerAI/urai-admin/pull/114", digest)
+    assert db.execute("SELECT state FROM tasks WHERE id=?", (first["task_id"],)).fetchone()[0] == 'VERIFYING'
     assert budget_gate(None, 1, None).startswith("DENY")
     assert budget_gate(390, 20, utcnow()) == "DENY_BUDGET"
     assert budget_gate(77, 1, utcnow()) == "ALLOW_BUDGET_ONLY"
@@ -167,7 +252,7 @@ def selftest(db):
     assert budget_gate(1, float("inf"), utcnow()) == "DENY_INVALID_COST"
     assert budget_gate(1, 1, (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=2)).isoformat()) == "DENY_STALE_BILLING_EVIDENCE"
     assert summary(db)["private_memory_writes"] == "DISABLED"
-    print(json.dumps({"result": "PASS", "checks": 10, "summary": summary(db)}, sort_keys=True))
+    print(json.dumps({"result": "PASS", "checks": 17, "summary": summary(db)}, sort_keys=True))
 
 def main():
     parser = argparse.ArgumentParser()
