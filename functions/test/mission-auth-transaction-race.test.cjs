@@ -11,7 +11,8 @@ let permitCount=0,transactionWrites=0;
 const db={collection(name){return{doc(id){return{path:name+'/'+id}}}},async runTransaction(fn){
  entryResolve();await proceed;return fn({get:async ref=>({exists:true,data:()=>ref.path.includes('Workers')?data:task,readTime:{toMillis:()=>1794905500000}}),
  update:()=>{transactionWrites++},set:()=>{transactionWrites++}})}};
-const store=new m.exports.InstitutionalMissionCoordination(db,async()=>{permitCount++; if(permitCount===1)initialPermitResolve();return authorized});
+const fence=async(tx)=>{const grant=await tx.get({path:'r1474SyntheticGrants/review_fixture'});if(!grant.exists||grant.data()?.active!==true)throw new Error('DENY: synthetic grant revoked')};
+const store=new m.exports.InstitutionalMissionCoordination(db,async()=>{permitCount++; if(permitCount===1)initialPermitResolve();return authorized},fence);
 (async()=>{
  const work=store.claimTask('worker_alpha','r1466_revoked_claim',10);
  await initialPermit;await entry;
