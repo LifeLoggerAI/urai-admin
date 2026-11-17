@@ -1,0 +1,80 @@
+{
+  "schema": "urai-r20261117-12-process-loss-receipt-v1",
+  "source_commit": "8ffc5f810396e483ce53358e7d0922c1e78b541f",
+  "runner_sha256": "e765d7fb75749a44d691646956296c5aad7e02fcacbf9b879793034d5a50bece",
+  "test_environment": "one localhost Firestore emulator 1.21.0 on existing CPU Pod, two separate Node workers, synthetic authorizer and simulated reviewer",
+  "observations": {
+    "worker_a_claimed_epoch": 1,
+    "worker_b_before_expiry_denied": true,
+    "worker_a_process_was_killed": true,
+    "real_elapsed_wait_seconds": 11,
+    "worker_b_claimed_epoch": 2,
+    "old_worker_heartbeat_denied": true,
+    "old_worker_evidence_denied": true,
+    "independent_fixture_reviewer_accepted": true,
+    "externalCertification": false
+  },
+  "limitations": [
+    "not cross physical machine",
+    "not hosted Firestore",
+    "not cloud IAM",
+    "not credential-attested worker identities",
+    "no pod/emulator restart",
+    "not continuous autonomy",
+    "not independent external certification"
+  ],
+  "artifacts": {
+    "setup.log": {
+      "content": "{\"action\":\"setup\",\"created\":2}\n",
+      "sha256": "677b22bc1f327bee0c9771ef566cb8f4bdb26d860e52b8490031be556e929b1f"
+    },
+    "alpha.log": {
+      "content": "{\"action\":\"claim\",\"worker\":\"worker_alpha\",\"claim\":{\"taskId\":\"r20261117_realtime_crash_task\",\"workerId\":\"worker_alpha\",\"leaseEpoch\":1,\"expiresAtMs\":1794948538881}}\n",
+      "sha256": "d397eb6bd8bda7af2111b68139bd497c8acd3a930567f2745f0654504da237dc"
+    },
+    "early_beta.log": {
+      "content": "{\"action\":\"claim\",\"worker\":\"worker_beta\",\"claim\":null}\n",
+      "sha256": "66b2fedee13227f671f67baf9208d52140a452faa5b7bbcc82e7715bfff615a8"
+    },
+    "recover.log": {
+      "content": "{\"action\":\"recover\",\"worker\":\"worker_beta\",\"claim\":{\"taskId\":\"r20261117_realtime_crash_task\",\"workerId\":\"worker_beta\",\"leaseEpoch\":2,\"expiresAtMs\":1794948551913},\"oldWorker\":\"worker_alpha\"}\n",
+      "sha256": "17d3498cd5d892b35ee47d4bca7be41cc25005e345084f2d439e99264a7a900d"
+    },
+    "stale.log": {
+      "content": "{\"action\":\"stale\",\"worker\":\"worker_alpha\",\"heartbeat\":false,\"evidence\":false}\n",
+      "sha256": "59b21e3ea99110191d7a928318714279f17e9dbdd3be462be16cc72fdfae0bda"
+    },
+    "submit.log": {
+      "content": "{\"action\":\"submit\",\"worker\":\"worker_beta\",\"accepted\":true,\"taskState\":\"VERIFYING\",\"receiptPresent\":true}\n",
+      "sha256": "b94cb3a52f45b4273c92c2c4d327a68e027c7e82cb0d558f183bc701a4421c5a"
+    },
+    "review.log": {
+      "content": "{\"action\":\"review\",\"reviewer\":\"reviewer_zeta\",\"result\":{\"taskId\":\"r20261117_realtime_crash_task\",\"state\":\"ACCEPTED\",\"reviewerId\":\"reviewer_zeta\"},\"receiptPresent\":true,\"externalCertification\":false}\n",
+      "sha256": "e752cb4a6f0af2c50c1ec0ae21fe7a3c126b9a95a99f002cd0f8ee1ef0f92083"
+    },
+    "result_claim_worker_alpha.json": {
+      "content": "{\n  \"action\": \"claim\",\n  \"worker\": \"worker_alpha\",\n  \"claim\": {\n    \"taskId\": \"r20261117_realtime_crash_task\",\n    \"workerId\": \"worker_alpha\",\n    \"leaseEpoch\": 1,\n    \"expiresAtMs\": 1794948538881\n  }\n}\n",
+      "sha256": "35eda1a58269e1509aa9ff126cee5e410b60be4af744c91d34c7ba2e66dcdbc2"
+    },
+    "early_beta_result.json": {
+      "content": "{\n  \"action\": \"claim\",\n  \"worker\": \"worker_beta\",\n  \"claim\": null\n}\n",
+      "sha256": "dbff376297600ebf8f0041a52240046224e7d5688f53b81c5997437380b6ffc1"
+    },
+    "result_recover_worker_beta.json": {
+      "content": "{\n  \"action\": \"recover\",\n  \"worker\": \"worker_beta\",\n  \"claim\": {\n    \"taskId\": \"r20261117_realtime_crash_task\",\n    \"workerId\": \"worker_beta\",\n    \"leaseEpoch\": 2,\n    \"expiresAtMs\": 1794948551913\n  },\n  \"oldWorker\": \"worker_alpha\"\n}\n",
+      "sha256": "5b158a7fbbc903df56bb8613a02e9fdc79a8de4c060b521f49505bb8edeb282c"
+    },
+    "result_stale_worker_alpha.json": {
+      "content": "{\n  \"action\": \"stale\",\n  \"worker\": \"worker_alpha\",\n  \"heartbeat\": false,\n  \"evidence\": false\n}\n",
+      "sha256": "0aa78caa371c15c82ac89097d45d2f2a6198a0468e33359bbc2e2bfb13509641"
+    },
+    "result_submit_worker_beta.json": {
+      "content": "{\n  \"action\": \"submit\",\n  \"worker\": \"worker_beta\",\n  \"accepted\": true,\n  \"taskState\": \"VERIFYING\",\n  \"receiptPresent\": true\n}\n",
+      "sha256": "3b07b0d98be69d78fcc67a8488379b3b8e1e504e803866df0fa6645e1a27df49"
+    },
+    "result_review.json": {
+      "content": "{\n  \"action\": \"review\",\n  \"reviewer\": \"reviewer_zeta\",\n  \"result\": {\n    \"taskId\": \"r20261117_realtime_crash_task\",\n    \"state\": \"ACCEPTED\",\n    \"reviewerId\": \"reviewer_zeta\"\n  },\n  \"receiptPresent\": true,\n  \"externalCertification\": false\n}\n",
+      "sha256": "7fdd135f9c3b317d9122d7354593eca071859b9df0ac837ac315a811ad174e0a"
+    }
+  }
+}
