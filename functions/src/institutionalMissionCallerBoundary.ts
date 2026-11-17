@@ -76,12 +76,18 @@ export async function createMissionSession<TCredential>(
       typeof opts.tenant !== 'string' || !opts.tenant) {
     throw new Error('DENY: trusted verifier configuration required');
   }
+  // Snapshot trusted configuration to prevent mutable option objects from
+  // replacing identity authority after a session is established.
+  const trusted: MissionBoundaryOptions<TCredential> = {
+    db: opts.db, credential: opts.credential, verifyCredential: opts.verifyCredential,
+    issuer: opts.issuer, audience: opts.audience, tenant: opts.tenant, now: opts.now,
+  };
   // The credential is opaque. No caller-supplied actorId is accepted.
   const check = async (): Promise<VerifiedMissionPrincipal> => {
     let verified: VerifiedMissionPrincipal | null;
-    try { verified = await opts.verifyCredential(opts.credential); }
+    try { verified = await trusted.verifyCredential(trusted.credential); }
     catch { throw new Error('DENY: trusted identity verification failed'); }
-    if (!validPrincipal(verified, opts as MissionBoundaryOptions<unknown>)) {
+    if (!validPrincipal(verified, trusted as MissionBoundaryOptions<unknown>)) {
       throw new Error('DENY: invalid or expired workload principal');
     }
     return verified;
@@ -102,7 +108,7 @@ export async function createMissionSession<TCredential>(
       return actions.has(action);
     } catch { return false; }
   };
-  const existing = new InstitutionalMissionCoordination(opts.db, permit);
+  const existing = new InstitutionalMissionCoordination(trusted.db, permit);
   return Object.freeze({
     principalId: subject,
     readTask: (taskId: string) => existing.readTask(subject, taskId),
