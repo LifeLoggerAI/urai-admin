@@ -106,6 +106,18 @@ const first = globalThis.claims.find(Boolean);
 await check('heartbeat renews active lease', async () => {
   assert.equal(await store.heartbeat(first.workerId, taskA.taskId, first.leaseEpoch), true);
 });
+await check('active lease denies heartbeat and evidence after worker capability downscope', async () => {
+  const path = 'institutionalMissionWorkers/' + first.workerId;
+  const original = db.data.get(path);
+  assert.equal(original.taskClasses.includes('SOURCE_AUDIT'), true);
+  db.data.set(path, { ...original, taskClasses: [] });
+  try {
+    assert.equal(await store.heartbeat(first.workerId, taskA.taskId, first.leaseEpoch), false);
+    assert.equal(await store.submitEvidence(first.workerId, taskA.taskId, first.leaseEpoch, git, hash), false);
+  } finally {
+    db.data.set(path, original);
+  }
+});
 await check('expired lease rejects heartbeat and is reclaimable', async () => {
   time += 61000;
   assert.equal(await store.heartbeat(first.workerId, taskA.taskId, first.leaseEpoch), false);
@@ -183,5 +195,5 @@ await check('poison task quarantined after three expired execution leases', asyn
   assert.equal(receipt.reason, 'LEASE_RETRY_LIMIT');
   assert.equal(await store.claimTask('worker_alpha', poisonTask.taskId, 10), null);
 });
-console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/18 PASS',
+console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/19 PASS',
  'NOT real Firestore, NOT cross-machine, NOT authorized staging');
