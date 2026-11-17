@@ -35,6 +35,10 @@ async function deny(n,f){await assert.rejects(f,/DENY/);checks++;console.log('PA
 let session=await createMissionSession(opts());
 await pass('authorized source read',async()=>{let t=await session.readTask('task_safe');assert.equal(t.taskId,'task_safe')});
 await deny('wrong task ID denied',()=>session.readTask('task_other'));
+await deny('session cannot gain expanded task grant',async()=>{
+ current={...principal,taskIds:['task_safe','task_other']};
+ try { await session.readTask('task_other'); } finally { current={...principal}; }
+});
 await deny('worker cannot verify',()=>session.verifyEvidence('task_safe','a'.repeat(40),'b'.repeat(64),'PASS'));
 assert.equal(transactionCalls,0);
 await deny('missing READ scope',async()=>{current={...principal,role:'WORKER',taskIds:['task_other']};await session.readTask('task_safe')});
