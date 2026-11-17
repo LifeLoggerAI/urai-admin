@@ -10,6 +10,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import {
   InstitutionalMissionCoordination,
   type MissionAction,
+  type AdminTransactionFence,
 } from './institutionalMissionCoordination';
 
 const WORKER = new Set<MissionAction>([
@@ -36,6 +37,7 @@ export interface MissionBoundaryOptions<TCredential> {
   // REQUIRED: trusted server-side verifier, not user-provided JWT payload parsing.
   // Must verify signatures, issuer keys, revocation, and workload binding.
   verifyCredential: (credential: TCredential) => Promise<VerifiedMissionPrincipal | null>;
+  transactionFence: AdminTransactionFence;
   issuer: string;
   audience: string;
   tenant: string;
@@ -70,7 +72,8 @@ export async function createMissionSession<TCredential>(
   opts: MissionBoundaryOptions<TCredential>,
 ) {
 
-  if (!opts || typeof opts.verifyCredential !== 'function' ||
+  if (!opts || typeof opts.transactionFence !== 'function' ||
+      typeof opts.verifyCredential !== 'function' ||
       typeof opts.issuer !== 'string' || !opts.issuer ||
       typeof opts.audience !== 'string' || !opts.audience ||
       typeof opts.tenant !== 'string' || !opts.tenant) {
@@ -81,6 +84,7 @@ export async function createMissionSession<TCredential>(
   const trusted: MissionBoundaryOptions<TCredential> = {
     db: opts.db, credential: opts.credential, verifyCredential: opts.verifyCredential,
     issuer: opts.issuer, audience: opts.audience, tenant: opts.tenant, now: opts.now,
+    transactionFence: opts.transactionFence,
   };
   // The credential is opaque. No caller-supplied actorId is accepted.
   const check = async (): Promise<VerifiedMissionPrincipal> => {
@@ -108,7 +112,7 @@ export async function createMissionSession<TCredential>(
       return actions.has(action);
     } catch { return false; }
   };
-  const existing = new InstitutionalMissionCoordination(trusted.db, permit);
+  const existing = new InstitutionalMissionCoordination(trusted.db, permit, trusted.transactionFence);
   return Object.freeze({
     principalId: subject,
     readTask: (taskId: string) => existing.readTask(subject, taskId),
