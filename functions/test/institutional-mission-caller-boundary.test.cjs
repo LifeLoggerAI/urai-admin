@@ -44,6 +44,7 @@ current={...principal,subject:'worker_beta'};
 await deny('principal swap denied after session',()=>session.readTask('task_safe'));
 current={...principal,role:'REVIEWER'};
 await deny('role switch loses worker capability',()=>session.claimTask('task_safe',10));
+await deny('role switch cannot gain reviewer VERIFY privilege',()=>session.verifyEvidence('task_safe','a'.repeat(40),'b'.repeat(64),'PASS'));
 current={...principal,issuedAtMs:principal.issuedAtMs,expiresAtMs:now-10};
 await deny('expiry after session setup',()=>session.readTask('task_safe'));
 current={...principal,notBeforeMs:now+10};
