@@ -38,6 +38,19 @@ export type AdminAuthorizer = (input: {
   taskId?: string;
 }) => Promise<boolean>;
 
+/**
+ * REVIEW-ONLY transactional guard. Must read authoritative, server-owned
+ * revocation/capability state through the *same* Firestore transaction as
+ * protected task writes, so concurrent revocation conflicts and retries.
+ * A plain external authorization callback is NOT an atomic write fence.
+ * This interface does not create/seed grants, select an IAM identity, or
+ * certify an issuer. Deployment of a safe implementation requires review.
+ */
+export type AdminTransactionFence = (
+  tx: Pick<import('firebase-admin/firestore').Transaction, 'get'>,
+  input: { actorId: string; action: MissionAction; taskId?: string },
+) => Promise<void>;
+
 function identity(value: string, label: string): string {
   if (typeof value !== 'string' || !/^[a-z][a-z0-9_-]{3,95}$/.test(value)) {
     throw new Error('invalid ' + label);
@@ -107,6 +120,7 @@ export class InstitutionalMissionCoordination {
   constructor(
     private readonly db: Firestore,
     private readonly authorize: AdminAuthorizer | null = null,
+    private readonly transactionFence: AdminTransactionFence | null = null,
   ) {}
 
   private async permit(actorId: string, action: MissionAction, taskId?: string): Promise<void> {
@@ -114,6 +128,19 @@ export class InstitutionalMissionCoordination {
     if (!this.authorize || (await this.authorize({ actorId, action, taskId })) !== true) {
       throw new Error('DENY: approved Admin RBAC/IAM authorization adapter unavailable');
     }
+  }
+
+  private async fence(
+    tx: import('firebase-admin/firestore').Transaction,
+    actorId: string,
+    action: MissionAction,
+    taskId?: string,
+  ): Promise<void> {
+    // Mutating operations deny without a trusted transaction-bound fence.
+    if (!this.transactionFence) {
+      throw new Error('DENY: transaction-authoritative revocation fence required');
+    }
+    await this.transactionFence(tx, { actorId, action, taskId });
   }
 
   private workerRef(workerId: string) {
@@ -134,6 +161,7 @@ export class InstitutionalMissionCoordination {
     const ref = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
       await this.permit(actorId, 'REGISTER');
+      await this.fence(tx, actorId, 'REGISTER');
       const prior = await tx.get(ref);
       if (prior.exists) {
         const previous = prior.data() || {};
@@ -177,6 +205,7 @@ export class InstitutionalMissionCoordination {
       .doc('_dedupe_' + createHash('sha256').update(input.dedupeKey).digest('hex'));
     return this.db.runTransaction(async (tx) => {
       await this.permit(actorId, 'CREATE', input.taskId);
+      await this.fence(tx, actorId, 'CREATE', input.taskId);
       const current = await tx.get(ref);
       const unique = await tx.get(dedupeRef);
       const deps = await Promise.all(input.dependencyIds.map((id) => tx.get(this.taskRef(id))));
@@ -205,6 +234,7 @@ export class InstitutionalMissionCoordination {
     const ref = this.taskRef(taskId), workerRef = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
       await this.permit(workerId, 'CLAIM', taskId);
+      await this.fence(tx, workerId, 'CLAIM', taskId);
       const w = await tx.get(workerRef), t = await tx.get(ref);
       if (!w.exists || w.data()?.status !== 'ACTIVE') throw new Error('unregistered worker denied');
       if (!t.exists) throw new Error('task not found');
@@ -260,6 +290,7 @@ export class InstitutionalMissionCoordination {
     const ref = this.taskRef(taskId), w = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
       await this.permit(workerId, 'HEARTBEAT', taskId);
+      await this.fence(tx, workerId, 'HEARTBEAT', taskId);
       const current = await tx.get(ref), worker = await tx.get(w);
       const task = current.data() || {};
       const now = authoritativeTimeMs(current);
@@ -283,6 +314,7 @@ export class InstitutionalMissionCoordination {
     const ref = this.taskRef(taskId), workerRef = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
       await this.permit(workerId, 'SUBMIT_EVIDENCE', taskId);
+      await this.fence(tx, workerId, 'SUBMIT_EVIDENCE', taskId);
       const snapshot = await tx.get(ref), worker = await tx.get(workerRef);
       const task = snapshot.data() || {};
       const now = authoritativeTimeMs(snapshot);
@@ -317,6 +349,7 @@ export class InstitutionalMissionCoordination {
     const ref = this.taskRef(taskId), reviewerRef = this.workerRef(reviewerId);
     return this.db.runTransaction(async (tx) => {
       await this.permit(reviewerId, 'VERIFY', taskId);
+      await this.fence(tx, reviewerId, 'VERIFY', taskId);
       const taskSnapshot = await tx.get(ref), reviewer = await tx.get(reviewerRef);
       const task = taskSnapshot.data() || {};
       if (task.state !== 'VERIFYING') throw new Error('task not submitted for verification');
@@ -355,6 +388,7 @@ export class InstitutionalMissionCoordination {
 export function createInstitutionalMissionCoordinationStore(
   db: Firestore,
   authorize: AdminAuthorizer | null = null,
+  transactionFence: AdminTransactionFence | null = null,
 ) {
-  return new InstitutionalMissionCoordination(db, authorize);
+  return new InstitutionalMissionCoordination(db, authorize, transactionFence);
 }

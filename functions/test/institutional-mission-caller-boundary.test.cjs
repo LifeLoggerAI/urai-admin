@@ -19,13 +19,14 @@ let current={...principal};
 const db={collection:()=>({doc:task=>({
  get:async()=>{reads++;return {exists:true,data:()=>({taskId:task,state:'READY'})}},
  })}),runTransaction:async()=>{transactionCalls++;throw Error('unexpected transaction')}};
-const opts=()=>({db,credential:'opaque-test',issuer:principal.issuer,
+const opts=()=>({db,credential:'opaque-test',transactionFence:async tx=>{if(!tx || !tx.get)throw Error('DENY: tx unavailable')},issuer:principal.issuer,
  audience:principal.audience,tenant:principal.tenant,now:()=>now,
  verifyCredential:async credential=>{verificationCalls++;return credential==='opaque-test'?current:null}});
 async function pass(n,f){await f();checks++;console.log('PASS',checks,n)}
 async function deny(n,f){await assert.rejects(f,/DENY/);checks++;console.log('PASS',checks,n)}
 (async()=>{
  await deny('missing verifier',()=>createMissionSession({...opts(),verifyCredential:null}));
+await deny('missing transaction fence',()=>createMissionSession({...opts(),transactionFence:null}));
  await deny('invalid credential',()=>createMissionSession({...opts(),credential:'other'}));
  await deny('wrong issuer',()=>createMissionSession({...opts(),issuer:'impostor'}));
  await deny('wrong audience',()=>createMissionSession({...opts(),audience:'wrong'}));
