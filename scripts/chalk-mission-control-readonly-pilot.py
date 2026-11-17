@@ -3,10 +3,13 @@
 
 This is a review-only bridge to the existing urai-admin institutional control plane.
 It is NOT a second production approval authority. Python 3.11+ standard library.
+SQLite WAL is local-only for this pilot: never share its database over NFS/multi-host mounts.
+The real coordinator requires the existing Admin RBAC and transactional Firestore authority.
 """
 import argparse
 import datetime as dt
 import hashlib
+import math
 import json
 import os
 import sqlite3
@@ -77,6 +80,8 @@ def ingest_pr(db, data):
             ON CONFLICT(dedupe_key) DO UPDATE SET
             source_sha=excluded.source_sha,title=excluded.title,
             state=CASE WHEN tasks.source_sha<>excluded.source_sha THEN 'BLOCKED' ELSE tasks.state END,
+            lease_owner=CASE WHEN tasks.source_sha<>excluded.source_sha THEN NULL ELSE tasks.lease_owner END,
+            lease_until=CASE WHEN tasks.source_sha<>excluded.source_sha THEN NULL ELSE tasks.lease_until END,
             updated_at=excluded.updated_at""",
             (task_id, "github:urai-spatial:pr:2118", "GitHub", sha, title[:500], state, stamp, stamp, url))
         before = db.total_changes
@@ -102,7 +107,7 @@ def fetch_public_pr():
         return json.load(response)
 
 def claim(db, task_id, owner, lease_seconds=60):
-    if not owner or not 1 <= lease_seconds <= 300:
+    if not isinstance(owner, str) or not owner.strip() or len(owner) > 128 or any(ord(c) < 32 for c in owner) or not isinstance(lease_seconds, int) or not 1 <= lease_seconds <= 300:
         raise ValueError("invalid owner or unbounded lease")
     stamp = utcnow()
     until = (dt.datetime.now(dt.timezone.utc) +
@@ -122,15 +127,20 @@ def budget_gate(spent_usd, expected_increment_usd, reported_at, ceiling=400):
     if spent_usd is None or expected_increment_usd is None or reported_at is None:
         return "DENY_MISSING_BILLING_EVIDENCE"
     try:
-        stamp = dt.datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
-        if stamp.tzinfo is None or dt.datetime.now(dt.timezone.utc) - stamp > dt.timedelta(hours=1):
-            return "DENY_STALE_BILLING_EVIDENCE"
-        if spent_usd < 0 or expected_increment_usd < 0:
+        amounts = (spent_usd, expected_increment_usd, ceiling)
+        if any(not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v) for v in amounts):
             return "DENY_INVALID_COST"
+        if spent_usd < 0 or expected_increment_usd < 0 or ceiling <= 0:
+            return "DENY_INVALID_COST"
+        stamp = dt.datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
+        now = dt.datetime.now(dt.timezone.utc)
+        if stamp.tzinfo is None or stamp > now + dt.timedelta(minutes=5) or now - stamp > dt.timedelta(hours=1):
+            return "DENY_STALE_BILLING_EVIDENCE"
         if spent_usd + expected_increment_usd > ceiling:
             return "DENY_BUDGET"
+        # Arithmetic check only. No provider authority or permission to create billable workloads.
         return "ALLOW_BUDGET_ONLY"
-    except (ValueError, TypeError, OverflowError):
+    except (ValueError, TypeError, OverflowError, AttributeError):
         return "DENY_INVALID_BILLING_EVIDENCE"
 
 def summary(db):
@@ -153,13 +163,16 @@ def selftest(db):
     assert budget_gate(None, 1, None).startswith("DENY")
     assert budget_gate(390, 20, utcnow()) == "DENY_BUDGET"
     assert budget_gate(77, 1, utcnow()) == "ALLOW_BUDGET_ONLY"
+    assert budget_gate(float("nan"), 1, utcnow()) == "DENY_INVALID_COST"
+    assert budget_gate(1, float("inf"), utcnow()) == "DENY_INVALID_COST"
+    assert budget_gate(1, 1, (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=2)).isoformat()) == "DENY_STALE_BILLING_EVIDENCE"
     assert summary(db)["private_memory_writes"] == "DISABLED"
-    print(json.dumps({"result": "PASS", "checks": 7, "summary": summary(db)}, sort_keys=True))
+    print(json.dumps({"result": "PASS", "checks": 10, "summary": summary(db)}, sort_keys=True))
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["selftest", "ingest-pr", "status", "budget-check"])
-    parser.add_argument("--db", default=os.environ.get("URAI_MISSION_DB", "/mnt/urai-evidence/chalk-mission-control/pilot.sqlite3"))
+    parser.add_argument("--db", default=os.environ.get("URAI_MISSION_DB", "/tmp/urai-mission-control-review/pilot.sqlite3"))
     parser.add_argument("--spent", type=float)
     parser.add_argument("--increment", type=float)
     parser.add_argument("--reported-at")
@@ -167,7 +180,8 @@ def main():
     if args.action == "budget-check":
         print(json.dumps({"decision": budget_gate(args.spent, args.increment, args.reported_at)}))
         return
-    db = connect(args.db)
+    # Synthetic tests MUST NOT mutate an operational task registry.
+    db = connect(":memory:" if args.action == "selftest" else args.db)
     try:
         if args.action == "selftest":
             selftest(db)
