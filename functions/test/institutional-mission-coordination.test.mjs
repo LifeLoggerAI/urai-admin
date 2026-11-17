@@ -146,5 +146,19 @@ await check('unregistered worker cannot claim work', async () => {
   await store.registerTask('admin_principal', child2);
   await assert.rejects(store.claimTask('worker_unknown', child2.taskId), /unregistered/);
 });
-console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/16 PASS',
+await check('missing Firestore readTime fails closed', async () => {
+  const original = db.snapshot.bind(db);
+  db.snapshot = (path) => {
+    const snapshot = original(path);
+    if (path.endsWith('/r1436_source_review')) delete snapshot.readTime;
+    return snapshot;
+  };
+  try {
+    await assert.rejects(store.claimTask('worker_beta', taskA.taskId),
+      /Firestore server readTime unavailable/);
+  } finally {
+    db.snapshot = original;
+  }
+});
+console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/17 PASS',
  'NOT real Firestore, NOT cross-machine, NOT authorized staging');
