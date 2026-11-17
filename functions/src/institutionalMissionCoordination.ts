@@ -133,6 +133,7 @@ export class InstitutionalMissionCoordination {
     const classes = [...new Set(taskClasses.map(asTaskClass))].sort();
     const ref = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
+      await this.permit(actorId, 'REGISTER');
       const prior = await tx.get(ref);
       if (prior.exists) {
         const previous = prior.data() || {};
@@ -175,6 +176,7 @@ export class InstitutionalMissionCoordination {
     const dedupeRef = this.db.collection(MISSION_COLLECTIONS.tasks)
       .doc('_dedupe_' + createHash('sha256').update(input.dedupeKey).digest('hex'));
     return this.db.runTransaction(async (tx) => {
+      await this.permit(actorId, 'CREATE', input.taskId);
       const current = await tx.get(ref);
       const unique = await tx.get(dedupeRef);
       const deps = await Promise.all(input.dependencyIds.map((id) => tx.get(this.taskRef(id))));
@@ -202,6 +204,7 @@ export class InstitutionalMissionCoordination {
     leaseDuration(durationSeconds);
     const ref = this.taskRef(taskId), workerRef = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
+      await this.permit(workerId, 'CLAIM', taskId);
       const w = await tx.get(workerRef), t = await tx.get(ref);
       if (!w.exists || w.data()?.status !== 'ACTIVE') throw new Error('unregistered worker denied');
       if (!t.exists) throw new Error('task not found');
@@ -256,6 +259,7 @@ export class InstitutionalMissionCoordination {
     if (!Number.isSafeInteger(leaseEpoch) || leaseEpoch < 1) return false;
     const ref = this.taskRef(taskId), w = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
+      await this.permit(workerId, 'HEARTBEAT', taskId);
       const current = await tx.get(ref), worker = await tx.get(w);
       const task = current.data() || {};
       const now = authoritativeTimeMs(current);
@@ -278,6 +282,7 @@ export class InstitutionalMissionCoordination {
     if (!Number.isSafeInteger(leaseEpoch) || leaseEpoch < 1) return false;
     const ref = this.taskRef(taskId), workerRef = this.workerRef(workerId);
     return this.db.runTransaction(async (tx) => {
+      await this.permit(workerId, 'SUBMIT_EVIDENCE', taskId);
       const snapshot = await tx.get(ref), worker = await tx.get(workerRef);
       const task = snapshot.data() || {};
       const now = authoritativeTimeMs(snapshot);
@@ -311,6 +316,7 @@ export class InstitutionalMissionCoordination {
     if (result !== 'PASS' && result !== 'FAIL') throw new Error('invalid verification result');
     const ref = this.taskRef(taskId), reviewerRef = this.workerRef(reviewerId);
     return this.db.runTransaction(async (tx) => {
+      await this.permit(reviewerId, 'VERIFY', taskId);
       const taskSnapshot = await tx.get(ref), reviewer = await tx.get(reviewerRef);
       const task = taskSnapshot.data() || {};
       if (task.state !== 'VERIFYING') throw new Error('task not submitted for verification');
