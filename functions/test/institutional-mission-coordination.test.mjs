@@ -35,7 +35,7 @@ class FakeFirestore {
   collection(name) { return new Ref(this, name); }
   snapshot(path) {
     const value = this.data.get(path);
-    return { exists: value !== undefined, data: () => value === undefined ? undefined : structuredClone(value) };
+    return { exists: value !== undefined, data: () => value === undefined ? undefined : structuredClone(value), readTime: { toMillis: () => time } };
   }
   async runTransaction(fn) {
     // In-memory serialization makes a fixture deterministic. Real Firestore
@@ -62,7 +62,7 @@ class FakeFirestore {
 const db = new FakeFirestore();
 let time = 1794905500000;
 const permitted = async () => true;
-const store = new InstitutionalMissionCoordination(db, permitted, () => time);
+const store = new InstitutionalMissionCoordination(db, permitted);
 const deny = new InstitutionalMissionCoordination(db);
 const git = 'https://github.com/LifeLoggerAI/urai-admin/pull/114';
 const rev = 'a'.repeat(40), hash = 'b'.repeat(64);
