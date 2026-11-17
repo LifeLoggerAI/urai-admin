@@ -160,5 +160,28 @@ await check('missing Firestore readTime fails closed', async () => {
     db.snapshot = original;
   }
 });
-console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/17 PASS',
+await check('poison task quarantined after three expired execution leases', async () => {
+  const poisonTask = {
+    taskId: 'r1442_poison_review', sourceRevision: rev, sourceUrl: git,
+    taskClass: 'SOURCE_AUDIT', dependencyIds: [], dedupeKey: 'r1442:poison:sha-a',
+  };
+  await store.registerTask('admin_principal', poisonTask);
+  for (let epoch = 1; epoch <= 3; epoch++) {
+    const owner = epoch % 2 ? 'worker_alpha' : 'worker_beta';
+    const lease = await store.claimTask(owner, poisonTask.taskId, 10);
+    assert.equal(lease.leaseEpoch, epoch);
+    time += 11000;
+  }
+  const fourth = await store.claimTask('worker_beta', poisonTask.taskId, 10);
+  assert.equal(fourth, null);
+  const final = await store.readTask('admin_principal', poisonTask.taskId);
+  assert.equal(final.state, 'BLOCKED');
+  assert.equal(final.blockReason, 'LEASE_RETRY_LIMIT');
+  assert.equal(final.leaseOwner, null);
+  const receipt = db.data.get('institutionalMissionTasks/r1442_poison_review/receipts/poison');
+  assert.equal(receipt.exhaustedEpoch, 3);
+  assert.equal(receipt.reason, 'LEASE_RETRY_LIMIT');
+  assert.equal(await store.claimTask('worker_alpha', poisonTask.taskId, 10), null);
+});
+console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/18 PASS',
  'NOT real Firestore, NOT cross-machine, NOT authorized staging');

@@ -20,6 +20,10 @@ export const MISSION_COLLECTIONS = Object.freeze({
   workers: 'institutionalMissionWorkers',
 });
 
+// A bounded number of execution leases prevents infinite poison-task retries.
+// Review-only policy; it does not authorize a scheduler or provider spending.
+export const MISSION_MAX_CLAIM_EPOCHS = 3;
+
 export const MISSION_TASK_CLASSES = [
   'SOURCE_AUDIT', 'VISUAL_EVIDENCE_REVIEW', 'SECURITY_REVIEW', 'RESEARCH_REVIEW',
 ] as const;
@@ -216,6 +220,25 @@ export class InstitutionalMissionCoordination {
       const epoch = Number(task.leaseEpoch);
       if (!Number.isSafeInteger(epoch) || epoch < 0 || epoch >= Number.MAX_SAFE_INTEGER - 1) {
         throw new Error('unsafe lease generation');
+      }
+      // Fail closed after the last permitted expired lease. The next
+      // transaction quarantines the task and records one durable reason.
+      // Firestore retries one contender after a concurrent transaction wins.
+      if (epoch >= MISSION_MAX_CLAIM_EPOCHS) {
+        const poisonRef = ref.collection('receipts').doc('poison');
+        const prior = await tx.get(poisonRef);
+        if (prior.exists) throw new Error('poison-task marker already exists; deny');
+        tx.set(poisonRef, {
+          taskId, sourceRevision: task.sourceRevision, lastLeaseOwner: task.leaseOwner,
+          exhaustedEpoch: epoch, reason: 'LEASE_RETRY_LIMIT',
+          recordedAt: FieldValue.serverTimestamp(),
+        });
+        tx.update(ref, {
+          state: 'BLOCKED', blockReason: 'LEASE_RETRY_LIMIT',
+          leaseOwner: null, leaseExpiresAtMs: null,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        return null;
       }
       const nextEpoch = epoch + 1;
       const until = now + durationSeconds * 1000;
