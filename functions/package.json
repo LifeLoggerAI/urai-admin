@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.active.json --noEmit",
-    "test": "node test/source-contracts.test.mjs && node test/institutional-control-plane-runtime-source.test.mjs",
+    "test": "node test/source-contracts.test.mjs && node test/institutional-control-plane-runtime-source.test.mjs && node test/institutional-mission-coordination.test.mjs",
     "build": "tsc -p tsconfig.active.json"
   },
   "dependencies": {
