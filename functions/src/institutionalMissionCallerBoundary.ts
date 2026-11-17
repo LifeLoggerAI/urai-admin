@@ -88,12 +88,13 @@ export async function createMissionSession<TCredential>(
   };
   const initial = await check();
   const subject = initial.subject;
+  const role = initial.role;
   const permit = async ({ actorId, action, taskId }: {
     actorId: string; action: MissionAction; taskId?: string;
   }): Promise<boolean> => {
     try {
       const p = await check();
-      if (p.subject !== subject || actorId !== subject ||
+      if (p.subject !== subject || p.role !== role || actorId !== subject ||
           (taskId && !p.taskIds.includes(taskId))) return false;
       const actions = p.role === 'WORKER' ? WORKER : REVIEWER;
       return actions.has(action);
