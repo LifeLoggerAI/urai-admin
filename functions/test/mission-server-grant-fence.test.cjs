@@ -12,6 +12,7 @@ async function bad(label,g=base,a='CLAIM',task='task_alpha',exists=true,time=now
 (async()=>{
 await good('authorized claim');
 await good('authorized heartbeat',base,'HEARTBEAT');
+await good('authorized read',{...base,allowedActions:['READ','CLAIM','HEARTBEAT']},'READ');
 await bad('missing',undefined,'CLAIM','task_alpha',false);
 await bad('revoked status',{...base,status:'REVOKED'});
 await bad('revokedAt',{...base,revokedAtMs:now-1});
