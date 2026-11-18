@@ -4,21 +4,32 @@ import { createRequire } from 'node:module';
 import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
-const typescript = readFileSync(new URL('../src/institutionalMissionCoordination.ts', import.meta.url), 'utf8');
-const compiled = ts.transpileModule(typescript, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2021 },
-  reportDiagnostics: true,
-});
-assert.equal(compiled.diagnostics?.filter((d) => d.category === ts.DiagnosticCategory.Error).length ?? 0, 0);
-
-const loader = { exports: {} };
-const mockRequire = (name) => name === 'firebase-admin/firestore'
-  ? { FieldValue: { serverTimestamp: () => '__SERVER_TIMESTAMP__' } }
-  : require(name);
-new Function('require', 'module', 'exports', compiled.outputText)(
-  mockRequire, loader, loader.exports,
-);
-const { InstitutionalMissionCoordination } = loader.exports;
+// Load exactly one compiled instance of the real server-owned fence and coordinator.
+// The test uses a serial in-memory DB for business logic only; never claim native
+// Firestore transaction security or workload identity from this fixture.
+const loaded = new Map();
+function loadSource(name) {
+  if (loaded.has(name)) return loaded.get(name).exports;
+  const text = readFileSync(new URL('../src/' + name, import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(text, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2021 },
+    reportDiagnostics: true,
+  });
+  assert.equal(compiled.diagnostics?.filter(d => d.category === ts.DiagnosticCategory.Error).length ?? 0, 0);
+  const module = { exports: {} };
+  loaded.set(name, module);
+  new Function('require', 'module', 'exports', compiled.outputText)(
+    id => id === './institutionalMissionServerGrantFence'
+      ? loadSource('institutionalMissionServerGrantFence.ts')
+      : id === 'firebase-admin/firestore'
+        ? { FieldValue: { serverTimestamp: () => '__SERVER_TIMESTAMP__' } }
+        : require(id),
+    module, module.exports,
+  );
+  return module.exports;
+}
+const { InstitutionalMissionCoordination } = loadSource('institutionalMissionCoordination.ts');
+const { createServerOwnedMissionGrantFence } = loadSource('institutionalMissionServerGrantFence.ts');
 
 // This fake serializes transactions to exercise the contract only. It is NOT
 // a Firestore emulator, network authorization test, multi-host certification,
@@ -62,14 +73,27 @@ class FakeFirestore {
 const db = new FakeFirestore();
 let time = 1794905500000;
 const permitted = async () => true;
-db.data.set('r1474SyntheticGrants/review_fixture', { active: true });
-const fence = async (tx) => {
-  const grant = await tx.get(db.collection('r1474SyntheticGrants').doc('review_fixture'));
-  if (!grant.exists || grant.data()?.active !== true) throw Error('DENY: transaction grant revoked');
-};
+const allowedIds = [
+  'r1436_source_review','r1436_gpu_job','r1436_untrusted',
+  'r1436_followup_review','r1436_blocked_review','r1442_poison_review'
+];
+for (const [actorId, role, allowedActions] of [
+  ['admin_principal', 'OPERATOR', ['REGISTER','CREATE']],
+  ['worker_alpha', 'WORKER', ['READ','CLAIM','HEARTBEAT','SUBMIT_EVIDENCE']],
+  ['worker_beta', 'WORKER', ['READ','CLAIM','HEARTBEAT','SUBMIT_EVIDENCE']],
+  ['worker_validator', 'REVIEWER', ['READ','VERIFY']],
+]) {
+  db.data.set('institutionalMissionGrants/' + actorId, {
+    schema:'urai-mission-grant-v1', actorId, issuer:'issuer',audience:'audience',
+    tenant:'tenant',role,status:'ACTIVE',allowedActions,taskIds:allowedIds,
+    issuedAtMs:time-1000,notBeforeMs:time-1000,expiresAtMs:time+600000,revokedAtMs:null,
+  });
+}
+const fence = createServerOwnedMissionGrantFence(db,{issuer:'issuer',audience:'audience',tenant:'tenant'});
 const store = new InstitutionalMissionCoordination(db, permitted, fence);
-const deny = new InstitutionalMissionCoordination(db);
-const noFence = new InstitutionalMissionCoordination(db, permitted);
+const denyConstruct = () => new InstitutionalMissionCoordination(db);
+const noFenceConstruct = () => new InstitutionalMissionCoordination(db, permitted);
+
 const git = 'https://github.com/LifeLoggerAI/urai-admin/pull/114';
 const rev = 'a'.repeat(40), hash = 'b'.repeat(64);
 const taskA = {
@@ -79,18 +103,13 @@ const taskA = {
 let count = 0;
 async function check(label, fn) { await fn(); count++; console.log('PASS', String(count).padStart(2, '0'), label); }
 
-await check('absent authorization denies even read', async () => {
-  await assert.rejects(deny.readTask('worker_alpha', taskA.taskId), /DENY/);
+await check('absent authoritative fence rejects construction, even for reads', async () => {
+  assert.throws(denyConstruct, /DENY: server-owned authoritative grant fence required/);
 });
-await check('missing transaction fence denies all six mutating actions', async () => {
-  const expected = /DENY: transaction-authoritative revocation fence required/;
-  await assert.rejects(noFence.registerWorker('admin_principal','worker_alpha',['SOURCE_AUDIT']),expected);
-  await assert.rejects(noFence.registerTask('admin_principal',taskA),expected);
-  await assert.rejects(noFence.claimTask('worker_alpha',taskA.taskId,10),expected);
-  await assert.rejects(noFence.heartbeat('worker_alpha',taskA.taskId,1,10),expected);
-  await assert.rejects(noFence.submitEvidence('worker_alpha',taskA.taskId,1,git,hash),expected);
-  await assert.rejects(noFence.verifyEvidence('worker_validator',taskA.taskId,rev,hash,'PASS'),expected);
+await check('missing transaction fence rejects construction before any mutation', async () => {
+  assert.throws(noFenceConstruct, /DENY: server-owned authoritative grant fence required/);
 });
+
 await check('registration of approved capabilities', async () => {
   await store.registerWorker('admin_principal', 'worker_alpha', ['SOURCE_AUDIT']);
   await store.registerWorker('admin_principal', 'worker_beta', ['SOURCE_AUDIT']);
@@ -144,14 +163,14 @@ await check('old generation cannot submit late evidence', async () => {
 });
 await check('recovery worker submits exact revision receipt once', async () => {
   assert.equal(await store.submitEvidence(globalThis.recovered.workerId, taskA.taskId, 2, git, hash), true);
-  assert.equal((await store.readTask('admin_principal', taskA.taskId)).state, 'VERIFYING');
+  assert.equal((await store.readTask('worker_validator', taskA.taskId)).state, 'VERIFYING');
 });
 await check('stale duplicate cannot resubmit evidence', async () => {
   assert.equal(await store.submitEvidence(globalThis.recovered.workerId, taskA.taskId, 2, git, hash), false);
 });
 await check('producer cannot independently accept own evidence', async () => {
   await assert.rejects(store.verifyEvidence(globalThis.recovered.workerId, taskA.taskId, rev, hash, 'PASS'),
-    /independent reviewer capability|separation of duties/);
+    /independent reviewer capability|separation of duties|DENY: invalid or revoked authoritative mission grant/);
 });
 await check('exact digest required for independent review', async () => {
   await assert.rejects(store.verifyEvidence('worker_validator', taskA.taskId, rev, 'c'.repeat(64), 'PASS'),
@@ -159,7 +178,7 @@ await check('exact digest required for independent review', async () => {
 });
 await check('distinct reviewer accepts evidence as metadata, not certification', async () => {
   assert.equal((await store.verifyEvidence('worker_validator', taskA.taskId, rev, hash, 'PASS')).state, 'ACCEPTED');
-  assert.equal((await store.readTask('admin_principal', taskA.taskId)).state, 'ACCEPTED');
+  assert.equal((await store.readTask('worker_validator', taskA.taskId)).state, 'ACCEPTED');
 });
 await check('dependent task requires accepted predecessor', async () => {
   const child = { taskId: 'r1436_followup_review', sourceRevision: rev, sourceUrl: git,
@@ -171,7 +190,7 @@ await check('unregistered worker cannot claim work', async () => {
   const child2 = { taskId: 'r1436_blocked_review', sourceRevision: rev, sourceUrl: git,
     taskClass: 'SOURCE_AUDIT', dependencyIds: [], dedupeKey: 'r1436:block:sha-a' };
   await store.registerTask('admin_principal', child2);
-  await assert.rejects(store.claimTask('worker_unknown', child2.taskId), /unregistered/);
+  await assert.rejects(store.claimTask('worker_unknown', child2.taskId), /unregistered|DENY/);
 });
 await check('missing Firestore readTime fails closed', async () => {
   const original = db.snapshot.bind(db);
@@ -201,7 +220,7 @@ await check('poison task quarantined after three expired execution leases', asyn
   }
   const fourth = await store.claimTask('worker_beta', poisonTask.taskId, 10);
   assert.equal(fourth, null);
-  const final = await store.readTask('admin_principal', poisonTask.taskId);
+  const final = await store.readTask('worker_validator', poisonTask.taskId);
   assert.equal(final.state, 'BLOCKED');
   assert.equal(final.blockReason, 'LEASE_RETRY_LIMIT');
   assert.equal(final.leaseOwner, null);
@@ -210,5 +229,5 @@ await check('poison task quarantined after three expired execution leases', asyn
   assert.equal(receipt.reason, 'LEASE_RETRY_LIMIT');
   assert.equal(await store.claimTask('worker_alpha', poisonTask.taskId, 10), null);
 });
-console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/19 PASS',
+console.log('R1436 SYNTHETIC METADATA CONTRACT', count + '/20 PASS',
  'NOT real Firestore, NOT cross-machine, NOT authorized staging');

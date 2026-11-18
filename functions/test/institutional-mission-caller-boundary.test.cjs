@@ -1,95 +1,31 @@
+'use strict';
+// R1488 fail-closed replacement for legacy callback-injection assumptions.
+// Production workload verification is not integrated. All arbitrary providers
+// must be denied, including callbacks returning a plausible principal.
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('node:module');
-const root=path.resolve(__dirname,'../src');
-const req=createRequire(path.resolve(__dirname,'../package.json'));
-const ts=req('typescript');
-const transpile=f=>ts.transpileModule(fs.readFileSync(path.join(root,f),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021,esModuleInterop:true}}).outputText;
-const coord={exports:{}};
-new Function('require','module','exports',transpile('institutionalMissionCoordination.ts'))(
-  id=>id==='firebase-admin/firestore'?{FieldValue:{serverTimestamp:()=>null}}:req(id),coord,coord.exports);
-const boundary={exports:{}};
-new Function('require','module','exports',transpile('institutionalMissionCallerBoundary.ts'))(
-  id=>id==='./institutionalMissionCoordination'?coord.exports:req(id),boundary,boundary.exports);
-const {createMissionSession}=boundary.exports;
-let now=1730000000000,checks=0,reads=0,verificationCalls=0,transactionCalls=0;
-const principal={subject:'worker_alpha',issuer:'fixture-issuer',audience:'mission-ops',
- tenant:'synthetic_research',role:'WORKER',issuedAtMs:now-1000,
- notBeforeMs:now-1000,expiresAtMs:now+20000,taskIds:['task_safe']};
-let current={...principal};
-const db={collection:()=>({doc:task=>({
- get:async()=>{reads++;return {exists:true,data:()=>({taskId:task,state:'READY'})}},
- })}),runTransaction:async()=>{transactionCalls++;throw Error('unexpected transaction')}};
-const opts=()=>({db,credential:'opaque-test',transactionFence:async tx=>{if(!tx || !tx.get)throw Error('DENY: tx unavailable')},issuer:principal.issuer,
- audience:principal.audience,tenant:principal.tenant,now:()=>now,
- verifyCredential:async credential=>{verificationCalls++;return credential==='opaque-test'?current:null}});
-async function pass(n,f){await f();checks++;console.log('PASS',checks,n)}
-async function deny(n,f){await assert.rejects(f,/DENY/);checks++;console.log('PASS',checks,n)}
+const src=path.resolve(__dirname,'../src'),req=createRequire(path.resolve(__dirname,'../package.json')),ts=req('typescript');
+const cache={};
+function load(n){if(cache[n])return cache[n].exports;const m={exports:{}};cache[n]=m;const code=ts.transpileModule(fs.readFileSync(path.join(src,n),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}}).outputText;
+new Function('require','module','exports',code)((id)=>id.startsWith('./')?load(id.slice(2)+'.ts'):req(id),m,m.exports);return m.exports}
+const {createMissionSession}=load('institutionalMissionCallerBoundary.ts');
+const {createServerOwnedMissionGrantFence}=load('institutionalMissionServerGrantFence.ts');
+const db={collection:()=>({doc:()=>({})})};
+const now=Date.now();
+const principal={subject:'worker_alpha',issuer:'issuer',audience:'audience',tenant:'tenant',role:'WORKER',
+ issuedAtMs:now-1000,notBeforeMs:now-1000,expiresAtMs:now+10000,taskIds:['task_safe']};
+const fence=createServerOwnedMissionGrantFence(db,{issuer:'issuer',audience:'audience',tenant:'tenant'});
+const base={db,credential:'unsigned-and-untrusted',transactionFence:fence,issuer:'issuer',
+ audience:'audience',tenant:'tenant',verifyCredential:async()=>principal};
+let checks=0;async function deny(label,options){await assert.rejects(createMissionSession(options),/DENY/);console.log('PASS',++checks,label)}
 (async()=>{
- await deny('missing verifier',()=>createMissionSession({...opts(),verifyCredential:null}));
-await deny('missing transaction fence',()=>createMissionSession({...opts(),transactionFence:null}));
- await deny('invalid credential',()=>createMissionSession({...opts(),credential:'other'}));
- await deny('wrong issuer',()=>createMissionSession({...opts(),issuer:'impostor'}));
- await deny('wrong audience',()=>createMissionSession({...opts(),audience:'wrong'}));
- await deny('wrong tenant',()=>createMissionSession({...opts(),tenant:'other'}));
- await pass('valid worker binds actorId',async()=>{const session=await createMissionSession(opts());assert.equal(session.principalId,'worker_alpha')});
-
-let session=await createMissionSession(opts());
-await pass('authorized source read',async()=>{let t=await session.readTask('task_safe');assert.equal(t.taskId,'task_safe')});
-await deny('wrong task ID denied',()=>session.readTask('task_other'));
-await deny('session cannot gain expanded task grant',async()=>{
- current={...principal,taskIds:['task_safe','task_other']};
- try { await session.readTask('task_other'); } finally { current={...principal}; }
-});
-await deny('worker cannot verify',()=>session.verifyEvidence('task_safe','a'.repeat(40),'b'.repeat(64),'PASS'));
-assert.equal(transactionCalls,0);
-await deny('missing READ scope',async()=>{current={...principal,role:'WORKER',taskIds:['task_other']};await session.readTask('task_safe')});
-current={...principal};
-await pass('valid session after role restoration',async()=>assert.equal((await session.readTask('task_safe')).taskId,'task_safe'));
-current={...principal,subject:'worker_beta'};
-await deny('principal swap denied after session',()=>session.readTask('task_safe'));
-current={...principal,role:'REVIEWER'};
-await deny('role switch loses worker capability',()=>session.claimTask('task_safe',10));
-await deny('role switch cannot gain reviewer VERIFY privilege',()=>session.verifyEvidence('task_safe','a'.repeat(40),'b'.repeat(64),'PASS'));
-current={...principal,issuedAtMs:principal.issuedAtMs,expiresAtMs:now-10};
-await deny('expiry after session setup',()=>session.readTask('task_safe'));
-current={...principal,notBeforeMs:now+10};
-await deny('not before after setup',()=>session.readTask('task_safe'));
-current={...principal,issuedAtMs:now+10};
-await deny('future issued after setup',()=>session.readTask('task_safe'));
-current={...principal,expiresAtMs:now+3600001};
-await deny('excess lifetime after setup',()=>session.readTask('task_safe'));
-
-current={...principal,taskIds:['task_safe','task_safe']};
-await deny('duplicate task grants',()=>session.readTask('task_safe'));
-current={...principal,taskIds:[]};
-await deny('empty task scope',()=>session.readTask('task_safe'));
-current={...principal,taskIds:['../bad']};
-await deny('path-like task scope',()=>session.readTask('task_safe'));
-current={...principal};
-const reviewer=await createMissionSession({...opts(),verifyCredential:async()=>({...principal,role:'REVIEWER',subject:'worker_validator'})});
-await deny('reviewer cannot claim worker task',()=>reviewer.claimTask('task_safe',10));
-await pass('reviewer may read permitted metadata',async()=>assert.equal((await reviewer.readTask('task_safe')).taskId,'task_safe'));
-current={...principal};let toggled=false;
-const revocable=await createMissionSession({...opts(),verifyCredential:async()=>toggled?null:principal});
-toggled=true;
-await deny('revoked credential denied on next call',()=>revocable.readTask('task_safe'));
-// Pin trust configuration even when server-owned options object is later mutated.
-current={...principal};
-const mutableIssuer=opts();
-const issuerSession=await createMissionSession(mutableIssuer);
-mutableIssuer.issuer='attacker-issuer';
-current={...principal,issuer:'attacker-issuer'};
-await deny('mutated issuer never widens session authority',()=>issuerSession.readTask('task_safe'));
-current={...principal};
-const mutableVerifier=opts();
-const verifierSession=await createMissionSession(mutableVerifier);
-mutableVerifier.verifyCredential=async()=>({...principal});
-await pass('mutated verifier cannot replace trusted callback',async()=>{
- const before=verificationCalls;
- await verifierSession.readTask('task_safe');
- assert.ok(verificationCalls>before);
-});
-assert.equal(transactionCalls,0);
-console.log('RESULT',JSON.stringify({checks,passed:checks,reads,verificationCalls,transactions:transactionCalls,realProviderIam:false,realHostedFirestore:false}));
-})().catch(e=>{console.error(e.stack);process.exitCode=2});
-
+ await deny('unsigned credential with synthetic verifier',base);
+ await deny('raw noop verifier', {...base,verifyCredential:async()=>null});
+ await deny('missing verifier', {...base,verifyCredential:null});
+ await deny('unbranded transaction fence', {...base,transactionFence:async()=>{}});
+ await deny('missing fence', {...base,transactionFence:null});
+ await deny('swapped identity payload', {...base,credential:{subject:'worker_alpha'}});
+ await deny('extra roles forged from payload', {...base,verifyCredential:async()=>({...principal,role:'REVIEWER'})});
+ console.log('R1488 CALLER BOUNDARY DENY-ONLY',checks+'/'+checks,'PASS',
+  'providerAuthentication:false hostedFirestore:false independentApproval:false');
+})().catch(e=>{console.error(e.stack||e);process.exitCode=1});

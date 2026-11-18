@@ -1,3 +1,4 @@
+import { isServerOwnedMissionGrantFence } from './institutionalMissionServerGrantFence';
 /**
  * R1436 REVIEW-ONLY extension of the existing URAI institutional control plane.
  *
@@ -121,7 +122,11 @@ export class InstitutionalMissionCoordination {
     private readonly db: Firestore,
     private readonly authorize: AdminAuthorizer | null = null,
     private readonly transactionFence: AdminTransactionFence | null = null,
-  ) {}
+  ) {
+    if (!isServerOwnedMissionGrantFence(transactionFence,db)) {
+      throw new Error('DENY: server-owned authoritative grant fence required');
+    }
+  }
 
   private async permit(actorId: string, action: MissionAction, taskId?: string): Promise<void> {
     identity(actorId, 'actorId');
@@ -379,9 +384,13 @@ export class InstitutionalMissionCoordination {
 
   async readTask(actorId: string, taskId: string) {
     await this.permit(actorId, 'READ', taskId);
-    const snapshot = await this.taskRef(taskId).get();
-    if (!snapshot.exists) throw new Error('task not found');
-    return snapshot.data();
+    return this.db.runTransaction(async (tx) => {
+      await this.permit(actorId, 'READ', taskId);
+      await this.fence(tx, actorId, 'READ', taskId);
+      const snapshot = await tx.get(this.taskRef(taskId));
+      if (!snapshot.exists) throw new Error('task not found');
+      return snapshot.data();
+    });
   }
 }
 
