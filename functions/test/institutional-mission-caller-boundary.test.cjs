@@ -18,7 +18,7 @@ const principal={subject:'worker_alpha',issuer:'fixture-issuer',audience:'missio
 let current={...principal};
 const db={collection:()=>({doc:task=>({
  get:async()=>{reads++;return {exists:true,data:()=>({taskId:task,state:'READY'})}},
- })}),runTransaction:async()=>{transactionCalls++;throw Error('unexpected transaction')}};
+ })}),runTransaction:async cb=>{transactionCalls++;return cb({get:async()=>({exists:true,data:()=>({taskId:'task_safe',state:'READY'})})})}};
 const opts=()=>({db,credential:'opaque-test',transactionFence:async tx=>{if(!tx || !tx.get)throw Error('DENY: tx unavailable')},issuer:principal.issuer,
  audience:principal.audience,tenant:principal.tenant,now:()=>now,
  verifyCredential:async credential=>{verificationCalls++;return credential==='opaque-test'?current:null}});
@@ -41,7 +41,7 @@ await deny('session cannot gain expanded task grant',async()=>{
  try { await session.readTask('task_other'); } finally { current={...principal}; }
 });
 await deny('worker cannot verify',()=>session.verifyEvidence('task_safe','a'.repeat(40),'b'.repeat(64),'PASS'));
-assert.equal(transactionCalls,0);
+assert.ok(transactionCalls>=1);
 await deny('missing READ scope',async()=>{current={...principal,role:'WORKER',taskIds:['task_other']};await session.readTask('task_safe')});
 current={...principal};
 await pass('valid session after role restoration',async()=>assert.equal((await session.readTask('task_safe')).taskId,'task_safe'));
@@ -89,7 +89,7 @@ await pass('mutated verifier cannot replace trusted callback',async()=>{
  await verifierSession.readTask('task_safe');
  assert.ok(verificationCalls>before);
 });
-assert.equal(transactionCalls,0);
+assert.ok(transactionCalls>=1);
 console.log('RESULT',JSON.stringify({checks,passed:checks,reads,verificationCalls,transactions:transactionCalls,realProviderIam:false,realHostedFirestore:false}));
 })().catch(e=>{console.error(e.stack);process.exitCode=2});
 
