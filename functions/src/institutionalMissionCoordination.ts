@@ -379,9 +379,13 @@ export class InstitutionalMissionCoordination {
 
   async readTask(actorId: string, taskId: string) {
     await this.permit(actorId, 'READ', taskId);
-    const snapshot = await this.taskRef(taskId).get();
-    if (!snapshot.exists) throw new Error('task not found');
-    return snapshot.data();
+    return this.db.runTransaction(async (tx) => {
+      await this.permit(actorId, 'READ', taskId);
+      await this.fence(tx, actorId, 'READ', taskId);
+      const snapshot = await tx.get(this.taskRef(taskId));
+      if (!snapshot.exists) throw new Error('task not found');
+      return snapshot.data();
+    });
   }
 }
 
