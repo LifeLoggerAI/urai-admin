@@ -3,7 +3,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { AdminTransactionFence, MissionAction } from './institutionalMissionCoordination';
 export type GrantPolicy = Readonly<{issuer:string;audience:string;tenant:string}>;
 const roles: Record<string, readonly MissionAction[]> = {
- OPERATOR:['REGISTER','CREATE'],WORKER:['CLAIM','HEARTBEAT','SUBMIT_EVIDENCE'],REVIEWER:['VERIFY']
+ OPERATOR:['REGISTER','CREATE'],WORKER:['READ','CLAIM','HEARTBEAT','SUBMIT_EVIDENCE'],REVIEWER:['READ','VERIFY']
 };
 const ids=/^[a-z][a-z0-9_-]{3,95}$/;
 function deny():never {throw Error('DENY: invalid or revoked authoritative mission grant')}
