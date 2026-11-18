@@ -68,11 +68,12 @@ export async function verifyGoogleMissionWorkloadToken(
       claims.email_verified !== true ||
       typeof claims.iat !== 'number' || !Number.isSafeInteger(claims.iat) ||
       typeof claims.exp !== 'number' || !Number.isSafeInteger(claims.exp) ||
-      claims.iat > now + 30 || now - claims.iat > 900 ||
-      claims.exp <= now || claims.exp - claims.iat > 3600 ||
+      claims.iat > now || now - claims.iat > 900 ||
+      claims.exp <= now || claims.exp <= claims.iat ||
+      claims.exp - claims.iat > 3600 ||
       (claims.nbf !== undefined &&
         (typeof claims.nbf !== 'number' || !Number.isSafeInteger(claims.nbf) ||
-         claims.nbf > now + 30))) deny();
+         claims.nbf > now || claims.nbf >= claims.exp))) deny();
   // No arbitrary URL, certificate, key ID, or issuer supplied by the worker.
   let jwks: unknown;
   try {
