@@ -87,7 +87,7 @@ export async function verifyGoogleMissionWorkloadToken(
   if (matches.length !== 1) deny();
   let good = false;
   try {
-    const pub = createPublicKey({ key: matches[0] as JsonWebKey, format: 'jwk' });
+    const pub = createPublicKey({ key: matches[0] as import('node:crypto').JsonWebKey, format: 'jwk' });
     const signature = Buffer.from(parts[2], 'base64url');
     good = signature.length >= 128 && verifySignature(
       'RSA-SHA256', Buffer.from(parts[0] + '.' + parts[1]), pub, signature);
