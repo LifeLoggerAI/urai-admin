@@ -1,23 +1,35 @@
-const assert=require('node:assert/strict'),fs=require('node:fs'),{createRequire}=require('node:module');
-const req=createRequire(require('node:path').resolve(__dirname,'../package.json'));
-const ts=req('typescript'),file=require('node:path').resolve(__dirname,'../src/institutionalMissionCoordination.ts');
-const m={exports:{}};new Function('require','module','exports',ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}}).outputText)(
-  n=>n==='firebase-admin/firestore'?{FieldValue:{serverTimestamp:()=>null}}:req(n),m,m.exports);
-const data={workerId:'worker_alpha',status:'ACTIVE',taskClasses:['SOURCE_AUDIT']};
-const task={taskId:'r1466_revoked_claim',taskClass:'SOURCE_AUDIT',state:'READY',leaseEpoch:0,dependencyIds:[]};
-let authorized=true,initialPermitResolve;const initialPermit=new Promise(r=>initialPermitResolve=r);
-let entryResolve;const entry=new Promise(r=>entryResolve=r);let startTx;const proceed=new Promise(r=>startTx=r);
-let permitCount=0,transactionWrites=0;
-const db={collection(name){return{doc(id){return{path:name+'/'+id}}}},async runTransaction(fn){
- entryResolve();await proceed;return fn({get:async ref=>({exists:true,data:()=>ref.path.includes('Workers')?data:task,readTime:{toMillis:()=>1794905500000}}),
- update:()=>{transactionWrites++},set:()=>{transactionWrites++}})}};
-const fence=async(tx)=>{const grant=await tx.get({path:'r1474SyntheticGrants/review_fixture'});if(!grant.exists||grant.data()?.active!==true)throw new Error('DENY: synthetic grant revoked')};
-const store=new m.exports.InstitutionalMissionCoordination(db,async()=>{permitCount++; if(permitCount===1)initialPermitResolve();return authorized},fence);
-(async()=>{
- const work=store.claimTask('worker_alpha','r1466_revoked_claim',10);
- await initialPermit;await entry;
- authorized=false;startTx();
- await assert.rejects(work,/DENY/);
+'use strict';
+// R1488 deterministic admission/race test with a trusted fence factory,
+// using a synthetic DB. NOT a native emulator test or hosted identity proof.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{createRequire}=require('node:module');
+const root=path.resolve(__dirname,'../src'),req=createRequire(path.resolve(__dirname,'../package.json')),ts=req('typescript'),cache={};
+function load(name){if(cache[name])return cache[name].exports;const m={exports:{}};cache[name]=m;
+ const output=ts.transpileModule(fs.readFileSync(path.join(root,name),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}}).outputText;
+ new Function('require','module','exports',output)(id=>id.startsWith('./')?load(id.slice(2)+'.ts'):req(id),m,m.exports);return m.exports}
+const {InstitutionalMissionCoordination}=load('institutionalMissionCoordination.ts');
+const {createServerOwnedMissionGrantFence}=load('institutionalMissionServerGrantFence.ts');
+const actor='worker_alpha',taskId='r1466_revoked_claim',now=1794905500000;
+let authorized=true,firstPermitResolve,beginTxResolve,releaseTx;
+const firstPermit=new Promise(r=>firstPermitResolve=r);
+const beginTx=new Promise(r=>beginTxResolve=r);
+const proceed=new Promise(r=>releaseTx=r);
+let permitCalls=0,transactionWrites=0,grantReads=0;
+const grant={schema:'urai-mission-grant-v1',actorId:actor,issuer:'issuer',audience:'audience',tenant:'tenant',role:'WORKER',
+status:'ACTIVE',allowedActions:['CLAIM'],taskIds:[taskId],issuedAtMs:now-1000,notBeforeMs:now-1000,
+expiresAtMs:now+10000,revokedAtMs:null};
+const db={collection:n=>({doc:id=>({path:n+'/'+id})}),
+ async runTransaction(fn){beginTxResolve();await proceed;return fn({
+ get:async ref=>{if(ref.path.startsWith('institutionalMissionGrants/'))grantReads++;
+  return {exists:true,data:()=>ref.path.startsWith('institutionalMissionGrants/')?grant:ref.path.startsWith('institutionalMissionWorkers/')?
+    {workerId:actor,status:'ACTIVE',taskClasses:['SOURCE_AUDIT']}:
+    {taskId,taskClass:'SOURCE_AUDIT',state:'READY',leaseEpoch:0,dependencyIds:[]},
+    readTime:{toMillis:()=>now}};},
+ update:()=>{transactionWrites++},set:()=>{transactionWrites++}});
+ }};
+const fence=createServerOwnedMissionGrantFence(db,{issuer:'issuer',audience:'audience',tenant:'tenant'});
+const store=new InstitutionalMissionCoordination(db,async()=>{permitCalls++;if(permitCalls===1)firstPermitResolve();return authorized},fence);
+(async()=>{const pending=store.claimTask(actor,taskId,10);await firstPermit;await beginTx;authorized=false;releaseTx();
+ await assert.rejects(pending,/DENY/);
  assert.equal(transactionWrites,0);
- console.log('PASS transaction admission rechecks revoked identity',{permitCount,transactionWrites});
-})().catch(e=>{console.error(e.stack);process.exitCode=2});
+ console.log('PASS R1488 admission revoked before transaction',{permitCalls,transactionWrites,grantReads,simulated:true,providerIAM:false});
+})().catch(e=>{console.error(e.stack||e);process.exitCode=2});

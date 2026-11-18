@@ -1,3 +1,4 @@
+import { isApprovedMissionCredentialVerifier } from './institutionalMissionCredentialAuthority';
 /**
  * R1460 REVIEW-ONLY caller boundary for the EXISTING InstitutionalMissionCoordination.
  *
@@ -72,7 +73,7 @@ export async function createMissionSession<TCredential>(
   opts: MissionBoundaryOptions<TCredential>,
 ) {
 
-  if (!opts || typeof opts.transactionFence !== 'function' ||
+  if (!opts || !isApprovedMissionCredentialVerifier(opts.verifyCredential) || typeof opts.transactionFence !== 'function' ||
       typeof opts.verifyCredential !== 'function' ||
       typeof opts.issuer !== 'string' || !opts.issuer ||
       typeof opts.audience !== 'string' || !opts.audience ||
