@@ -8,12 +8,13 @@
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.active.json --noEmit && tsc -p tsconfig.mission.json --noEmit",
-    "test": "node test/source-contracts.test.mjs && node test/institutional-control-plane-runtime-source.test.mjs && node test/institutional-mission-coordination.test.mjs && node test/institutional-mission-caller-boundary.test.cjs && node test/mission-auth-transaction-race.test.cjs && node test/mission-server-grant-fence.test.cjs",
+    "test": "node test/source-contracts.test.mjs && node test/institutional-control-plane-runtime-source.test.mjs && node test/institutional-mission-coordination.test.mjs && node test/institutional-mission-caller-boundary.test.cjs && node test/mission-auth-transaction-race.test.cjs && node test/mission-server-grant-fence.test.cjs && node test/mission-google-identity-verifier.test.cjs",
     "build": "tsc -p tsconfig.active.json"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^5.0.1",
+    "google-auth-library": "9.15.1",
     "next": "^14.2.35",
     "react": "^18",
     "react-dom": "^18",
