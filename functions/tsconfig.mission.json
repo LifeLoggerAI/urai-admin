@@ -5,6 +5,7 @@
     "src/institutionalMissionCallerBoundary.ts",
     "src/institutionalMissionServerGrantFence.ts",
     "src/institutionalMissionTrustedRuntime.ts",
-    "src/institutionalMissionCredentialAuthority.ts"
+    "src/institutionalMissionCredentialAuthority.ts",
+    "src/institutionalMissionGoogleOidcVerifier.ts"
   ]
 }
