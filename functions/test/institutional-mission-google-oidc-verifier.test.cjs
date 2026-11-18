@@ -66,6 +66,12 @@ async function deny(label,token,opts=policy){
  const {privateKey:otherKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
  const h=b64({alg:'RS256',kid:key.kid}),p=b64(base),payload=h+'.'+p;
  await deny('bad signature',payload+'.'+crypto.sign('RSA-SHA256',Buffer.from(payload),otherKey).toString('base64url'));
+ // R1504 independent negative controls: nbf may never authorize before its not-before time.
+ // Explicitly deny signed tokens before nbf and impossible timestamp orderings.
+ await deny('future nbf',sign({...base,nbf:now+20,exp:now+240}));
+ await deny('nbf after expiry',sign({...base,nbf:now+20,exp:now+10}));
+ await deny('future iat within prior skew',sign({...base,iat:now+20,exp:now+240}));
+ await deny('expiry at or before issuance',sign({...base,iat:now-10,exp:now-10}));
  global.fetch=originalFetch;
  console.log('RESULT',JSON.stringify({checks,endpointChecks:expectedEndpoint,synthetic:true,providerIdentity:false,providerIAM:false,realIssuer:false,hostedFirestore:false,productionAuthorized:false}));
 })().catch(e=>{global.fetch=originalFetch;console.error(e.stack||e);process.exitCode=1});
