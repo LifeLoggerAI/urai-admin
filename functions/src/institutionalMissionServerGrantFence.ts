@@ -16,14 +16,15 @@ export function createServerOwnedMissionGrantFence(db:Firestore,policy:GrantPoli
   if(!named(actorId)||!Object.values(roles).some(actions=>actions.includes(action))||(taskId!==undefined&&!named(taskId)))deny();
   const snap=await tx.get(db.collection('institutionalMissionGrants').doc(actorId));
   if(!snap.exists)deny();
-  const now=snap.readTime?.toMillis?.();
-  if(!Number.isSafeInteger(now)||(now as number)<=0)deny();
+  const rawReadTime=snap.readTime?.toMillis?.();
+  if(typeof rawReadTime!=='number'||!Number.isSafeInteger(rawReadTime)||rawReadTime<=0)deny();
+  const now=rawReadTime;
   const g=snap.data();
   const allowed=['schema','actorId','issuer','audience','tenant','role','status','allowedActions','taskIds','issuedAtMs','notBeforeMs','expiresAtMs','revokedAtMs'];
   if(!g||Object.keys(g).some(k=>!allowed.includes(k))||
    g.schema!=='urai-mission-grant-v1'||g.actorId!==actorId||
    g.issuer!==trusted.issuer||g.audience!==trusted.audience||g.tenant!==trusted.tenant||
-   g.status!=='ACTIVE'||g.revokedAtMs!==null||!Object.hasOwn(roles,g.role)||
+   g.status!=='ACTIVE'||g.revokedAtMs!==null||!Object.prototype.hasOwnProperty.call(roles,g.role)||
    !Array.isArray(g.allowedActions)||g.allowedActions.length<1||g.allowedActions.length>6||new Set(g.allowedActions).size!==g.allowedActions.length||!g.allowedActions.every((a:string)=>Object.values(roles).some(actions=>actions.includes(a as MissionAction)))||
    !g.allowedActions.includes(action)||!roles[g.role].includes(action)||
    !names(g.taskIds,16)||
