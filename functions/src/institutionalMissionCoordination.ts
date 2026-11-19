@@ -252,7 +252,7 @@ export class InstitutionalMissionCoordination {
       }
       const now = authoritativeTimeMs(t);
       if (!(task.state === 'READY' ||
-        (task.state === 'CLAIMED' && Number.isSafeInteger(task.leaseExpiresAtMs) && task.leaseExpiresAtMs < now))) {
+        (task.state === 'CLAIMED' && Number.isSafeInteger(task.leaseExpiresAtMs) && task.leaseExpiresAtMs <= now))) {
         return null;
       }
       const epoch = Number(task.leaseEpoch);
@@ -302,7 +302,8 @@ export class InstitutionalMissionCoordination {
       if (!worker.exists || worker.data()?.status !== 'ACTIVE' ||
           !worker.data()?.taskClasses?.includes(task.taskClass) ||
           task.state !== 'CLAIMED' || task.leaseOwner !== workerId ||
-          task.leaseEpoch !== leaseEpoch || task.leaseExpiresAtMs < now) return false;
+          task.leaseEpoch !== leaseEpoch || !Number.isSafeInteger(task.leaseExpiresAtMs) ||
+          task.leaseExpiresAtMs <= now) return false;
       tx.update(ref, {
         leaseExpiresAtMs: now + durationSeconds * 1000,
         updatedAt: FieldValue.serverTimestamp(),
@@ -326,7 +327,8 @@ export class InstitutionalMissionCoordination {
       if (!worker.exists || worker.data()?.status !== 'ACTIVE' ||
           !worker.data()?.taskClasses?.includes(task.taskClass) || task.state !== 'CLAIMED' ||
           task.leaseOwner !== workerId || task.leaseEpoch !== leaseEpoch ||
-          task.leaseExpiresAtMs < now) return false;
+          !Number.isSafeInteger(task.leaseExpiresAtMs) ||
+          task.leaseExpiresAtMs <= now) return false;
       const receiptRef = ref.collection('receipts').doc('execution');
       const existing = await tx.get(receiptRef);
       if (existing.exists) throw new Error('execution evidence already persisted; fail closed');
@@ -370,6 +372,15 @@ export class InstitutionalMissionCoordination {
       const verifierReceipt = await tx.get(ref.collection('receipts').doc('verification'));
       if (!executionReceipt.exists || verifierReceipt.exists) {
         throw new Error('missing execution receipt or verification already recorded');
+      }
+      // A receipt's existence alone cannot prove the task still matches it.
+      // Reject inconsistent owner, epoch, source or evidence metadata.
+      const execution = executionReceipt.data() || {};
+      if (execution.taskId !== taskId || execution.workerId !== task.evidenceSubmittedBy ||
+          execution.leaseEpoch !== task.leaseEpoch ||
+          execution.sourceRevision !== expectedRevision ||
+          execution.sha256 !== expectedDigest || execution.evidenceUrl !== task.evidenceUrl) {
+        throw new Error('execution receipt integrity mismatch; verification denied');
       }
       tx.set(ref.collection('receipts').doc('verification'), {
         taskId, reviewerId, expectedRevision, expectedDigest, result,
