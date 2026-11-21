@@ -382,3 +382,36 @@ test('R1660 absent mission task fails closed without exposing receipts',async()=
   const {store}=await fixture();
   await assert.rejects(store.readTaskWithReceipts('worker_reviewer','task_missing'),/task not found/);
 });
+
+
+test('R1660 complete authorized Firestore-like mission path reaches actual Founder Inbox projector', async () => {
+  const {pathToFileURL}=require('node:url');
+  const projector=await import(pathToFileURL(path.resolve(__dirname,'../../scripts/mission-receipt-inbox.mjs')).href);
+  const {store}=await fixture();
+  const initial=await projector.readAuthorizedFounderTask(store,'worker_reviewer','task_alpha');
+  assert.equal(initial.status,'NOT_DELIVERED');
+  const claim=await store.claimTask('worker_alpha','task_alpha',10);
+  assert.equal(await store.submitEvidence('worker_alpha','task_alpha',claim.leaseEpoch,evidenceUrl,sha256),true);
+  const awaiting=await projector.readAuthorizedFounderTask(store,'worker_reviewer','task_alpha');
+  assert.equal(awaiting.status,'PENDING_INDEPENDENT_REVIEW');
+  await store.verifyEvidence('worker_reviewer','task_alpha',revision,sha256,'PASS');
+  const reviewed=await projector.readAuthorizedFounderTask(store,'worker_reviewer','task_alpha');
+  assert.equal(reviewed.status,'VERIFIED_POINTER');
+  assert.equal(reviewed.sha256,sha256);
+  assert.equal(reviewed.artifactBytesVerified,false);
+  assert.equal(reviewed.founderAcknowledged,false);
+  assert.equal(reviewed.automaticallyDispatches,false);
+});
+test('R1660 live-style revoked READ grant cannot project prior accepted receipt',async()=>{
+  const {pathToFileURL}=require('node:url');
+  const projector=await import(pathToFileURL(path.resolve(__dirname,'../../scripts/mission-receipt-inbox.mjs')).href);
+  const {db,store}=await fixture();
+  const claim=await store.claimTask('worker_alpha','task_alpha',10);
+  await store.submitEvidence('worker_alpha','task_alpha',claim.leaseEpoch,evidenceUrl,sha256);
+  await store.verifyEvidence('worker_reviewer','task_alpha',revision,sha256,'PASS');
+  const accepted=await projector.readAuthorizedFounderTask(store,'worker_reviewer','task_alpha');
+  assert.equal(accepted.status,'VERIFIED_POINTER');
+  const prior=db.get(grantPath('worker_reviewer'));
+  db.put(grantPath('worker_reviewer'),{...prior,status:'REVOKED',revokedAtMs:db.nowMs});
+  await assert.rejects(projector.readAuthorizedFounderTask(store,'worker_reviewer','task_alpha'),/DENY/);
+});
