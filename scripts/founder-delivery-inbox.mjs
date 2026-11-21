@@ -22,6 +22,10 @@ function validId(value) { return typeof value === 'string' && ID.test(value); }
 function validHash(value, re) { return typeof value === 'string' && re.test(value); }
 function evidencePointer(value) {
   if (typeof value !== 'string' || value.length > 2000) return false;
+  // WHATWG URL normalizes encoded dot segments before pathname checks.
+  // Reject dangerous raw spellings first, including backslashes and traversal.
+  if (/%2f|%5c|%2e|%00/i.test(value) || value.includes('\\') ||
+      /\/(?:\.{1,2})(?:\/|$)/.test(value)) return false;
   try {
     const u = new URL(value);
     if (u.protocol !== 'https:' || u.username || u.password || u.port ||
