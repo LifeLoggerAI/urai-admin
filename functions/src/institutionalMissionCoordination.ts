@@ -393,6 +393,37 @@ export class InstitutionalMissionCoordination {
     });
   }
 
+  /**
+   * R1660 review-only, receipt-complete task read for the Founder Inbox.
+   * Same trusted READ grant and revocation fence as readTask; task and both
+   * receipt documents are read in a single Firestore transaction snapshot.
+   * Does not enable public browsing, arbitrary collection queries, polling,
+   * automatic delivery, archival writes, or founder acknowledgement.
+   *
+   * Caller must independently project/validate fields before rendering.
+   */
+  async readTaskWithReceipts(actorId: string, taskId: string) {
+    await this.permit(actorId, 'READ', taskId);
+    const ref = this.taskRef(taskId);
+    return this.db.runTransaction(async (tx) => {
+      await this.permit(actorId, 'READ', taskId);
+      await this.fence(tx, actorId, 'READ', taskId);
+      const [taskSnapshot, executionSnapshot, verificationSnapshot] = await Promise.all([
+        tx.get(ref),
+        tx.get(ref.collection('receipts').doc('execution')),
+        tx.get(ref.collection('receipts').doc('verification')),
+      ]);
+      if (!taskSnapshot.exists) throw new Error('task not found');
+      const task = taskSnapshot.data() || {};
+      if (task.taskId !== taskId) throw new Error('DENY: task identity mismatch');
+      const execution = executionSnapshot.exists ? executionSnapshot.data() || {} : null;
+      const verification = verificationSnapshot.exists ? verificationSnapshot.data() || {} : null;
+      if (execution && execution.taskId !== taskId) throw new Error('DENY: execution identity mismatch');
+      if (verification && verification.taskId !== taskId) throw new Error('DENY: verification identity mismatch');
+      return { task, execution, verification };
+    });
+  }
+
   async readTask(actorId: string, taskId: string) {
     await this.permit(actorId, 'READ', taskId);
     return this.db.runTransaction(async (tx) => {
