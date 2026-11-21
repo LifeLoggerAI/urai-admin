@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { summarizeFounderCustody } from './founder-custody-manifest.mjs';
 const a='a'.repeat(40),sha='b'.repeat(64);
-const src='https://app.heygen.com/videos/d230fd9cad6a40969940845112cd8a78';
-const archive='https://app.notion.com/p/41ffc25435048191ac88e13356f6b8e3';
+const src='https://app.heygen.com/videos/synthetic-test-video';
+const archive='https://app.notion.com/p/11111111111111111111111111111111';
 const item={id:'heygen:sample_video',kind:'video',name:'Synthetic original video',filename:'sample.mp4',bytes:1024,sha256:sha,
  originalRecordUrl:src,archiveUrl:archive,verificationState:'SOURCE_AND_ARCHIVE_SHA_MATCH',
  verificationMethod:'independent-sample-hashes',verificationWorker:'synthetic-worker',
