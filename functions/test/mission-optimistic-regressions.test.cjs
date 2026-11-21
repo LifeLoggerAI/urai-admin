@@ -329,3 +329,56 @@ test('missing server readTime fails closed without extending a lease', async () 
   await assert.rejects(store.claimTask('worker_alpha', 'task_alpha', 10), /server readTime unavailable/);
   assert.equal(db.get(taskPath('task_alpha')).state, 'READY');
 });
+
+
+test('R1660 receipt-complete read returns one authorized consistent task snapshot', async () => {
+  const {db,store} = await fixture();
+  const ready = await store.readTaskWithReceipts('worker_reviewer','task_alpha');
+  assert.equal(ready.task.state,'READY');
+  assert.equal(ready.execution,null);
+  assert.equal(ready.verification,null);
+  const claim=await store.claimTask('worker_alpha','task_alpha',10);
+  assert.equal(await store.submitEvidence('worker_alpha','task_alpha',claim.leaseEpoch,evidenceUrl,sha256),true);
+  const submitted=await store.readTaskWithReceipts('worker_reviewer','task_alpha');
+  assert.equal(submitted.task.state,'VERIFYING');
+  assert.equal(submitted.execution.sha256,sha256);
+  assert.equal(submitted.verification,null);
+  const accepted=await store.verifyEvidence('worker_reviewer','task_alpha',revision,sha256,'PASS');
+  assert.equal(accepted.state,'ACCEPTED');
+  const reviewed=await store.readTaskWithReceipts('worker_reviewer','task_alpha');
+  assert.equal(reviewed.task.state,'ACCEPTED');
+  assert.equal(reviewed.execution.taskId,'task_alpha');
+  assert.equal(reviewed.verification.taskId,'task_alpha');
+  assert.equal(reviewed.verification.result,'PASS');
+  assert.equal(reviewed.verification.reviewerId,'worker_reviewer');
+  assert.equal(db.get(taskPath('task_alpha')).state,'ACCEPTED');
+});
+
+test('R1660 receipt-complete read denies revoked and out-of-scope reviewer grants', async () => {
+  const {db,store} = await fixture();
+  const prior=db.get(grantPath('worker_reviewer'));
+  db.put(grantPath('worker_reviewer'),{...prior,status:'REVOKED',revokedAtMs:db.nowMs});
+  await assert.rejects(store.readTaskWithReceipts('worker_reviewer','task_alpha'),/DENY/);
+  const priorWorker=db.get(grantPath('worker_alpha'));
+  db.put(grantPath('worker_alpha'),{...priorWorker,taskIds:['task_beta']});
+  await assert.rejects(store.readTaskWithReceipts('worker_alpha','task_alpha'),/DENY/);
+});
+
+test('R1660 receipt-complete read rejects mismatched task and receipt IDs', async () => {
+  const {db,store}=await fixture();
+  db.put(receiptPath('task_alpha','execution'),{
+    taskId:'task_wrong',workerId:'worker_alpha',leaseEpoch:1,
+    sourceRevision:revision,sha256,evidenceUrl});
+  await assert.rejects(store.readTaskWithReceipts('worker_reviewer','task_alpha'),/execution identity mismatch/);
+  db.put(receiptPath('task_alpha','execution'),{taskId:'task_alpha',workerId:'worker_alpha',
+    leaseEpoch:1,sourceRevision:revision,sha256,evidenceUrl});
+  db.put(receiptPath('task_alpha','verification'),{
+    taskId:'task_other',reviewerId:'worker_reviewer',expectedRevision:revision,
+    expectedDigest:sha256,result:'PASS',externalCertification:false});
+  await assert.rejects(store.readTaskWithReceipts('worker_reviewer','task_alpha'),/verification identity mismatch/);
+});
+
+test('R1660 absent mission task fails closed without exposing receipts',async()=>{
+  const {store}=await fixture();
+  await assert.rejects(store.readTaskWithReceipts('worker_reviewer','task_missing'),/task not found/);
+});
