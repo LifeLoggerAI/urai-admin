@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {renderFounderInbox} from './render-founder-inbox-html.mjs';
-const sha='a'.repeat(64), source='https://app.heygen.com/videos/d230fd9cad6a40969940845112cd8a78',archive='https://app.notion.com/p/41ffc25435048191ac88e13356f6b8e3';
+const sha='a'.repeat(64), source='https://app.heygen.com/videos/synthetic-test-video',archive='https://app.notion.com/p/11111111111111111111111111111111';
 const item={id:'heygen:synthetic_video',kind:'video',name:'Clean video',filename:'clean.mp4',bytes:1530,sha256:sha,originalRecordUrl:source,archiveUrl:archive,verificationState:'SOURCE_AND_ARCHIVE_SHA_MATCH',verificationMethod:'local-stream-sha',verificationWorker:'worker_sample',humanReview:'PENDING',founderAcknowledged:false};
 const base={schema:'urai-founder-artifact-custody-v1',scope:'PRIVATE_REVIEW_ONLY',deliveryMode:'MANUAL_VERIFIED_CUSTODY',automaticallyDispatches:false,productionGate:'HOLD_NO_GO',privateMemoryWrites:'DISABLED',items:[item]};
 const run=m=>renderFounderInbox(m);
